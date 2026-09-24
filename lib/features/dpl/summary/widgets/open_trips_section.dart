@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
@@ -10,6 +11,9 @@ import '../../manager/widgets/error_retry.dart';
 import '../../models/dpl_dispatch_slip.dart';
 import '../../models/dpl_dispatch_trip.dart';
 import '../../models/dpl_production_summary.dart';
+import '../../models/dpl_trip_label_scan.dart';
+import '../screens/trip_label_scan_screen.dart';
+import '../services/master_sticker_pdf.dart';
 import '../providers/dispatch_slips_provider.dart';
 import '../providers/dispatch_trips_provider.dart';
 import '../providers/production_summary_provider.dart';
@@ -160,11 +164,123 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
   final _notesCtrl = TextEditingController();
   bool _submitting = false;
 
+  /// How many printed labels have been physically scanned onto this trip.
+  ///
+  /// A slip may not be cut until every planned piece is accounted for. Held in
+  /// local state rather than a provider because the scanner screen hands the
+  /// fresh progress straight back on pop — round-tripping through a provider
+  /// would leave the Send button briefly stale at exactly the moment the
+  /// dispatcher is reaching for it.
+  DplTripScanProgress? _scanProgress;
+  bool _loadingScans = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadScanProgress();
+  }
+
   @override
   void dispose() {
     _vehicleCtrl.dispose();
     _notesCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadScanProgress() async {
+    final res =
+        await ref.read(dplApiServiceProvider).getTripLabelScans(widget.trip.id);
+    if (!mounted) return;
+    setState(() {
+      _loadingScans = false;
+      if (res.isOk) _scanProgress = res.data;
+    });
+  }
+
+  /// True when every SELECTED plan has all its labels scanned.
+  ///
+  /// Unselected plans are irrelevant — the dispatcher may legitimately send
+  /// part of a trip. A plan the server has no row for counts as NOT scanned:
+  /// absence of evidence is not evidence of scanning.
+  bool get _selectedFullyScanned {
+    if (_selected.isEmpty) return false;
+    final p = _scanProgress;
+    if (p == null) return false;
+    return p.areComplete(_selected);
+  }
+
+  /// Pieces still to scan across the ticked plans — drives the footer copy.
+  int get _selectedUnscanned {
+    final p = _scanProgress;
+    if (p == null) return 0;
+    var out = 0;
+    for (final id in _selected) {
+      final row = p.forPlan(id);
+      if (row != null) out += row.remainingQty;
+    }
+    return out;
+  }
+
+  Future<void> _openScanner() async {
+    final result = await Navigator.of(context).push<DplTripScanProgress>(
+      MaterialPageRoute(
+        builder: (_) => TripLabelScanScreen(
+          tripId: widget.trip.id,
+          tripNumber: widget.trip.tripNumber,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (result != null) {
+      setState(() => _scanProgress = result);
+    } else {
+      // Popped with the system back gesture — re-read rather than assume the
+      // tally is unchanged, since scans were very likely recorded.
+      await _loadScanProgress();
+    }
+  }
+
+  /// Print the aggregate label describing one plan's scanned pieces.
+  Future<void> _printMasterSticker(DplTripPlan plan) async {
+    final res = await ref.read(dplApiServiceProvider).getMasterSticker(
+          tripId: widget.trip.id,
+          planId: plan.id,
+        );
+    if (!mounted) return;
+    if (res.isError || res.data == null) {
+      // NOTHING_SCANNED is the common case and its message already explains
+      // itself, so surface the server's wording rather than inventing one.
+      DplSnacks.error(
+        context,
+        res.error ?? 'Could not build the master sticker.',
+      );
+      return;
+    }
+
+    final data = res.data!;
+    try {
+      await Printing.layoutPdf(
+        name: 'Master-${widget.trip.tripNumber}-${data.customerPartNo}',
+        // Both the page box AND the layout format must be the 100x75 die-cut,
+        // with dynamicLayout off: left on, an operator choosing A4 in the
+        // print dialog silently rescales the label.
+        format: MasterStickerPdf.pageFormat,
+        dynamicLayout: false,
+        onLayout: (_) => MasterStickerPdf.build(data),
+      );
+    } on MissingPluginException {
+      if (mounted) {
+        DplSnacks.error(
+          context,
+          'Print not available in this build. Please fully restart the app '
+          '(stop + run again) so the print plugin is registered.',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        DplSnacks.error(context, 'Failed to open print sheet: $e');
+      }
+    }
   }
 
   List<DplTripPlan> get _openPlans => widget.trip.plans
@@ -410,9 +526,14 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
     final Map<String, int>? availableByKey =
         _buildAvailableMap(summaryAsync);
 
+    // Sending is gated on THREE things now: plans ticked, a vehicle, and every
+    // ticked plan's labels physically scanned onto the trip. The scan gate is
+    // re-checked server-side when the slip is cut — this only keeps the button
+    // honest, because a client cannot know what is on a trolley.
     final canSend = !_submitting &&
         _selected.isNotEmpty &&
-        !_vehicleMissing;
+        !_vehicleMissing &&
+        _selectedFullyScanned;
 
     return Container(
       decoration: BoxDecoration(
@@ -459,6 +580,19 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
               },
             ),
           ],
+          // Label scanning — the gate that proves the pieces on the trolley
+          // are the pieces this system printed labels for.
+          if (openPlans.isNotEmpty) ...[
+            const Divider(height: 1, color: DplColors.divider),
+            _ScanPanel(
+              progress: _scanProgress,
+              loading: _loadingScans,
+              openPlans: openPlans,
+              selected: _selected,
+              onScan: _openScanner,
+              onMasterSticker: _printMasterSticker,
+            ),
+          ],
           // Vehicle + notes — apply to whichever plans are checked.
           if (openPlans.isNotEmpty) ...[
             const Divider(height: 1, color: DplColors.divider),
@@ -501,15 +635,23 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
                           ? 'Tick plans to include'
                           : (_vehicleMissing
                               ? 'Enter vehicle no to send'
-                              : '${_selected.length} plan'
-                                  '${_selected.length == 1 ? "" : "s"} · '
-                                  '${fmt.format(_selectedTotalQty)} NOS'),
+                              // Name the number still outstanding — "scan the
+                              // labels" alone leaves the dispatcher counting
+                              // the trolley to work out how many are missing.
+                              : (!_selectedFullyScanned
+                                  ? (_selectedUnscanned > 0
+                                      ? 'Scan $_selectedUnscanned more label'
+                                          '${_selectedUnscanned == 1 ? "" : "s"} to send'
+                                      : 'Scan the labels to send')
+                                  : '${_selected.length} plan'
+                                      '${_selected.length == 1 ? "" : "s"} · '
+                                      '${fmt.format(_selectedTotalQty)} NOS')),
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 12.5,
                         color: _selected.isEmpty
                             ? DplColors.textSecondary
-                            : (_vehicleMissing
+                            : ((_vehicleMissing || !_selectedFullyScanned)
                                 ? DplColors.warning
                                 : DplColors.primaryDark),
                       ),
@@ -541,6 +683,153 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The scan gate: per-plan tally, a Scan button, and a master sticker per
+/// plan once its pieces are on the trip.
+///
+/// Shown for the whole trip rather than per ticked plan because the dispatcher
+/// scans a trolley, not a selection — they load what is in front of them and
+/// tick afterwards.
+class _ScanPanel extends StatelessWidget {
+  final DplTripScanProgress? progress;
+  final bool loading;
+  final List<DplTripPlan> openPlans;
+  final Set<int> selected;
+  final VoidCallback onScan;
+  final ValueChanged<DplTripPlan> onMasterSticker;
+
+  const _ScanPanel({
+    required this.progress,
+    required this.loading,
+    required this.openPlans,
+    required this.selected,
+    required this.onScan,
+    required this.onMasterSticker,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.qr_code_scanner_rounded,
+                  size: 16, color: DplColors.textSecondary),
+              const SizedBox(width: 6),
+              const Text(
+                'LABEL SCAN',
+                style: TextStyle(
+                  color: DplColors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const Spacer(),
+              if (loading)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                TextButton.icon(
+                  onPressed: onScan,
+                  icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
+                  label: const Text('Scan labels'),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          for (final plan in openPlans)
+            _ScanPlanRow(
+              plan: plan,
+              row: progress?.forPlan(plan.id),
+              isSelected: selected.contains(plan.id),
+              onMasterSticker: () => onMasterSticker(plan),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScanPlanRow extends StatelessWidget {
+  final DplTripPlan plan;
+  final DplTripPlanScan? row;
+  final bool isSelected;
+  final VoidCallback onMasterSticker;
+
+  const _ScanPlanRow({
+    required this.plan,
+    required this.row,
+    required this.isSelected,
+    required this.onMasterSticker,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scanned = row?.scannedQty ?? 0;
+    final planned = row?.plannedQty ?? plan.qty;
+    final complete = row?.isComplete ?? false;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(
+            complete
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
+            size: 15,
+            color: complete ? const Color(0xFF15803D) : DplColors.textSecondary,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              plan.description.isEmpty ? plan.customerPn : plan.description,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: DplColors.textSecondary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Text(
+            '$scanned / $planned scanned',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: complete ? const Color(0xFF15803D) : DplColors.warning,
+            ),
+          ),
+          // The master sticker describes what was SCANNED, so it only appears
+          // once there is something to describe.
+          if (scanned > 0)
+            IconButton(
+              tooltip: 'Print master sticker',
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.only(left: 6),
+              constraints: const BoxConstraints(),
+              icon: const Icon(Icons.local_offer_outlined, size: 17),
+              onPressed: onMasterSticker,
+            ),
         ],
       ),
     );

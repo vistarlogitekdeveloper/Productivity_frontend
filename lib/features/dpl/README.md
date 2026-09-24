@@ -87,7 +87,7 @@ Non-DPL roles continue to land on their existing dashboards
 ## Backend conventions
 
 - All paths relative to `AppConstants.dplApiBaseUrl`
-  (`https://vistar-crm.onrender.com/api/v1/dpl`).
+  (`https://api.vistarlogitek.com/api/v1/dpl`).
 - All authenticated requests carry `Authorization: Bearer <jwt>` — the
   JWT is the same one written by the existing login flow.
 - All responses are unwrapped from `{ success, data, error, code }` by

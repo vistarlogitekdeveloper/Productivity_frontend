@@ -103,6 +103,50 @@ class LocalStorageRepository {
     ]);
   }
 
+  // ------------------------------------------------------------
+  // DPL permission snapshot (backend migration 148)
+  //
+  // What the logged-in user is allowed to do, as granted permission keys.
+  // Cached so a screen can decide what to show on the first frame instead of
+  // flashing a control and then withdrawing it. The server re-checks every
+  // request, so a stale snapshot can only ever hide something.
+  // ------------------------------------------------------------
+
+  Future<void> saveDplPermissions(List<String> keys) async {
+    await _prefs.setStringList(AppConstants.dplPermissionsKey, keys);
+  }
+
+  /// The cached permission keys, or `null` when none were ever stored.
+  ///
+  /// `null` and `[]` mean different things and the caller must not conflate
+  /// them: `null` is "this session predates permissions, fall back to the
+  /// role checks", `[]` is "the server said this person may do nothing".
+  List<String>? getDplPermissions() =>
+      _prefs.getStringList(AppConstants.dplPermissionsKey);
+
+  Future<void> clearDplPermissions() async {
+    await _prefs.remove(AppConstants.dplPermissionsKey);
+  }
+
+  // ------------------------------------------------------------
+  // "This account is still on a password somebody else chose"
+  //
+  // Persisted so a page refresh cannot walk past the forced change. It is a
+  // convenience, not the guarantee — the backend re-reports the flag on every
+  // /auth/me, so clearing local storage only costs the user one round trip.
+  // ------------------------------------------------------------
+
+  Future<void> saveDplMustChangePassword(bool value) async {
+    await _prefs.setBool(AppConstants.dplMustChangePasswordKey, value);
+  }
+
+  bool getDplMustChangePassword() =>
+      _prefs.getBool(AppConstants.dplMustChangePasswordKey) ?? false;
+
+  Future<void> clearDplMustChangePassword() async {
+    await _prefs.remove(AppConstants.dplMustChangePasswordKey);
+  }
+
   Future<void> clearAll() async {
     await _prefs.clear();
   }

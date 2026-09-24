@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/local_storage_repository.dart';
 import '../../auth/auth_provider.dart';
+import 'dpl_password_gate_provider.dart';
 
 /// A dedicated Dio instance for the DPL module.
 ///
@@ -49,6 +50,27 @@ final dplDioProvider = Provider<Dio>((ref) {
             apiCode = raw.trim();
           }
         }
+        // 403 PASSWORD_CHANGE_REQUIRED — the backend refuses everything except
+        // /auth/{change-password,me,logout} while this account is still on a
+        // password somebody else chose (see middleware/auth.js).
+        //
+        // Normally the router has already pinned the user to the change screen
+        // from the flag saved at login, so this never fires. It exists for the
+        // case where the two disagree — cleared browser storage, a password
+        // reset by an administrator mid-session — because the alternative is a
+        // dashboard where every single request fails with no explanation.
+        // Raising the flag makes the router redirect on the next frame.
+        if (status == 403 && apiCode == 'PASSWORD_CHANGE_REQUIRED') {
+          Future.microtask(() {
+            try {
+              ref.read(dplMustChangePasswordProvider.notifier).set(true);
+            } catch (_) {
+              // Provider may have been disposed — safe to ignore.
+            }
+          });
+          return handler.next(error);
+        }
+
         final shouldLogout = status == 401 ||
             (status != null && status >= 500 && apiCode == 'NO_ORGANIZATION');
         if (shouldLogout) {

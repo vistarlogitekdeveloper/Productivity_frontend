@@ -361,6 +361,38 @@ class _PartCard extends StatelessWidget {
                         style: const TextStyle(color: Color(0xFF5D6A7A)),
                       ),
                     ),
+                  // Surfaced on the row because it is the key QA scans on. A
+                  // part with no substrate cannot be reached by a scan at all,
+                  // so "—" here is an actionable gap, not decoration.
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.inventory_2_outlined,
+                          size: 13,
+                          color: Color(0xFF94A3B8),
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            part.substratePartNo.isEmpty
+                                ? 'No substrate mapped'
+                                : part.substratePartNo,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: part.substratePartNo.isEmpty
+                                  ? const Color(0xFFB45309)
+                                  : const Color(0xFF475569),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -400,6 +432,8 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
   late final TextEditingController _pnCtrl;
   late final TextEditingController _descCtrl;
   late final TextEditingController _nameCtrl;
+  late final TextEditingController _substrateCtrl;
+  late final TextEditingController _materialCtrl;
   String? _machineName;
   bool _isActive = true;
   String? _error;
@@ -411,6 +445,8 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
     _pnCtrl = TextEditingController(text: e?.partNumber ?? '');
     _descCtrl = TextEditingController(text: e?.description ?? '');
     _nameCtrl = TextEditingController(text: e?.name ?? '');
+    _substrateCtrl = TextEditingController(text: e?.substratePartNo ?? '');
+    _materialCtrl = TextEditingController(text: e?.materialCode ?? '');
     _machineName = (e?.machineName ?? '').isEmpty ? null : e!.machineName;
     _isActive = e?.isActive ?? true;
   }
@@ -420,6 +456,8 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
     _pnCtrl.dispose();
     _descCtrl.dispose();
     _nameCtrl.dispose();
+    _substrateCtrl.dispose();
+    _materialCtrl.dispose();
     super.dispose();
   }
 
@@ -441,6 +479,12 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
       partNumber: _pnCtrl.text.trim(),
       description: _descCtrl.text.trim(),
       name: _nameCtrl.text.trim(),
+      // The backend has accepted substrate_part_no since migration 019; this
+      // form simply never offered it, which is why no part could be reached by
+      // a QA scan until now. `toJsonForWrite()` sends both of these even when
+      // blank, so clearing a wrong mapping actually clears it.
+      substratePartNo: _substrateCtrl.text.trim(),
+      materialCode: _materialCtrl.text.trim(),
       machineName: _machineName!.trim(),
       isActive: _isActive,
     ));
@@ -462,7 +506,7 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
       ..sort();
 
     return AlertDialog(
-      title: Text(widget.existing == null ? 'Add Part' : 'Edit Description'),
+      title: Text(widget.existing == null ? 'Add Part' : 'Edit Part'),
       content: SizedBox(
         width: 440,
         child: SingleChildScrollView(
@@ -502,6 +546,36 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
                 controller: _nameCtrl,
                 decoration: const InputDecoration(
                   labelText: 'Display Name (optional)',
+                ),
+              ),
+              const SizedBox(height: 10),
+              // The substrate is what QA scans off the raw-material label, and
+              // it is what maps that scan back to this customer part. One
+              // substrate legitimately serves several customer parts (e.g.
+              // 195872440-083 is both 542469500120D1 and 546769500133D1) —
+              // QA gets a picker when that happens, so entering the same
+              // substrate on more than one part here is correct, not a mistake.
+              TextField(
+                controller: _substrateCtrl,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  labelText: 'Substrate Part No.',
+                  hintText: '195245450-083',
+                  prefixIcon: Icon(Icons.inventory_2_outlined),
+                  helperText:
+                      'Printed on the raw-material label. QA scans this to '
+                      'find the customer part.',
+                  helperMaxLines: 3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _materialCtrl,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  labelText: 'Material Code (optional)',
+                  hintText: '587136190-083',
+                  prefixIcon: Icon(Icons.science_outlined),
                 ),
               ),
               const SizedBox(height: 10),

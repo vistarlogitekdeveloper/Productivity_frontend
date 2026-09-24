@@ -1,7 +1,7 @@
 class AppConstants {
   static const String appName = 'Vistar Pulse';
   static const String apiBaseUrl =
-      'https://vistar-crm.onrender.com/api/v1/productivity';
+      'https://api.vistarlogitek.com/api/v1/productivity';
 
   // Base URL for the Daily Production Loading (DPL) module. The DPL
   // endpoints live under a parallel path on the same backend host.
@@ -23,11 +23,30 @@ class AppConstants {
   static const String dplOrgCodeKey = 'DPL_ORG_CODE';
   static const String dplOrgNameKey = 'DPL_ORG_NAME';
 
+  /// The permission keys the logged-in DPL user holds, written on login and
+  /// re-read on app restart so a screen never renders before it knows what
+  /// the person is allowed to do. Advisory only — the server re-checks every
+  /// request, so a stale copy here can hide a button but can never grant one.
+  static const String dplPermissionsKey = 'DPL_PERMISSIONS';
+
+  /// True while the backend says this account is still on a password somebody
+  /// else chose — an administrator created it, or reset it. The router forces
+  /// the user to `/dpl/change-password` until it clears.
+  static const String dplMustChangePasswordKey = 'DPL_MUST_CHANGE_PASSWORD';
+
   // Roles
   static const String roleAdmin = 'ADMIN';
   static const String roleSupervisor = 'SUPERVISOR';
   static const String roleBrin = 'BRIN';
   static const String roleOperator = 'OPERATOR';
+
+  /// DPL Administrator. Creates organizations and users, and edits the
+  /// role/permission grid. Backend value `dpl_admin` (migration 148).
+  ///
+  /// Distinct from [roleAdmin], which belongs to the Productivity module and
+  /// lands on `/admin-dashboard`. The two are unrelated despite the name.
+  static const String roleDplAdmin = 'DPL_ADMIN';
+
   static const String roleDplManager = 'DPL_MANAGER';
   static const String roleDplSupervisor = 'DPL_SUPERVISOR';
 
@@ -78,6 +97,8 @@ class AppConstants {
         return 'BRIN';
       case roleOperator:
         return 'Operator';
+      case roleDplAdmin:
+        return 'DPL Administrator';
       case roleDplManager:
         return 'DPL Manager';
       case roleDplSupervisor:
@@ -114,6 +135,9 @@ class AppConstants {
     final normalized = normalizeRole(role);
     return normalized == roleAdmin || normalized == roleSupervisor;
   }
+
+  static bool isDplAdminRole(String role) =>
+      normalizeRole(role) == roleDplAdmin;
 
   static bool isDplManagerRole(String role) =>
       normalizeRole(role) == roleDplManager;
@@ -154,6 +178,7 @@ class AppConstants {
       isDplDeoRole(role);
 
   static bool isDplRole(String role) =>
+      isDplAdminRole(role) ||
       isDplManagerRole(role) ||
       isDplSupervisorRole(role) ||
       isDplCustomerRole(role) ||

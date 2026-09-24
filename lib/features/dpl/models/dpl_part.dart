@@ -74,8 +74,16 @@ class DplPart {
         'customer_part_no': partNumber,
         'description': description,
         if (name.isNotEmpty) 'part_name': name,
-        if (substratePartNo.isNotEmpty) 'substrate_part_no': substratePartNo,
-        if (materialCode.isNotEmpty) 'material_code': materialCode,
+        // Sent ALWAYS, as null when blank, rather than being omitted when
+        // empty like the fields around them. These two became editable on the
+        // parts master so QA's scan can resolve a substrate to a customer
+        // part; omitting them on a blank value would mean a manager could add
+        // a mapping but never correct a wrong one — the PUT would simply not
+        // mention the field and the old value would survive. The backend's
+        // create/update validators both `allow(null, '')`, and the columns
+        // are nullable, so an explicit null clears them properly.
+        'substrate_part_no': substratePartNo.isEmpty ? null : substratePartNo,
+        'material_code': materialCode.isEmpty ? null : materialCode,
         if (machineName.isNotEmpty) 'machine_name': machineName,
         'is_active': isActive,
       };

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../models/dpl_admin.dart';
 import '../models/dpl_dashboard_summary.dart';
 import '../models/dpl_downtime_event.dart';
 import '../models/dpl_downtime_event_detail.dart';
@@ -12,6 +13,8 @@ import '../models/dpl_excel_preview.dart';
 import '../models/dpl_machine.dart';
 import '../models/dpl_manpower_log.dart';
 import '../models/dpl_organization.dart';
+import '../models/dpl_pallet.dart';
+import '../models/dpl_spd.dart';
 import '../models/dpl_monthly_chart.dart';
 import '../models/dpl_part.dart';
 import '../models/dpl_production_plan.dart';
@@ -27,6 +30,9 @@ import '../models/dpl_carry_candidate.dart';
 import '../models/_json_helpers.dart';
 import '../models/dpl_buffer_norm.dart';
 import '../models/dpl_customer_snapshot.dart';
+import '../models/dpl_location.dart';
+import '../models/dpl_part_sticker.dart';
+import '../models/dpl_trip_label_scan.dart';
 import '../models/dpl_dispatch_plan_actual.dart';
 import '../models/dpl_dispatch_plan_inputs.dart';
 import '../models/dpl_consolidated_slip.dart';
@@ -149,13 +155,35 @@ class DplApiService {
     );
   }
 
+  /// The signed-in user, re-read from the server.
+  ///
+  /// THE `user` UNWRAP IS THE POINT OF THIS METHOD, NOT A DETAIL.
+  ///
+  /// `/auth/me` answers `{ success, data: { user: {...} } }`, and `_send`
+  /// hands `fromJson` the `data` object — so what arrives here is the
+  /// `{ user: ... }` WRAPPER, not the user. Parsing the wrapper as a user
+  /// found no `permissions` key, which `DplUserProfile` correctly reads as
+  /// "this server predates permissions" — and the whole app then fell back to
+  /// permissive. Every `DplPermissionsController.refresh()` silently wiped the
+  /// real permission list, so an administrator's switch had no effect on the
+  /// device and controls the plant had turned OFF kept appearing.
+  ///
+  /// Both shapes are accepted because `/login` answers `{ token, user }` and
+  /// a future endpoint may answer the user directly; guessing wrong here is
+  /// expensive and costs one `is Map` check to avoid.
   Future<DplApiResponse<DplUserProfile>> me() {
     return _send<DplUserProfile>(
       () => _dio.get(DplPaths.authMe),
       fallback: 'Unable to load profile.',
-      fromJson: (data) => DplUserProfile.fromJson(
-        data is Map ? Map<String, dynamic>.from(data) : const {},
-      ),
+      fromJson: (data) {
+        final map = data is Map ? Map<String, dynamic>.from(data) : const {};
+        final nested = map['user'];
+        return DplUserProfile.fromJson(
+          nested is Map
+              ? Map<String, dynamic>.from(nested)
+              : Map<String, dynamic>.from(map),
+        );
+      },
     );
   }
 
@@ -3404,6 +3432,1108 @@ class DplApiService {
         .map((e) => Map<String, dynamic>.from(e))
         .toList();
   }
+
+  // ---------------------------------------------------------------------------
+  // QA finished-goods stickers (backend migration 144)
+  //
+  // Scan the Grupo Antolin raw-material label -> resolve its substrate part no
+  // to the customer part reference(s) it maps to -> QA picks one -> the SERVER
+  // issues serials, capped at the plan item's recorded actual_qty.
+  //
+  // Serials are never minted client-side. Two handhelds doing that produce
+  // colliding labels on physical parts, and the quantity cap is only real if
+  // it is a row count taken under a lock on the server.
+  //
+  // Note QA's plan browsing reuses getPlans / getPlan / getDashboard above —
+  // `dpl_qa` was added to those endpoints' read-only guard rather than given a
+  // parallel controller, so the QA view cannot drift from the Manager view.
+  // ---------------------------------------------------------------------------
+
+  /// `GET /qa/current-shift` — which shift is running right now.
+  ///
+  /// Returns `null` inside [DplShift] when the clock falls in a gap between
+  /// configured shifts. Callers must handle that rather than assume a shift
+  /// is always live.
+  Future<DplApiResponse<DplShift?>> getQaCurrentShift() {
+    return _send<DplShift?>(
+      () => _dio.get(DplPaths.qaCurrentShift),
+      fallback: 'Failed to read the current shift.',
+      fromJson: (data) {
+        if (data is Map) {
+          final raw = data['shift'];
+          if (raw is Map) {
+            return DplShift.fromJson(Map<String, dynamic>.from(raw));
+          }
+        }
+        return null;
+      },
+    );
+  }
+
+  /// `POST /qa/scan/resolve` — scanned payload -> candidate customer parts.
+  ///
+  /// Pass [rawPayload] from the scanner, or [substratePartNo] when the
+  /// operator keyed the number printed under a damaged symbol.
+  ///
+  /// A 404 carries code `SUBSTRATE_NOT_FOUND`; its `data.candidates` lists what
+  /// the decoder actually read, which is what the UI shows instead of a dead
+  /// end. `_send` surfaces that as `DplApiResponse.error` with the code, so
+  /// callers branch on `res.code == 'SUBSTRATE_NOT_FOUND'`.
+  Future<DplApiResponse<DplScanResolution>> resolveQaScan({
+    String? rawPayload,
+    String? substratePartNo,
+  }) {
+    return _send<DplScanResolution>(
+      () => _dio.post(
+        DplPaths.qaScanResolve,
+        data: _cleanQuery({
+          'raw_payload': (rawPayload ?? '').trim().isEmpty ? null : rawPayload,
+          'substrate_part_no':
+              (substratePartNo ?? '').trim().isEmpty ? null : substratePartNo,
+        }),
+      ),
+      fallback: 'Failed to resolve the scanned label.',
+      // Hand-rolled rather than _oneFrom: the response carries `parts` next to
+      // sibling metadata (`candidates`, `matched_on`) that the generic
+      // unwrappers would discard.
+      fromJson: (data) => DplScanResolution.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `GET /qa/plan-items/:id/stickers/summary` — actual vs printed vs left.
+  Future<DplApiResponse<DplStickerSummary>> getQaStickerSummary(int planItemId) {
+    return _send<DplStickerSummary>(
+      () => _dio.get(DplPaths.qaStickerSummary(planItemId)),
+      fallback: 'Failed to read the sticker count for this item.',
+      fromJson: (data) => DplStickerSummary.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `POST /qa/plan-items/:id/stickers` — issue [count] serials.
+  ///
+  /// On success the response carries the issued stickers; render the PDF from
+  /// those, never from locally generated values.
+  ///
+  /// A 409 with code `STICKER_LIMIT_EXCEEDED` is the quantity cap firing and
+  /// its message names how many are actually left. `SUBSTRATE_PART_MISMATCH`
+  /// means the picked part is not mapped to the scanned substrate;
+  /// `NO_ACTUAL_QTY` means the supervisor has not recorded production yet.
+  Future<DplApiResponse<DplStickerIssueResult>> issueQaStickers({
+    required int planItemId,
+    required int partId,
+    required int count,
+    String? substratePartNo,
+    String? rawPayload,
+  }) {
+    return _send<DplStickerIssueResult>(
+      () => _dio.post(
+        DplPaths.qaIssueStickers(planItemId),
+        data: _cleanQuery({
+          'part_id': partId,
+          'count': count,
+          'substrate_part_no':
+              (substratePartNo ?? '').trim().isEmpty ? null : substratePartNo,
+          'raw_payload': (rawPayload ?? '').trim().isEmpty ? null : rawPayload,
+        }),
+      ),
+      fallback: 'Failed to issue stickers.',
+      fromJson: (data) => DplStickerIssueResult.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `POST /qa/stickers/direct` — labels with no production plan behind them.
+  ///
+  /// Maxion SSR v3.0 §5.2. There is deliberately NO actual-quantity cap on
+  /// this path: the operator says how many, and that many exist. The server
+  /// gates it on `labels.print_batch` for the caller's organization and
+  /// answers `DIRECT_PRINT_NOT_ALLOWED` when the plant has not been granted
+  /// it, so a plant on the default keeps the plan-item cap unchanged.
+  Future<DplApiResponse<DplStickerIssueResult>> issueDirectQaStickers({
+    required int partId,
+    required int count,
+    int? machineId,
+  }) {
+    return _send<DplStickerIssueResult>(
+      () => _dio.post(
+        DplPaths.qaStickersDirect,
+        data: _cleanQuery({
+          'part_id': partId,
+          'machine_id': machineId,
+          'count': count,
+        }),
+      ),
+      fallback: 'Failed to print the labels.',
+      fromJson: (data) => DplStickerIssueResult.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `GET /qa/machines` — every active machine, for the direct-print picker.
+  ///
+  /// Distinct from the plan-driven Production tab, which shows only machines
+  /// that have a plan for the chosen date and shift. Direct printing has no
+  /// plan, so it lists them all.
+  Future<DplApiResponse<List<DplMachine>>> getQaMachines() {
+    return _send<List<DplMachine>>(
+      () => _dio.get(DplPaths.qaMachines),
+      fallback: 'Failed to load machines.',
+      fromJson: (data) => _parseListEnvelope(
+        data is Map ? data['machines'] ?? data : data,
+      ).map(DplMachine.fromJson).toList(),
+    );
+  }
+
+  /// `GET /qa/parts?q=` — searchable part list for the direct-print picker.
+  Future<DplApiResponse<List<DplPart>>> getQaParts({String? q}) {
+    return _send<List<DplPart>>(
+      () => _dio.get(
+        DplPaths.qaParts,
+        queryParameters: _cleanQuery({
+          'q': (q ?? '').trim().isEmpty ? null : q!.trim(),
+        }),
+      ),
+      fallback: 'Failed to load parts.',
+      fromJson: (data) => _parseListEnvelope(
+        data is Map ? data['parts'] ?? data : data,
+      ).map(DplPart.fromJson).toList(),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pallet build and close (backend migration 151, Maxion SSR Module 4)
+  //
+  // The operator opens a pallet, scans printed wheel labels onto it, then
+  // closes it. The SYSTEM decides full (P), half (H) or merged (PM) and issues
+  // the number — SSR §4, "The app decides P, H or PM by itself".
+  // ---------------------------------------------------------------------------
+
+  /// The pallet this operator currently has open, or null.
+  ///
+  /// Called on screen load so an open pallet survives a battery change, an app
+  /// restart or a shift handover, which SSR Module 4 asks for by name.
+  Future<DplApiResponse<DplPallet?>> getOpenPallet() {
+    return _send<DplPallet?>(
+      () => _dio.get(DplPaths.qaPalletOpen),
+      fallback: 'Failed to read the open pallet.',
+      fromJson: (data) {
+        final raw = data is Map ? data['pallet'] : null;
+        if (raw is! Map) return null;
+        return DplPallet.fromJson(Map<String, dynamic>.from(raw));
+      },
+    );
+  }
+
+  /// Start a pallet. [fromHalfPalletId] brings a stored half pallet back and
+  /// fills it up; the result closes as PM.
+  Future<DplApiResponse<DplPallet>> openPallet({
+    required int partId,
+    int? machineId,
+    int? fromHalfPalletId,
+  }) {
+    return _send<DplPallet>(
+      () => _dio.post(
+        DplPaths.qaPallets,
+        data: _cleanQuery({
+          'part_id': partId,
+          'machine_id': machineId,
+          'from_half_pallet_id': fromHalfPalletId,
+        }),
+      ),
+      fallback: 'Failed to open the pallet.',
+      fromJson: _palletFromEnvelope,
+    );
+  }
+
+  /// Put one wheel on the pallet.
+  ///
+  /// [code] is either the full QR payload or a serial keyed in by hand when
+  /// the label is scuffed. Refusals are precise — `WRONG_PART`,
+  /// `ALREADY_ON_ANOTHER_PALLET`, `PALLET_FULL` — because the operator is
+  /// holding the wheel and needs to know what to do with it.
+  Future<DplApiResponse<DplPallet>> scanWheelOntoPallet({
+    required int palletId,
+    required String code,
+  }) {
+    return _send<DplPallet>(
+      () => _dio.post(DplPaths.qaPalletScan(palletId), data: {'code': code}),
+      fallback: 'Failed to scan that wheel.',
+      fromJson: _palletFromEnvelope,
+    );
+  }
+
+  /// Take one wheel back off after a mis-scan.
+  Future<DplApiResponse<DplPallet>> undoPalletScan({
+    required int palletId,
+    required String serial,
+  }) {
+    return _send<DplPallet>(
+      () => _dio.delete(DplPaths.qaPalletUndoScan(palletId, serial)),
+      fallback: 'Failed to remove that wheel.',
+      fromJson: _palletFromEnvelope,
+    );
+  }
+
+  /// Close it. The type and number come back from the server.
+  Future<DplApiResponse<DplPallet>> closePallet({
+    required int palletId,
+    String? reason,
+  }) {
+    return _send<DplPallet>(
+      () => _dio.post(
+        DplPaths.qaPalletClose(palletId),
+        data: _cleanQuery({
+          'reason': (reason ?? '').trim().isEmpty ? null : reason!.trim(),
+        }),
+      ),
+      fallback: 'Failed to close the pallet.',
+      fromJson: _palletFromEnvelope,
+    );
+  }
+
+  /// Abandon an open pallet.
+  ///
+  /// Releases every wheel back to unpacked and issues no number. This is
+  /// the only way out of a pallet opened for the wrong item, since only
+  /// one can be open per operator at a time.
+  Future<DplApiResponse<void>> discardPallet(int palletId) {
+    return _send<void>(
+      () => _dio.delete(DplPaths.qaPalletById(palletId)),
+      fallback: 'Failed to discard the pallet.',
+    );
+  }
+
+  /// Stored half pallets, oldest first — SSR Module 5's order of suggestion.
+  Future<DplApiResponse<List<DplPallet>>> getHalfPallets({int? partId}) {
+    return _send<List<DplPallet>>(
+      () => _dio.get(
+        DplPaths.qaPalletsHalf,
+        queryParameters: _cleanQuery({'part_id': partId}),
+      ),
+      fallback: 'Failed to load stored half pallets.',
+      fromJson: (data) => _parseListEnvelope(
+        data is Map ? data['pallets'] ?? data : data,
+      ).map(DplPallet.fromJson).toList(),
+    );
+  }
+
+  /// Turn a scanned pallet label into the pallet, where it is, and where it
+  /// should go — Maxion SSR Module 6.
+  ///
+  /// Accepts the QR payload (`MWP|PM26000012`) or the number printed under it,
+  /// because §5 prints the payload in plain text "so a damaged code can still
+  /// be keyed in". A WHEEL label is refused by name rather than resolving to
+  /// nothing — scanning a wheel here is a real mistake worth saying out loud.
+  Future<DplApiResponse<DplPalletResolution>> resolvePalletForPutaway(
+    String code,
+  ) {
+    return _send<DplPalletResolution>(
+      () => _dio.get(
+        DplPaths.warehousePalletResolve,
+        queryParameters: {'code': code.trim()},
+      ),
+      fallback: 'Could not read that pallet label.',
+      fromJson: (data) => DplPalletResolution.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Record which rack a closed pallet is standing on.
+  ///
+  /// Capacity, the row lock and releasing a previous placement all happen
+  /// server-side; a refusal here names the reason (`LOCATION_FULL`,
+  /// `PALLET_NOT_CLOSED`, `ALREADY_ASSIGNED`) and should be shown verbatim.
+  Future<DplApiResponse<DplPallet>> putPalletAway({
+    required int palletId,
+    required int locationId,
+    String? remarks,
+  }) {
+    return _send<DplPallet>(
+      () => _dio.post(
+        DplPaths.warehousePalletPutaway(palletId),
+        data: {
+          'location_id': locationId,
+          if (remarks != null && remarks.trim().isNotEmpty)
+            'remarks': remarks.trim(),
+        },
+      ),
+      fallback: 'Failed to record the location.',
+      fromJson: _palletFromEnvelope,
+    );
+  }
+
+  /// The pallet register — every pallet built, filtered and paginated.
+  ///
+  /// Returns the page AND the unfiltered-by-page total, because "showing 50 of
+  /// 2,310" is the difference between a list the storeman trusts and one they
+  /// assume is everything.
+  Future<DplApiResponse<DplPalletPage>> listPallets(DplPalletFilter filter) {
+    return _send<DplPalletPage>(
+      () => _dio.get(
+        DplPaths.qaPallets,
+        queryParameters: _cleanQuery(filter.toQuery()),
+      ),
+      fallback: 'Failed to load the pallet register.',
+      fromJson: (data) => DplPalletPage.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Everything the 100 x 75 mm master pallet label prints.
+  ///
+  /// Refuses with `PALLET_NOT_CLOSED` while the pallet is still open — an
+  /// open pallet has no number yet, and a label without a number is a label
+  /// nobody can scan back.
+  Future<DplApiResponse<DplPalletSticker>> getPalletLabel(int palletId) {
+    return _send<DplPalletSticker>(
+      () => _dio.get(DplPaths.qaPalletLabel(palletId)),
+      fallback: 'Failed to load the pallet label.',
+      fromJson: (data) => DplPalletSticker.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // SPD conversion (Maxion SSR §8, Module 12)
+  // ---------------------------------------------------------------------------
+
+  /// The wheels physically on a pallet, for the SPD picker.
+  ///
+  /// A separate call from the pallet itself because the pallet label
+  /// deliberately never carries this list (open point C-04) — but choosing
+  /// which wheels leave is impossible without seeing them.
+  Future<DplApiResponse<DplPalletWheels>> getPalletWheels(int palletId) {
+    return _send<DplPalletWheels>(
+      () => _dio.get(DplPaths.qaPalletWheels(palletId)),
+      fallback: 'Failed to load the wheels on this pallet.',
+      fromJson: (data) => DplPalletWheels.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Turn the named wheels into individual SPD packs.
+  ///
+  /// One pack per wheel, each with its own number and `MWS|` label. Whatever
+  /// is left stays on the pallet, which becomes a half pallet and is
+  /// relabelled — the response says which labels to print.
+  Future<DplApiResponse<DplSpdResult>> convertToSpd({
+    required int palletId,
+    required List<int> stickerIds,
+  }) {
+    return _send<DplSpdResult>(
+      () => _dio.post(
+        DplPaths.qaPalletSpd(palletId),
+        data: {'sticker_ids': stickerIds},
+      ),
+      fallback: 'Failed to convert those wheels.',
+      fromJson: (data) => DplSpdResult.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// The SPD pack register.
+  Future<DplApiResponse<DplSpdPage>> listSpdPacks({
+    String? search,
+    int? partId,
+    String? status,
+    int limit = 50,
+    int offset = 0,
+  }) {
+    return _send<DplSpdPage>(
+      () => _dio.get(
+        DplPaths.qaSpdPacks,
+        queryParameters: _cleanQuery({
+          'search': (search ?? '').trim().isEmpty ? null : search!.trim(),
+          'part_id': partId,
+          'status': (status ?? '').isEmpty ? null : status,
+          'limit': limit,
+          'offset': offset,
+        }),
+      ),
+      fallback: 'Failed to load SPD packs.',
+      fromJson: (data) => DplSpdPage.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Move named wheels between two pallets — the drag-and-drop merge.
+  ///
+  /// [moves] says where each moved wheel ENDS UP, so wheels can go both ways
+  /// in one operation and there is no "which is the target" to get wrong. Send
+  /// only the wheels that actually changed side; the server refuses an
+  /// instruction where nothing moved.
+  Future<DplApiResponse<DplRedistributeResult>> redistributeWheels({
+    required int palletAId,
+    required int palletBId,
+    required Map<int, int> moves,
+  }) {
+    return _send<DplRedistributeResult>(
+      () => _dio.post(
+        DplPaths.qaPalletsRedistribute,
+        data: {
+          'pallet_ids': [palletAId, palletBId],
+          'moves': [
+            for (final e in moves.entries)
+              {'sticker_id': e.key, 'to_pallet_id': e.value},
+          ],
+        },
+      ),
+      fallback: 'Failed to move those wheels.',
+      fromJson: (data) => DplRedistributeResult.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Fill [targetPalletId] from [sourcePalletId], stopping at the target's
+  /// standard quantity — SSR Module 5.
+  ///
+  /// Two half pallets that add up to more than one pallet-worth become a FULL
+  /// pallet and a smaller half pallet, not one over-full pallet. The response's
+  /// `reprint` names which labels are now stale.
+  Future<DplApiResponse<DplMergeResult>> mergePallets({
+    required int targetPalletId,
+    required int sourcePalletId,
+  }) {
+    return _send<DplMergeResult>(
+      () => _dio.post(
+        DplPaths.qaPalletsMerge,
+        data: {
+          'target_pallet_id': targetPalletId,
+          'source_pallet_id': sourcePalletId,
+        },
+      ),
+      fallback: 'Failed to merge the pallets.',
+      fromJson: (data) => DplMergeResult.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Combine stored half pallets of the same item, with no new production.
+  Future<DplApiResponse<DplPallet>> combineHalfPallets(List<int> palletIds) {
+    return _send<DplPallet>(
+      () => _dio.post(
+        DplPaths.qaPalletsCombine,
+        data: {'pallet_ids': palletIds},
+      ),
+      fallback: 'Failed to combine the pallets.',
+      fromJson: _palletFromEnvelope,
+    );
+  }
+
+  /// Scan and undo answer `{ pallet: {...} }` nested under a result; open,
+  /// close and combine answer `{ pallet: {...} }` directly. Tolerating both
+  /// here keeps five call sites from each repeating the same guess.
+  DplPallet _palletFromEnvelope(dynamic data) {
+    if (data is Map) {
+      final nested = data['pallet'];
+      if (nested is Map) return DplPallet.fromJson(Map<String, dynamic>.from(nested));
+      return DplPallet.fromJson(Map<String, dynamic>.from(data));
+    }
+    return const DplPallet();
+  }
+
+  /// `POST /qa/stickers/void` — retire spoiled labels.
+  ///
+  /// Frees the quantity so a replacement can be printed; the serials
+  /// themselves are never reused.
+  Future<DplApiResponse<int>> voidQaStickers({
+    required List<int> stickerIds,
+    String? reason,
+  }) {
+    return _send<int>(
+      () => _dio.post(
+        DplPaths.qaStickersVoid,
+        data: _cleanQuery({
+          'sticker_ids': stickerIds,
+          'reason': (reason ?? '').trim().isEmpty ? null : reason,
+        }),
+      ),
+      fallback: 'Failed to void the stickers.',
+      fromJson: (data) =>
+          data is Map ? parseIntOr(data['voided']) : 0,
+    );
+  }
+
+  /// `GET /qa/stickers` — traceability / reprint lookup.
+  Future<DplApiResponse<List<DplPartSticker>>> getQaStickers({
+    int? planItemId,
+    String? batchId,
+    String? serialNo,
+    int page = 1,
+    int limit = 50,
+  }) {
+    return _send<List<DplPartSticker>>(
+      () => _dio.get(
+        DplPaths.qaStickers,
+        queryParameters: _cleanQuery({
+          'plan_item_id': planItemId,
+          'batch_id': (batchId ?? '').trim().isEmpty ? null : batchId,
+          'serial_no': (serialNo ?? '').trim().isEmpty ? null : serialNo,
+          'page': page,
+          'limit': limit,
+        }),
+      ),
+      fallback: 'Failed to load the sticker log.',
+      fromJson: (data) => _parseListEnvelope(
+        data is Map ? data['stickers'] ?? data : data,
+      ).map(DplPartSticker.fromJson).toList(),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Storage locations (backend migration 146)
+  //
+  // Master is manager-maintained; the assignment is QA's. Capacity is enforced
+  // server-side under a row lock on the location, so the `free_qty` these
+  // methods return is for display and for keeping the picker honest — never
+  // for deciding whether an assignment is allowed.
+  // ---------------------------------------------------------------------------
+
+  /// Location master, newest search first. Used by both the manager's master
+  /// screen and QA's picker; QA never passes [includeInactive].
+  Future<DplApiResponse<List<DplLocation>>> getLocations({
+    String? q,
+    int page = 1,
+    int limit = 50,
+    bool includeInactive = false,
+    bool asManager = false,
+    // Reads the SAME master through the warehouse router instead of the QA
+    // one. Needed because a putaway operator may hold `pallet.putaway` without
+    // being dpl_qa, and the QA router would refuse them on role before the
+    // permission was ever consulted.
+    bool asWarehouse = false,
+  }) {
+    return _send<List<DplLocation>>(
+      () => _dio.get(
+        asManager
+            ? DplPaths.managerLocations
+            : asWarehouse
+                ? DplPaths.warehouseLocations
+                : DplPaths.qaLocations,
+        queryParameters: _cleanQuery({
+          'q': (q ?? '').trim().isEmpty ? null : q!.trim(),
+          'page': page,
+          'limit': limit,
+          // `_cleanQuery` strips nulls but not `false`, so only send it when
+          // it is actually true — the backend treats the string 'true'.
+          if (includeInactive) 'include_inactive': 'true',
+        }),
+      ),
+      fallback: 'Failed to load storage locations.',
+      fromJson: (data) => _parseListEnvelope(
+        data is Map ? data['locations'] ?? data : data,
+      ).map(DplLocation.fromJson).toList(),
+    );
+  }
+
+  Future<DplApiResponse<DplLocation>> createLocation(DplLocation location) {
+    return _send<DplLocation>(
+      () => _dio.post(DplPaths.managerLocations, data: location.toJsonForWrite()),
+      fallback: 'Failed to create the location.',
+      fromJson: (data) => DplLocation.fromJson(
+        data is Map && data['location'] is Map
+            ? Map<String, dynamic>.from(data['location'] as Map)
+            : Map<String, dynamic>.from(data as Map),
+      ),
+    );
+  }
+
+  Future<DplApiResponse<DplLocation>> updateLocation(
+    int id,
+    DplLocation location,
+  ) {
+    return _send<DplLocation>(
+      () => _dio.put(
+        DplPaths.managerLocationById(id),
+        data: location.toJsonForWrite(),
+      ),
+      fallback: 'Failed to update the location.',
+      fromJson: (data) => DplLocation.fromJson(
+        data is Map && data['location'] is Map
+            ? Map<String, dynamic>.from(data['location'] as Map)
+            : Map<String, dynamic>.from(data as Map),
+      ),
+    );
+  }
+
+  /// Soft delete. Refused with `LOCATION_NOT_EMPTY` while stock sits on it.
+  Future<DplApiResponse<void>> deleteLocation(int id) {
+    return _send<void>(
+      () => _dio.delete(DplPaths.managerLocationById(id)),
+      fallback: 'Failed to remove the location.',
+    );
+  }
+
+  /// Where a plan item's output is stored, or `null` when nowhere.
+  Future<DplApiResponse<DplLocationAssignment?>> getPlanItemLocation(
+    int planItemId,
+  ) {
+    return _send<DplLocationAssignment?>(
+      () => _dio.get(DplPaths.qaPlanItemLocation(planItemId)),
+      fallback: 'Failed to read the storage location.',
+      fromJson: (data) {
+        if (data is Map) {
+          final raw = data['assignment'];
+          if (raw is Map) {
+            return DplLocationAssignment.fromJson(
+              Map<String, dynamic>.from(raw),
+            );
+          }
+        }
+        return null;
+      },
+    );
+  }
+
+  /// Store a plan item's produced batch at [locationId].
+  ///
+  /// [qty] omitted means "everything this item produced". Expect 409s with
+  /// `LOCATION_FULL` (message names the remaining room), `LABELS_INCOMPLETE`,
+  /// `QTY_EXCEEDS_PRODUCED` or `ALREADY_ASSIGNED`.
+  Future<DplApiResponse<DplLocationAssignment>> assignPlanItemLocation({
+    required int planItemId,
+    required int locationId,
+    int? qty,
+    String? remarks,
+  }) {
+    return _send<DplLocationAssignment>(
+      () => _dio.post(
+        DplPaths.qaPlanItemLocation(planItemId),
+        data: _cleanQuery({
+          'location_id': locationId,
+          'qty': qty,
+          'remarks': (remarks ?? '').trim().isEmpty ? null : remarks!.trim(),
+        }),
+      ),
+      fallback: 'Failed to assign the location.',
+      fromJson: (data) => DplLocationAssignment.fromJson(
+        data is Map && data['assignment'] is Map
+            ? Map<String, dynamic>.from(data['assignment'] as Map)
+            : Map<String, dynamic>.from(data as Map),
+      ),
+    );
+  }
+
+  /// `GET /dispatch/trips/label-availability`
+  ///
+  /// Returns `{partId: DplLabelStock}`. All four figures travel, not just the
+  /// allowance, so the screen can distinguish "nothing printed" from "printed
+  /// but every piece is already on another trip" — a zero allowance means
+  /// something different in each case.
+  ///
+  /// A part ABSENT from the response has nothing printed and nothing planned,
+  /// which is a hard zero rather than unknown.
+  ///
+  /// Advisory only: `POST /dispatch/trips` re-checks under an advisory lock,
+  /// because two managers planning the same part at once would otherwise both
+  /// read this number and both pass.
+  Future<DplApiResponse<Map<int, DplLabelStock>>> getLabelAvailability({
+    List<int>? partIds,
+  }) {
+    return _send<Map<int, DplLabelStock>>(
+      () => _dio.get(
+        DplPaths.dispatchTripsLabelAvailability,
+        queryParameters: _cleanQuery({
+          'part_ids': (partIds == null || partIds.isEmpty)
+              ? null
+              : partIds.join(','),
+        }),
+      ),
+      fallback: 'Failed to load labelled stock.',
+      fromJson: (data) {
+        final rows = _parseListEnvelope(
+          data is Map ? data['parts'] ?? data : data,
+        );
+        return {
+          for (final r in rows)
+            parseIntOr(r['part_id'] ?? r['partId']): DplLabelStock.fromJson(r),
+        };
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Scanning printed labels onto a trip (backend migration 147)
+  //
+  // The dispatcher scans every printed label before a trip can be sent to the
+  // DEO. The client disables its Send button on this progress, but the server
+  // re-derives the same figure when the slip is cut — a client cannot be the
+  // authority on whether pieces are physically on a trolley.
+  // ---------------------------------------------------------------------------
+
+  /// `GET /dispatch/trips/:id/label-scans` — per-plan scan progress.
+  Future<DplApiResponse<DplTripScanProgress>> getTripLabelScans(int tripId) {
+    return _send<DplTripScanProgress>(
+      () => _dio.get(DplPaths.tripLabelScans(tripId)),
+      fallback: 'Failed to load scan progress.',
+      fromJson: (data) => DplTripScanProgress.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `POST /dispatch/trips/:id/label-scans` — scan one label onto the trip.
+  ///
+  /// [code] takes the full QR payload or a bare serial keyed in from a damaged
+  /// label. Returns the refreshed progress so the caller never needs a second
+  /// round trip to re-evaluate its Send gate.
+  ///
+  /// Expect 409s: `ALREADY_SCANNED_HERE` (harmless double-tap),
+  /// `ALREADY_ON_ANOTHER_TRIP`, `PART_NOT_ON_TRIP`, `PLAN_ALREADY_FULL`,
+  /// `STICKER_VOIDED`; and 404 `STICKER_NOT_FOUND`.
+  Future<DplApiResponse<DplTripScanProgress>> scanLabelToTrip({
+    required int tripId,
+    required String code,
+  }) {
+    return _send<DplTripScanProgress>(
+      () => _dio.post(
+        DplPaths.tripLabelScans(tripId),
+        data: {'code': code},
+      ),
+      fallback: 'Failed to scan that label.',
+      fromJson: (data) {
+        final map = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+        final progress = map['progress'];
+        return DplTripScanProgress.fromJson(
+          progress is Map ? Map<String, dynamic>.from(progress) : map,
+        );
+      },
+    );
+  }
+
+  /// `DELETE /dispatch/trips/:id/label-scans/:serial` — undo a mis-scan.
+  Future<DplApiResponse<DplTripScanProgress>> undoTripLabelScan({
+    required int tripId,
+    required String serial,
+  }) {
+    return _send<DplTripScanProgress>(
+      () => _dio.delete(
+        DplPaths.tripLabelScanUndo(tripId, Uri.encodeComponent(serial)),
+      ),
+      fallback: 'Failed to undo that scan.',
+      fromJson: (data) {
+        final map = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+        final progress = map['progress'];
+        return DplTripScanProgress.fromJson(
+          progress is Map ? Map<String, dynamic>.from(progress) : map,
+        );
+      },
+    );
+  }
+
+  /// `GET /dispatch/trips/:id/plans/:planId/master-sticker`
+  ///
+  /// Everything the aggregate label prints, built from the pieces actually
+  /// scanned. 409 `NOTHING_SCANNED` when the plan has no scans yet.
+  Future<DplApiResponse<DplMasterSticker>> getMasterSticker({
+    required int tripId,
+    required int planId,
+  }) {
+    return _send<DplMasterSticker>(
+      () => _dio.get(DplPaths.tripMasterSticker(tripId, planId)),
+      fallback: 'Failed to build the master sticker.',
+      fromJson: (data) => DplMasterSticker.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Take the batch back off the rack.
+  Future<DplApiResponse<void>> releasePlanItemLocation(
+    int planItemId, {
+    String? remarks,
+  }) {
+    return _send<void>(
+      () => _dio.delete(
+        DplPaths.qaPlanItemLocation(planItemId),
+        data: _cleanQuery({
+          'remarks': (remarks ?? '').trim().isEmpty ? null : remarks!.trim(),
+        }),
+      ),
+      fallback: 'Failed to release the location.',
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Administration (backend migration 148)
+  //
+  // Users, organizations and the role/permission grid. Every endpoint here is
+  // permission-guarded server-side; the client's own permission checks decide
+  // what to SHOW, never what to allow.
+  //
+  // An administrator works across organizations, so `organizationId` is an
+  // optional FILTER on the list rather than an implicit scope. Omit it and
+  // every tenant's users come back.
+  // ---------------------------------------------------------------------------
+
+  /// The role list and the grouped permission catalogue.
+  ///
+  /// Served by the backend rather than hard-coded here so the grid can never
+  /// render a permission this build of the API does not enforce, nor miss one
+  /// it does.
+  Future<DplApiResponse<DplPermissionMatrix>> getAdminCatalogue() {
+    return _send<DplPermissionMatrix>(
+      () => _dio.get(DplPaths.adminCatalogue),
+      fallback: 'Failed to load the permission catalogue.',
+      fromJson: (data) => DplPermissionMatrix.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  Future<DplApiResponse<DplManagedUserPage>> getAdminUsers({
+    int? organizationId,
+    String? q,
+    String? role,
+    String status = 'all',
+    int page = 1,
+    int limit = 50,
+  }) {
+    return _send<DplManagedUserPage>(
+      () => _dio.get(
+        DplPaths.adminUsers,
+        queryParameters: _cleanQuery({
+          'organization_id': organizationId,
+          'q': (q ?? '').trim().isEmpty ? null : q!.trim(),
+          'role': (role ?? '').trim().isEmpty ? null : role,
+          'status': status,
+          'page': page,
+          'limit': limit,
+        }),
+      ),
+      fallback: 'Failed to load users.',
+      fromJson: (data) => DplManagedUserPage.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Creates an account. [password] is the temporary one the administrator
+  /// hands over; the account is flagged so it stops working once the person
+  /// sets their own.
+  Future<DplApiResponse<DplManagedUser>> createAdminUser(
+    DplManagedUser user, {
+    required String password,
+  }) {
+    return _send<DplManagedUser>(
+      () => _dio.post(
+        DplPaths.adminUsers,
+        data: user.toCreateJson(password: password),
+      ),
+      fallback: 'Failed to create the user.',
+      fromJson: _adminUserFromEnvelope,
+    );
+  }
+
+  Future<DplApiResponse<DplManagedUser>> updateAdminUser(
+    int id,
+    DplManagedUser user,
+  ) {
+    return _send<DplManagedUser>(
+      () => _dio.put(DplPaths.adminUserById(id), data: user.toUpdateJson()),
+      fallback: 'Failed to update the user.',
+      fromJson: _adminUserFromEnvelope,
+    );
+  }
+
+  /// Disables or re-enables an account.
+  ///
+  /// There is no delete. Every sticker, scan, slip and trip points at the user
+  /// who made it, so removing the row would either break those references or
+  /// let the id be reused and re-attribute somebody else's work.
+  ///
+  /// Refused with `LAST_ADMIN` when it would leave nobody able to administer
+  /// the system, and with `CANNOT_DISABLE_SELF` when you are the target.
+  Future<DplApiResponse<DplManagedUser>> setAdminUserActive(
+    int id,
+    bool isActive,
+  ) {
+    return _send<DplManagedUser>(
+      () => _dio.post(
+        DplPaths.adminUserStatus(id),
+        data: {'is_active': isActive},
+      ),
+      fallback: 'Failed to change the account status.',
+      fromJson: _adminUserFromEnvelope,
+    );
+  }
+
+  /// Sets someone else's password. There is no matching read — nothing in the
+  /// API returns a password or its hash.
+  Future<DplApiResponse<DplManagedUser>> resetAdminUserPassword(
+    int id,
+    String password,
+  ) {
+    return _send<DplManagedUser>(
+      () => _dio.post(
+        DplPaths.adminUserPassword(id),
+        data: {'password': password},
+      ),
+      fallback: 'Failed to reset the password.',
+      fromJson: _adminUserFromEnvelope,
+    );
+  }
+
+  Future<DplApiResponse<List<DplAdminOrganization>>> getAdminOrganizations({
+    String? q,
+    bool includeInactive = true,
+  }) {
+    return _send<List<DplAdminOrganization>>(
+      () => _dio.get(
+        DplPaths.adminOrganizations,
+        queryParameters: _cleanQuery({
+          'q': (q ?? '').trim().isEmpty ? null : q!.trim(),
+          // The admin screen is the one place inactive tenants must be
+          // visible — otherwise an organization switched off by mistake
+          // cannot be switched back on.
+          if (includeInactive) 'include_inactive': 'true',
+        }),
+      ),
+      fallback: 'Failed to load organizations.',
+      fromJson: (data) => _parseListEnvelope(
+        data is Map ? data['organizations'] ?? data : data,
+      ).map(DplAdminOrganization.fromJson).toList(),
+    );
+  }
+
+  Future<DplApiResponse<DplAdminOrganization>> createAdminOrganization(
+    DplAdminOrganization org,
+  ) {
+    return _send<DplAdminOrganization>(
+      () => _dio.post(DplPaths.adminOrganizations, data: org.toJsonForWrite()),
+      fallback: 'Failed to create the organization.',
+      fromJson: (data) => DplAdminOrganization.fromJson(
+        data is Map && data['organization'] is Map
+            ? Map<String, dynamic>.from(data['organization'] as Map)
+            : Map<String, dynamic>.from(data as Map),
+      ),
+    );
+  }
+
+  /// Renaming, recoding or deactivating a tenant. Deactivation is refused with
+  /// `ORG_HAS_ACTIVE_USERS` while anyone there can still log in.
+  Future<DplApiResponse<DplAdminOrganization>> updateAdminOrganization(
+    int id,
+    DplAdminOrganization org,
+  ) {
+    return _send<DplAdminOrganization>(
+      () => _dio.put(
+        DplPaths.adminOrganizationById(id),
+        data: org.toJsonForWrite(),
+      ),
+      fallback: 'Failed to update the organization.',
+      fromJson: (data) => DplAdminOrganization.fromJson(
+        data is Map && data['organization'] is Map
+            ? Map<String, dynamic>.from(data['organization'] as Map)
+            : Map<String, dynamic>.from(data as Map),
+      ),
+    );
+  }
+
+  /// The whole grid for one organization. Omit [organizationId] to get the
+  /// caller's own.
+  Future<DplApiResponse<DplPermissionMatrix>> getAdminPermissions({
+    int? organizationId,
+  }) {
+    return _send<DplPermissionMatrix>(
+      () => _dio.get(
+        DplPaths.adminPermissions,
+        queryParameters: _cleanQuery({'organization_id': organizationId}),
+      ),
+      fallback: 'Failed to load the access rules.',
+      fromJson: (data) => DplPermissionMatrix.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Saves the changed cells for one role.
+  ///
+  /// Only the changes are sent, not the whole row: a full-row save would
+  /// write an override for every permission, freezing that role at today's
+  /// defaults so a later change to a default could never reach it.
+  ///
+  /// Refused with `ADMIN_LOCKOUT_REFUSED` if it would leave nobody able to
+  /// manage users or access rules.
+  Future<DplApiResponse<void>> setAdminPermissions({
+    required int organizationId,
+    required String role,
+    required Map<String, bool> changes,
+  }) {
+    return _send<void>(
+      () => _dio.put(
+        DplPaths.adminPermissions,
+        data: {
+          'organization_id': organizationId,
+          'role': role,
+          'permissions': changes,
+        },
+      ),
+      fallback: 'Failed to save the access rules.',
+    );
+  }
+
+  /// Drops every override for one role, returning it to the built-in default.
+  Future<DplApiResponse<void>> resetAdminPermissions({
+    required int organizationId,
+    required String role,
+  }) {
+    return _send<void>(
+      () => _dio.post(
+        DplPaths.adminPermissionsReset,
+        data: {'organization_id': organizationId, 'role': role},
+      ),
+      fallback: 'Failed to reset the access rules.',
+    );
+  }
+
+  Future<DplApiResponse<List<DplUserAuditEntry>>> getAdminAudit({
+    int? organizationId,
+    int? targetUserId,
+    int page = 1,
+    int limit = 50,
+  }) {
+    return _send<List<DplUserAuditEntry>>(
+      () => _dio.get(
+        DplPaths.adminAudit,
+        queryParameters: _cleanQuery({
+          'organization_id': organizationId,
+          'target_user_id': targetUserId,
+          'page': page,
+          'limit': limit,
+        }),
+      ),
+      fallback: 'Failed to load the account history.',
+      fromJson: (data) => _parseListEnvelope(
+        data is Map ? data['entries'] ?? data : data,
+      ).map(DplUserAuditEntry.fromJson).toList(),
+    );
+  }
+
+  /// Every admin write returns `{ user: {...} }`; a few older proxies unwrap
+  /// it. Tolerating both here keeps the call sites from each repeating the
+  /// same two-line guess.
+  DplManagedUser _adminUserFromEnvelope(dynamic data) {
+    return DplManagedUser.fromJson(
+      data is Map && data['user'] is Map
+          ? Map<String, dynamic>.from(data['user'] as Map)
+          : Map<String, dynamic>.from(data as Map),
+    );
+  }
 }
 
 /// Lightweight user summary returned by `GET /dispatch/drivers` — just
@@ -3482,6 +4612,19 @@ class DplUserProfile {
   final int? organizationId;
   final DplOrganization? organization;
 
+  /// The permission keys this user holds (backend migration 148).
+  ///
+  /// `null` means the server did not send the field at all — an API older
+  /// than migration 148. That is NOT the same as `[]`, which means the server
+  /// answered and the answer was "nothing". Screens must treat null as
+  /// "fall back to the role checks" and an empty list as a real denial; the
+  /// two are kept distinct all the way to [DplPermissions] for that reason.
+  final List<String>? permissions;
+
+  /// True right after an administrator created the account or reset its
+  /// password. The app routes such a user to change their password.
+  final bool mustChangePassword;
+
   const DplUserProfile({
     required this.id,
     required this.name,
@@ -3489,10 +4632,13 @@ class DplUserProfile {
     required this.role,
     this.organizationId,
     this.organization,
+    this.permissions,
+    this.mustChangePassword = false,
   });
 
   factory DplUserProfile.fromJson(Map<String, dynamic> json) {
     final rawOrg = json['organization'];
+    final rawPerms = json['permissions'];
     return DplUserProfile(
       id: json['id'] is int ? json['id'] as int : 0,
       name: json['name']?.toString() ?? '',
@@ -3503,6 +4649,11 @@ class DplUserProfile {
       organization: rawOrg is Map
           ? DplOrganization.fromJson(Map<String, dynamic>.from(rawOrg))
           : null,
+      permissions: rawPerms is List
+          ? rawPerms.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
+          : null,
+      mustChangePassword: json['must_change_password'] == true ||
+          json['mustChangePassword'] == true,
     );
   }
 }

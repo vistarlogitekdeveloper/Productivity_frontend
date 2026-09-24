@@ -11,6 +11,31 @@ class DplPaths {
   // Public list used to populate the org selector on the login screen.
   static const String authOrganizations = '/auth/organizations';
 
+  // ---------------------------------------------------------------------------
+  // Administration (backend migration 148)
+  //
+  // Users, organizations, the role/permission grid and the account-change
+  // trail. Guarded server-side by PERMISSION rather than by role, so an
+  // installation can hand a plant head `admin.users.view` without handing
+  // over the whole panel.
+  //
+  // The administrator works ACROSS organizations: `/admin/users` takes an
+  // optional `organization_id` filter and returns every tenant when it is
+  // omitted. That is deliberate — an administrator who could only see their
+  // own tenant could not move someone between two.
+  // ---------------------------------------------------------------------------
+  static const String adminCatalogue = '/admin/catalogue';
+  static const String adminUsers = '/admin/users';
+  static const String adminOrganizations = '/admin/organizations';
+  static const String adminPermissions = '/admin/permissions';
+  static const String adminPermissionsReset = '/admin/permissions/reset';
+  static const String adminAudit = '/admin/audit';
+
+  static String adminUserById(int id) => '/admin/users/$id';
+  static String adminUserStatus(int id) => '/admin/users/$id/status';
+  static String adminUserPassword(int id) => '/admin/users/$id/password';
+  static String adminOrganizationById(int id) => '/admin/organizations/$id';
+
   // Manager — dashboard
   static const String dashboard = '/manager/dashboard';
   static const String alerts = '/manager/alerts';
@@ -32,8 +57,7 @@ class DplPaths {
   static const String plans = '/manager/plans';
   static String planById(int id) => '/manager/plans/$id';
   static String planLock(int id) => '/manager/plans/$id/lock';
-  static String planChangeStatus(int id) =>
-      '/manager/plans/$id/change-status';
+  static String planChangeStatus(int id) => '/manager/plans/$id/change-status';
   static String planItemChangeStatus(int planId, int itemId) =>
       '/manager/plans/$planId/items/$itemId/change-status';
   static String planItemCarryForward(int planId, int itemId) =>
@@ -50,8 +74,7 @@ class DplPaths {
   // Manager — reports
   static const String reportPlanVsActual = '/manager/reports/plan-vs-actual';
   static const String reportDowntime = '/manager/reports/downtime';
-  static const String reportDowntimeEvents =
-      '/manager/reports/downtime/events';
+  static const String reportDowntimeEvents = '/manager/reports/downtime/events';
   static const String reportSupervisorPerformance =
       '/manager/reports/supervisor-performance';
   static const String reportPartWise = '/manager/reports/part-wise';
@@ -67,8 +90,7 @@ class DplPaths {
   static String manpowerById(int id) => '/manager/manpower/$id';
 
   // Supervisor — bulk manpower entry for today
-  static const String supervisorManpowerToday =
-      '/supervisor/manpower/today';
+  static const String supervisorManpowerToday = '/supervisor/manpower/today';
 
   // Supervisor
   static const String supervisorToday = '/supervisor/today';
@@ -99,10 +121,8 @@ class DplPaths {
       '/supervisor/downtime-reasons';
 
   // Supervisor — identity verification (selfie gate)
-  static const String supervisorIdentityStatus =
-      '/supervisor/identity/status';
-  static const String supervisorIdentityVerify =
-      '/supervisor/identity/verify';
+  static const String supervisorIdentityStatus = '/supervisor/identity/status';
+  static const String supervisorIdentityVerify = '/supervisor/identity/verify';
   static String supervisorIdentityPhoto(int id) =>
       '/supervisor/identity/$id/photo';
 
@@ -132,10 +152,8 @@ class DplPaths {
   // (machine, part) bucket. Same endpoint is consumed by the Manager
   // and by the downstream Dispatch / QA / PDI viewers; backend gates
   // access by JWT role.
-  static const String productionSummary =
-      '/manager/production-summary';
-  static const String productionSummaryOne =
-      '/manager/production-summary/one';
+  static const String productionSummary = '/manager/production-summary';
+  static const String productionSummaryOne = '/manager/production-summary/one';
 
   // Manager — force-close a stuck/orphaned active downtime. Manager-
   // scoped recovery route; differs from the supervisor `resume` route
@@ -152,6 +170,24 @@ class DplPaths {
   // open → slip_created → dispatched as dispatchers cut + ship slips.
   static const String dispatchTrips = '/dispatch/trips';
   static const String dispatchTripsNextNumber = '/dispatch/trips/next-number';
+
+  /// How many labelled pieces of each part are still free to plan onto a trip.
+  ///
+  /// `available = issued stickers − qty already on non-cancelled trip plans`.
+  /// The planning screen caps its qty input with this; `POST /dispatch/trips`
+  /// re-checks it under an advisory lock, so the client figure is advisory.
+  static const String dispatchTripsLabelAvailability =
+      '/dispatch/trips/label-availability';
+
+  // Scanning printed labels onto a trip before it goes to the DEO
+  // (backend migration 147). A slip cannot be cut until every planned piece
+  // has been scanned — enforced server-side in createSlipFromTrip.
+  static String tripLabelScans(int tripId) =>
+      '/dispatch/trips/$tripId/label-scans';
+  static String tripLabelScanUndo(int tripId, String serial) =>
+      '/dispatch/trips/$tripId/label-scans/$serial';
+  static String tripMasterSticker(int tripId, int planId) =>
+      '/dispatch/trips/$tripId/plans/$planId/master-sticker';
   static String dispatchTripById(int id) => '/dispatch/trips/$id';
   static String dispatchTripCancel(int id) => '/dispatch/trips/$id/cancel';
   static String dispatchTripPlan(int tripId, int planId) =>
@@ -170,7 +206,7 @@ class DplPaths {
   static String tripJourney(int id) => '/dispatch/trips/$id/journey';
   static String tripDriver(int id) => '/dispatch/trips/$id/driver';
   static String tripGateOut(int id) => '/dispatch/trips/$id/gate-out';
-  static String tripGateIn(int id)  => '/dispatch/trips/$id/gate-in';
+  static String tripGateIn(int id) => '/dispatch/trips/$id/gate-in';
   static String tripTataGateIn(int id) => '/dispatch/trips/$id/tata-gate-in';
   static String tripTataDockIn(int id) => '/dispatch/trips/$id/tata-dock-in';
   static String tripTataDockOut(int id) => '/dispatch/trips/$id/tata-dock-out';
@@ -202,8 +238,7 @@ class DplPaths {
   static String dispatchSlipById(int id) => '/dispatch/slips/$id';
   static String dispatchSlipQaApprove(int id) =>
       '/dispatch/slips/$id/qa-approve';
-  static String dispatchSlipQaReject(int id) =>
-      '/dispatch/slips/$id/qa-reject';
+  static String dispatchSlipQaReject(int id) => '/dispatch/slips/$id/qa-reject';
   static String dispatchSlipPdiApprove(int id) =>
       '/dispatch/slips/$id/pdi-approve';
   static String dispatchSlipPdiReject(int id) =>
@@ -249,7 +284,8 @@ class DplPaths {
   //   customer-todays-plans   — updated DAILY
   // ---------------------------------------------------------------------------
   static const String stockingNorms = '/manager/stocking-norms';
-  static const String customerOpeningStocks = '/manager/customer-opening-stocks';
+  static const String customerOpeningStocks =
+      '/manager/customer-opening-stocks';
   static const String customerTodaysPlans = '/manager/customer-todays-plans';
 
   // GA Opening Stock — per-part opening stock held at GA, refreshed
@@ -261,6 +297,109 @@ class DplPaths {
   // Drives the "Pack: N NOS" hint on every qty input across the
   // dispatch flow. Not enforced by backend; partial packs are valid.
   static const String packagingQtys = '/manager/packaging-qtys';
+
+  // ---------------------------------------------------------------------------
+  // QA finished-goods stickers (backend migration 144).
+  //
+  // QA scans the Grupo Antolin raw-material label on a produced part, the
+  // server resolves its substrate part no to the customer part reference(s)
+  // it maps to (one substrate legitimately maps to several), QA picks one,
+  // and the server issues serials — never more than the plan item's recorded
+  // `actual_qty`.
+  //
+  // Serials are ALWAYS server-issued. The app must never mint its own: two
+  // handhelds doing that produce colliding labels on physical parts.
+  //
+  // QA's plan-browsing screens deliberately reuse `/manager/plans`,
+  // `/manager/plans/:id` and `/manager/dashboard` — `dpl_qa` was added to
+  // those endpoints' read-only role guard so the QA view cannot drift from
+  // the Manager view it is meant to mirror.
+  // ---------------------------------------------------------------------------
+  // Direct printing (backend migration 149). Labels with NO production plan
+  // behind them and NO actual-quantity cap — Maxion SSR v3.0 §5.2, where the
+  // pack point prints a pallet's worth in one go and over-printing is caught
+  // by shift-end reconciliation rather than refused up front.
+  //
+  // Server-gated on `labels.print_batch`, which an administrator grants per
+  // organization. A plant without it gets 403 DIRECT_PRINT_NOT_ALLOWED and
+  // keeps the plan-item cap unchanged.
+  static const String qaStickersDirect = '/qa/stickers/direct';
+  static const String qaMachines = '/qa/machines';
+  static const String qaParts = '/qa/parts';
+
+  // Pallet build and close (backend migration 151, Maxion SSR Module 4).
+  // The operator opens a pallet, scans printed wheel labels onto it, and
+  // closes it; the SYSTEM decides full / half / merged and issues the number.
+  static const String qaPallets = '/qa/pallets';
+  static const String qaPalletOpen = '/qa/pallets/open';
+  static const String qaPalletsHalf = '/qa/pallets/half';
+  static const String qaPalletsCombine = '/qa/pallets/combine';
+
+  static String qaPalletById(int palletId) => '/qa/pallets/$palletId';
+  static String qaPalletScan(int palletId) => '/qa/pallets/$palletId/scan';
+  static String qaPalletClose(int palletId) => '/qa/pallets/$palletId/close';
+
+  /// Fill one closed pallet from another, stopping at the standard quantity.
+  static const String qaPalletsMerge = '/qa/pallets/merge';
+
+  /// The drag-and-drop merge: the operator says where each moved wheel ends up.
+  static const String qaPalletsRedistribute = '/qa/pallets/redistribute';
+
+  // --- SPD conversion (SSR §8, Module 12) ---
+  static const String qaSpdPacks = '/qa/spd';
+  static String qaPalletWheels(int palletId) => '/qa/pallets/$palletId/wheels';
+  static String qaPalletSpd(int palletId) => '/qa/pallets/$palletId/spd';
+  static String qaPalletUndoScan(int palletId, String serial) =>
+      '/qa/pallets/$palletId/scan/$serial';
+
+  /// The master pallet label's data — the client renders the PDF.
+  ///
+  /// A GET of its own rather than a field on the close response, because
+  /// SSR §5 has the pallet label reprinted "when the pallet changes, for
+  /// example on a merge" — long after the close, often by someone else.
+  static String qaPalletLabel(int palletId) => '/qa/pallets/$palletId/label';
+
+  // --- Warehouse putaway (Maxion SSR Module 6) ---
+  //
+  // A SEPARATE prefix from /qa on purpose. The QA router is role-locked to
+  // dpl_qa / dpl_supervisor / dpl_manager before any permission is read, so a
+  // pallet endpoint living there could never be granted to a storeman however
+  // the administrator sets the grid. These are guarded by `pallet.putaway`
+  // alone, which is what makes "who racks a pallet" a setting.
+  static const String warehouseLocations = '/warehouse/locations';
+  static const String warehousePalletResolve = '/warehouse/pallets/resolve';
+  static String warehousePalletPutaway(int palletId) =>
+      '/warehouse/pallets/$palletId/putaway';
+
+  static const String qaCurrentShift = '/qa/current-shift';
+  static const String qaScanResolve = '/qa/scan/resolve';
+  static const String qaStickers = '/qa/stickers';
+  static const String qaStickersVoid = '/qa/stickers/void';
+
+  static String qaStickerSummary(int planItemId) =>
+      '/qa/plan-items/$planItemId/stickers/summary';
+  static String qaIssueStickers(int planItemId) =>
+      '/qa/plan-items/$planItemId/stickers';
+
+  // ---------------------------------------------------------------------------
+  // Storage locations (backend migration 146).
+  //
+  // The master is manager-maintained and carries a capacity; QA reads it
+  // (active rows only) to pick where a finished batch is stored. Every row
+  // returns `used_qty` / `free_qty` from the assignment ledger, so the picker
+  // shows remaining room without a round trip per location.
+  //
+  // Capacity is enforced server-side under a row lock on the location — the
+  // client figure is only there to keep the list honest.
+  // ---------------------------------------------------------------------------
+  static const String managerLocations = '/manager/locations';
+  static const String qaLocations = '/qa/locations';
+
+  static String managerLocationById(int id) => '/manager/locations/$id';
+  static String managerLocationContents(int id) =>
+      '/manager/locations/$id/contents';
+  static String qaPlanItemLocation(int planItemId) =>
+      '/qa/plan-items/$planItemId/location';
 }
 
 /// Allowed `context` values for the identity-verify endpoint.
@@ -396,9 +535,7 @@ class DplDispatchSlipStatus {
 
   /// True while the slip is still moving through the approval pipeline.
   static bool isOpen(String status) =>
-      status == pendingQa ||
-      status == pendingDeo ||
-      status == pendingPdi;
+      status == pendingQa || status == pendingDeo || status == pendingPdi;
 
   /// True once both quality gates have signed off (QR is populated).
   static bool isApproved(String status) => status == approved;

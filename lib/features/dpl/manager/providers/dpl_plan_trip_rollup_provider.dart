@@ -5,6 +5,7 @@ import '../../core/dpl_api_service.dart';
 import '../../core/dpl_constants.dart';
 import '../../models/dpl_dispatch_slip.dart';
 import '../../models/dpl_production_summary.dart';
+import '../../models/dpl_trip_label_scan.dart';
 
 /// Filter applied to the Plan Trip rollup banner (Today's production /
 /// Total produced / Total dispatched).
@@ -93,6 +94,20 @@ final dplPlanTripTodayProductionProvider = FutureProvider.autoDispose<
         // We only consume `totals` — minimize the items[] payload.
         limit: 1,
       );
+});
+
+/// Labelled pieces per part that are still free to plan onto a trip.
+///
+/// Carries labelled / on-trip / free / committed / available per part, so a
+/// zero allowance can be explained rather than just stated. A part ABSENT from
+/// this map has nothing printed and nothing planned — a hard zero, not
+/// "unknown" — so readers must default to 0 rather than to "no limit".
+///
+/// Advisory: `POST /dispatch/trips` re-checks the same figure under an
+/// advisory lock, so a stale client value cannot over-commit labelled stock.
+final dplPlanTripLabelAvailabilityProvider =
+    FutureProvider.autoDispose<DplApiResponse<Map<int, DplLabelStock>>>((ref) async {
+  return ref.watch(dplApiServiceProvider).getLabelAvailability();
 });
 
 /// Total produced over the selected range (defaults to all-time).

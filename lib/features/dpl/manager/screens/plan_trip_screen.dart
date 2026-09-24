@@ -8,12 +8,14 @@ import 'package:intl/intl.dart';
 import '../../core/design/dpl_format.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
+import '../../core/dpl_feature_flags.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_refresh_icon_button.dart';
 import '../../core/widgets/dpl_snack.dart';
 import '../../models/dpl_dispatch_trip.dart';
 import '../../models/dpl_part_field.dart';
 import '../../models/dpl_plant.dart';
+import '../../models/dpl_trip_label_scan.dart';
 import '../../summary/providers/dispatch_trips_provider.dart';
 import '../../summary/providers/plants_provider.dart';
 import '../providers/dpl_part_field_provider.dart';
@@ -84,6 +86,9 @@ class _PlanTripScreenState extends ConsumerState<PlanTripScreen> {
               ref.invalidate(dplPlanTripTodayProductionProvider);
               ref.invalidate(dplPlanTripProductionRollupProvider);
               ref.invalidate(dplPlanTripDispatchedRollupProvider);
+              // Labelled stock moves as QA prints and as other managers plan
+              // trips, so a refresh must re-read it or the caps go stale.
+              ref.invalidate(dplPlanTripLabelAvailabilityProvider);
               // Also re-resolve trip_numbers for every draft whose
               // plant is set, so a refresh re-aligns with whatever
               // other managers may have submitted in the meantime.
@@ -206,6 +211,10 @@ class _PlanTripScreenState extends ConsumerState<PlanTripScreen> {
     // counter; without this, a second draft for the same plant would
     // re-use the number we showed pre-submit.
     ref.invalidate(dplManagerPlanForDateTripsProvider);
+    // A submitted trip consumes labelled stock, so the caps on any remaining
+    // draft rows are now stale. Without this, a second draft for the same part
+    // would still show the pre-submit allowance.
+    ref.invalidate(dplPlanTripLabelAvailabilityProvider);
     await _refreshAllTripNumbers();
     if (!mounted) return;
     setState(() => _submitting = false);
@@ -368,7 +377,64 @@ class _PlanTripScreenState extends ConsumerState<PlanTripScreen> {
         if (p.qty <= 0) return '$tag: qty must be greater than 0.';
       }
     }
+
+    // Labelled-stock ceiling, re-checked across the WHOLE draft.
+    //
+    // The per-row formatter only guards keystrokes on one row. Two rows can
+    // each be under the cap individually and still exceed it together, and
+    // swapping a part after typing a qty leaves a value the formatter never
+    // saw. Both are caught here.
+    //
+    // A part missing from the map has nothing printed — treated as 0, because
+    // reading "absent" as "no limit" is the hole this rule closes.
+    //
+    // Skipped entirely while `enforceLabelStockOnPlan` is off. The dispatch
+    // scan gate still guarantees nothing unlabelled ships, so this check only
+    // governs how early the system complains, not whether it is safe.
+    final labelRes = DplFeatureFlags.enforceLabelStockOnPlan
+        ? ref.read(dplPlanTripLabelAvailabilityProvider).asData?.value
+        : null;
+    if (labelRes != null && !labelRes.isError) {
+      final available = labelRes.data ?? const <int, DplLabelStock>{};
+      final requested = <int, int>{};
+      for (final t in _trips) {
+        for (final p in t.plans) {
+          if (p.partId == null) continue;
+          requested[p.partId!] = (requested[p.partId!] ?? 0) + p.qty;
+        }
+      }
+      for (final entry in requested.entries) {
+        final stock = available[entry.key] ?? const DplLabelStock();
+        if (entry.value > stock.availableQty) {
+          final name = _partLabelForId(entry.key);
+          if (stock.nothingPrinted) {
+            return 'No labels have been printed for $name yet, so it cannot be '
+                'planned onto a trip. Ask QA to scan and print first.';
+          }
+          if (stock.allLoaded) {
+            return 'All ${stock.labelledQty} printed labels for $name have already '
+                'been loaded onto trips. Print labels for newly produced pieces '
+                'before planning more.';
+          }
+          return 'Only ${stock.availableQty} labelled NOS of $name are free to '
+              'dispatch, but the draft asks for ${entry.value} across all trips.';
+        }
+      }
+    }
+
     return null;
+  }
+
+  /// Best-effort display name for a part id, for validation messages.
+  String _partLabelForId(int partId) {
+    for (final t in _trips) {
+      for (final p in t.plans) {
+        if (p.partId == partId && (p.partLabel ?? '').isNotEmpty) {
+          return p.partLabel!;
+        }
+      }
+    }
+    return 'part #$partId';
   }
 
   Widget _buildBody(
@@ -436,6 +502,22 @@ class _PlanTripScreenState extends ConsumerState<PlanTripScreen> {
         if (e.value != null) packagingByPartId[e.partId] = e.value!;
       }
     }
+
+    // Labelled stock per part.
+    //
+    // THREE states, not two. "Loaded, part absent" means nothing printed and
+    // is a hard zero. "Still loading" and "fetch failed" are NOT zero — they
+    // are unknown, and capping the input at zero on an unknown would tell the
+    // manager no labels exist when the request simply had not landed yet.
+    // `labelStockLoaded` is what separates them; when it is false the row
+    // leaves the qty uncapped and says so, and the server still enforces the
+    // real limit on submit.
+    final labelAvailAsync = ref.watch(dplPlanTripLabelAvailabilityProvider);
+    final labelAvailRes = labelAvailAsync.asData?.value;
+    final labelStockLoaded = labelAvailRes != null && !labelAvailRes.isError;
+    final labelAvailableByPartId = labelStockLoaded
+        ? (labelAvailRes.data ?? const <int, DplLabelStock>{})
+        : const <int, DplLabelStock>{};
 
     final byPart = _joinByPart(normsPage, stocksPage, plansPage);
     final readyRows = byPart.values.where((r) => r.isReady).toList()
@@ -535,6 +617,8 @@ class _PlanTripScreenState extends ConsumerState<PlanTripScreen> {
               partsByPartId: partsByPartId,
               dispatchByPartId: dispatchByPartId,
               packagingByPartId: packagingByPartId,
+              labelAvailableByPartId: labelAvailableByPartId,
+              labelStockLoaded: labelStockLoaded,
               allocatedByPartId: allocatedByPartId,
               readyPartIds: readyRows.map((r) => r.partId).toSet(),
               onAddPlan: () => setState(() {
@@ -1592,6 +1676,15 @@ class _TripCard extends StatelessWidget {
   /// isn't a multiple of the pack. Backend doesn't enforce — partial
   /// packs are valid for stock-short / pilot cases.
   final Map<int, int> packagingByPartId;
+
+  /// Labelled stock per part. A part MISSING from this map has nothing
+  /// printed — a hard zero, not "no limit".
+  final Map<int, DplLabelStock> labelAvailableByPartId;
+
+  /// False while the label-stock fetch is in flight or failed. Distinct from
+  /// an empty map: unknown is not the same as zero.
+  final bool labelStockLoaded;
+
   final Set<int> readyPartIds;
   final VoidCallback onAddPlan;
   final VoidCallback onRemoveTrip;
@@ -1608,6 +1701,8 @@ class _TripCard extends StatelessWidget {
     required this.partsByPartId,
     required this.dispatchByPartId,
     required this.packagingByPartId,
+    required this.labelAvailableByPartId,
+    required this.labelStockLoaded,
     required this.allocatedByPartId,
     required this.readyPartIds,
     required this.onAddPlan,
@@ -1757,6 +1852,8 @@ class _TripCard extends StatelessWidget {
                 partsByPartId: partsByPartId,
                 dispatchByPartId: dispatchByPartId,
                 packagingByPartId: packagingByPartId,
+                labelAvailableByPartId: labelAvailableByPartId,
+                labelStockLoaded: labelStockLoaded,
                 allocatedByPartId: allocatedByPartId,
                 readyPartIds: readyPartIds,
                 onRemove: () => onRemovePlan(trip.plans[i]),
@@ -1811,6 +1908,13 @@ class _PlanRow extends StatefulWidget {
   /// "Pack: N NOS" hint + multiple-of-pack warning under the qty
   /// input. Missing entries → hint is hidden for that row.
   final Map<int, int> packagingByPartId;
+
+  /// Labelled stock per part. Missing = nothing printed.
+  final Map<int, DplLabelStock> labelAvailableByPartId;
+
+  /// False while the label-stock fetch is in flight or failed.
+  final bool labelStockLoaded;
+
   final Set<int> readyPartIds;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
@@ -1821,6 +1925,8 @@ class _PlanRow extends StatefulWidget {
     required this.partsByPartId,
     required this.dispatchByPartId,
     required this.packagingByPartId,
+    required this.labelAvailableByPartId,
+    required this.labelStockLoaded,
     required this.allocatedByPartId,
     required this.readyPartIds,
     required this.onRemove,
@@ -1957,6 +2063,25 @@ class _PlanRowState extends State<_PlanRow> {
         ? null
         : widget.packagingByPartId[widget.plan.partId];
 
+    // Labelled stock for this part.
+    //
+    // `stock` is null in two distinct situations and they must not be
+    // conflated: the fetch has not landed (unknown — leave the input
+    // uncapped and say so, the server still enforces), or it has landed and
+    // this part simply has nothing printed (a hard zero).
+    final DplLabelStock? stock = (widget.plan.partId == null || !widget.labelStockLoaded)
+        ? null
+        : (widget.labelAvailableByPartId[widget.plan.partId] ??
+            const DplLabelStock());
+
+    // The cap only exists when the flag is on. With it off, `labelCap` is null
+    // everywhere it is consumed, so the input formatter is not installed, the
+    // one-tap shortcuts are unrestricted and Submit is not gated — planning
+    // behaves exactly as it did before the rule was introduced.
+    final labelCap =
+        DplFeatureFlags.enforceLabelStockOnPlan ? stock?.availableQty : null;
+    final overLabelCap = labelCap != null && widget.plan.qty > labelCap;
+
     // Advisory note shown directly under the Description label when
     // the selected machine has nothing pre-configured for a clean
     // auto-fill. The picker stays usable either way.
@@ -2020,6 +2145,7 @@ class _PlanRowState extends State<_PlanRow> {
               setState(() {
                 widget.plan.machineName = v;
                 widget.plan.partId = null;
+                widget.plan.partLabel = null;
                 widget.plan.qty = 0;
                 _setQtyText(0);
               });
@@ -2048,6 +2174,11 @@ class _PlanRowState extends State<_PlanRow> {
                 // allocations" below.
                 final wasSamePart = widget.plan.partId == v;
                 widget.plan.partId = v;
+                widget.plan.partLabel = v == null
+                    ? null
+                    : (widget.partsByPartId[v]?.customerPn.isNotEmpty == true
+                        ? widget.partsByPartId[v]!.customerPn
+                        : widget.partsByPartId[v]?.description);
 
                 // Auto-fill with the formula result when the part is
                 // ready, MINUS whatever is already allocated to this
@@ -2122,6 +2253,10 @@ class _PlanRowState extends State<_PlanRow> {
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(7),
+                    // Hard cap at the labelled stock. Rejecting the keystroke
+                    // beats accepting it and complaining on submit: the
+                    // manager never types a number the backend will refuse.
+                    if (labelCap != null) _MaxValueFormatter(labelCap),
                   ],
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
@@ -2141,19 +2276,41 @@ class _PlanRowState extends State<_PlanRow> {
                 ),
               ),
               const SizedBox(width: 10),
-              if (suggested != null || pack != null) ...[
+              if (suggested != null ||
+                  pack != null ||
+                  stock != null ||
+                  widget.plan.partId != null) ...[
                 Expanded(
                   child: Text(
-                    _suggestedAndPackLabel(suggested, pack),
-                    style: const TextStyle(
-                      color: DplColors.textSecondary,
+                    _suggestedAndPackLabel(
+                      suggested,
+                      pack,
+                      stock,
+                      widget.plan.partId != null,
+                      widget.labelStockLoaded,
+                    ),
+                    style: TextStyle(
+                      // Amber only when a zero actually stops something. With
+                      // the cap off it is just a fact, and colouring it as a
+                      // warning beside a field that accepts any value reads as
+                      // a malfunction.
+                      color: (DplFeatureFlags.enforceLabelStockOnPlan &&
+                              stock != null &&
+                              stock.availableQty == 0)
+                          ? DplColors.warning
+                          : DplColors.textSecondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (suggested != null && widget.plan.qty != suggested)
+                // Only offer "Reset to suggested" when the suggestion is
+                // actually dispatchable. Otherwise the one-tap shortcut hands
+                // the manager a number the backend will refuse.
+                if (suggested != null &&
+                    widget.plan.qty != suggested &&
+                    (labelCap == null || suggested <= labelCap))
                   TextButton(
                     onPressed: () {
                       setState(() {
@@ -2191,6 +2348,10 @@ class _PlanRowState extends State<_PlanRow> {
               child: _MultipleOfPackHint(
                 pack: pack,
                 qty: widget.plan.qty,
+                // The pack-rounding shortcut must not step over the label
+                // ceiling either — rounding 12 up to 14 when only 12 are
+                // labelled would hand back a number the backend refuses.
+                maxQty: labelCap,
                 onApply: (newQty) {
                   setState(() {
                     widget.plan.qty = newQty;
@@ -2200,20 +2361,94 @@ class _PlanRowState extends State<_PlanRow> {
                 },
               ),
             ),
+          // Reachable when a part is swapped after a qty was typed: the
+          // formatter only guards keystrokes, not a later change of part.
+          if (overLabelCap && stock != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 32, top: 6),
+              child: Text(
+                stock.nothingPrinted
+                    ? 'No labels have been printed for this part yet — ask QA to '
+                        'scan and print before planning it.'
+                    : stock.allLoaded
+                        // The case that produced the misleading message. Say
+                        // where the stock went, not that it never existed.
+                        ? 'All ${stock.labelledQty} printed labels for this part have '
+                            'already been loaded onto trips. Print labels for newly '
+                            'produced pieces before planning more.'
+                        : 'Only ${stock.availableQty} labelled NOS are free to dispatch. '
+                            'Reduce the qty.',
+                style: const TextStyle(
+                  color: DplColors.error,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
   /// Builds the right-hand label next to the qty input. Combines the
-  /// formula's suggested qty and the customer's pack size into a
-  /// middot-separated string ("Suggested: 79 NOS · Pack: 14 NOS").
-  /// Either piece may be null — surface only what's available.
-  String _suggestedAndPackLabel(int? suggested, int? pack) {
+  /// formula's suggested qty, the customer's pack size and the labelled stock
+  /// into a middot-separated string
+  /// ("Labels: 12 NOS · Suggested: 79 NOS · Pack: 14 NOS").
+  /// Any piece may be null — surface only what's available.
+  ///
+  /// The label figure leads: it is the only one of the three that is a hard
+  /// ceiling, so it is what the manager needs to read first.
+  String _suggestedAndPackLabel(
+    int? suggested,
+    int? pack,
+    DplLabelStock? stock,
+    bool partChosen,
+    bool stockLoaded,
+  ) {
     final parts = <String>[];
+    if (partChosen && !stockLoaded) {
+      // Unknown, not zero. Saying "No labels printed" here was the bug: a part
+      // with 28 printed labels read as having none simply because the fetch
+      // had not landed — or, worse, because every piece was already claimed by
+      // another trip, which is a different problem with a different fix.
+      parts.add('Checking labels…');
+    } else if (stock != null) {
+      parts.add(
+        stock.hintFor(enforced: DplFeatureFlags.enforceLabelStockOnPlan),
+      );
+    }
     if (suggested != null) parts.add('Suggested: $suggested NOS');
     if (pack != null) parts.add('Pack: $pack NOS');
     return parts.join(' · ');
+  }
+}
+
+/// Rejects any edit that would push the numeric value above [max].
+///
+/// Used to cap trip qty at the labelled stock. Deliberately REJECTS rather
+/// than silently rewriting to [max]: a field that changes the digits out from
+/// under someone mid-type is worse than one that simply will not accept them,
+/// and the hint beside it already says what the ceiling is.
+///
+/// An empty field is always allowed through, otherwise the value could never
+/// be cleared and retyped.
+class _MaxValueFormatter extends TextInputFormatter {
+  final int max;
+
+  const _MaxValueFormatter(this.max);
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text.trim();
+    if (text.isEmpty) return newValue;
+    final parsed = int.tryParse(text);
+    // Non-numeric cannot happen behind digitsOnly, but fall through rather
+    // than throwing if the formatter order ever changes.
+    if (parsed == null) return newValue;
+    return parsed > max ? oldValue : newValue;
   }
 }
 
@@ -2223,17 +2458,25 @@ class _PlanRowState extends State<_PlanRow> {
 class _MultipleOfPackHint extends StatelessWidget {
   final int pack;
   final int qty;
+
+  /// Labelled stock ceiling, when known. The "round up" chip is withheld when
+  /// it would exceed this — offering a one-tap value the backend refuses is
+  /// worse than offering nothing.
+  final int? maxQty;
+
   final ValueChanged<int> onApply;
   const _MultipleOfPackHint({
     required this.pack,
     required this.qty,
     required this.onApply,
+    this.maxQty,
   });
 
   @override
   Widget build(BuildContext context) {
     final lower = (qty ~/ pack) * pack;
-    final upper = lower + pack;
+    final upperRaw = lower + pack;
+    final upper = (maxQty != null && upperRaw > maxQty!) ? null : upperRaw;
     return Row(
       children: [
         const Icon(Icons.warning_amber_rounded,
@@ -2254,8 +2497,9 @@ class _MultipleOfPackHint extends StatelessWidget {
         // pack — there's no meaningful lower multiple to offer.
         if (lower > 0)
           _PackSuggestionChip(value: lower, onTap: () => onApply(lower)),
-        if (lower > 0) const SizedBox(width: 4),
-        _PackSuggestionChip(value: upper, onTap: () => onApply(upper)),
+        if (lower > 0 && upper != null) const SizedBox(width: 4),
+        if (upper != null)
+          _PackSuggestionChip(value: upper, onTap: () => onApply(upper)),
       ],
     );
   }
@@ -2374,6 +2618,14 @@ class _TripPlanDraft {
   String? machineName;
   int? partId;
   int qty = 0;
+
+  /// Human label for [partId], captured when the part is picked.
+  ///
+  /// Held on the draft because validation runs outside the build scope where
+  /// the parts lookup lives, and a submit error that says "part #42" instead
+  /// of "546469500102ZX" is not something a manager can act on.
+  String? partLabel;
+
   _TripPlanDraft();
 }
 

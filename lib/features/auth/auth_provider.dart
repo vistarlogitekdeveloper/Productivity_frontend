@@ -5,6 +5,8 @@ import '../../data/models/user_model.dart';
 import '../../data/repositories/local_storage_repository.dart';
 import '../dpl/core/dpl_api_service.dart';
 import '../dpl/core/dpl_organization_provider.dart';
+import '../dpl/core/dpl_password_gate_provider.dart';
+import '../dpl/core/dpl_permissions_provider.dart';
 import '../workspace/services/workspace_credentials.dart';
 import '../workspace/workspace_account.dart';
 import 'auth_repository.dart';
@@ -127,6 +129,11 @@ class AuthController extends _$AuthController {
     // holds the value in memory — null it out so the AppBar pill clears
     // immediately on logout instead of lingering until next app start.
     await ref.read(dplActiveOrganizationProvider.notifier).clear();
+    // Same reason as the org snapshot: `clearAll()` wipes prefs, but the
+    // notifier still holds the set in memory, so the next login would start
+    // from the previous user's permissions until something refreshed it.
+    await ref.read(dplPermissionsProvider.notifier).clear();
+    await ref.read(dplMustChangePasswordProvider.notifier).clear();
     state = const AsyncValue.data(null);
   }
 
@@ -182,6 +189,23 @@ class AuthController extends _$AuthController {
       } else {
         await ref.read(dplActiveOrganizationProvider.notifier).clear();
       }
+
+      // What this user is allowed to do (backend migration 148). Stored so
+      // the first frame of the next screen already knows what to render.
+      // A null list means the backend predates permissions — it is stored as
+      // "unknown", which makes every screen fall back to its role checks
+      // rather than rendering nothing at all.
+      await ref
+          .read(dplPermissionsProvider.notifier)
+          .set(profile?.permissions);
+
+      // An administrator created this account, or reset its password, so the
+      // value that just got them in is one somebody else knows — including,
+      // for a bootstrapped installation, a constant in the repository. The
+      // router pins them to /dpl/change-password until this clears.
+      await ref
+          .read(dplMustChangePasswordProvider.notifier)
+          .set(profile?.mustChangePassword ?? false);
 
       state = AsyncValue.data(UserModel(
         id: userId,

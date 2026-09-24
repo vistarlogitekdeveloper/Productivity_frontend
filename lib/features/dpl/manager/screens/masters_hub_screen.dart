@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/dpl_permissions_provider.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 
-class DplMastersHubScreen extends StatelessWidget {
+/// A ConsumerWidget rather than a StatelessWidget SOLELY so the Maxion tile
+/// below can be permission-gated.
+///
+/// Every other tile here is pre-existing DPL master data that has always been
+/// on this screen for a manager; those stay unconditional. The pallet register
+/// is a Maxion capability, and a capability an administrator cannot switch off
+/// is not a capability an administrator controls.
+class DplMastersHubScreen extends ConsumerWidget {
   final bool embedded;
 
   const DplMastersHubScreen({super.key, this.embedded = false});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final canViewPallets =
+        ref.watch(dplPermissionsProvider).can(DplPermission.palletView);
     final body = Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -132,6 +143,30 @@ class DplMastersHubScreen extends StatelessWidget {
                 'Powers the "Pack: N NOS" hint next to every qty input.',
             onTap: () => context.push('/dpl/manager/packaging-qtys'),
           ),
+          const SizedBox(height: 10),
+          _OptionCard(
+            icon: Icons.warehouse_outlined,
+            color: const Color(0xFF7C3AED),
+            title: 'Storage Locations',
+            subtitle:
+                'Racks and floor positions finished goods are stored at, each '
+                'with a capacity. QA picks from this list, and the capacity is '
+                'what stops a location being over-filled.',
+            onTap: () => context.push('/dpl/manager/masters/locations'),
+          ),
+          if (canViewPallets) ...[
+            const SizedBox(height: 10),
+            _OptionCard(
+              icon: Icons.grid_view_outlined,
+              color: const Color(0xFF0F766E),
+              title: 'Pallets Built',
+              subtitle:
+                  'Every pallet the pack point has closed, with filters for '
+                  'item, line, type and pack date. Reprint a pallet sticker, '
+                  'and see which half pallets are still waiting to be filled.',
+              onTap: () => context.push('/dpl/manager/pallets'),
+            ),
+          ],
         ],
       ),
     );
