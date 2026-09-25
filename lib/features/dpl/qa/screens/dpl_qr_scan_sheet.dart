@@ -110,13 +110,31 @@ class _DplQrScanSheetState extends State<DplQrScanSheet> {
   /// layout would quietly stop matching the day a product line prints it
   /// slightly differently — and the server is the authority regardless; this
   /// only decides whether the camera keeps the viewfinder open.
+  /// MUST stay equivalent to `looksExternal` on the server — a camera that
+  /// refuses what the server would accept, or accepts what it would reject, is
+  /// what teaches an operator to distrust the app.
   bool _looksExternal(String code) {
     if (code.contains('|')) return false;
     if (RegExp(r'^GA\d{6,}$', caseSensitive: false).hasMatch(code)) return false;
     if (RegExp(r'^(PM|P|H|M|SP)\d{6,}$', caseSensitive: false).hasMatch(code)) {
       return false;
     }
-    return code.split('/').length >= 4;
+
+    // A separator count alone is not enough: a URL, a PO number and even '////'
+    // all clear four fields, and adoption MINTS a wheel. The camera reads QR
+    // and DataMatrix — exactly what a URL poster or an asset tag carries.
+    if (code.contains('://')) return false;
+    if (RegExp(r'\s').hasMatch(code)) return false;
+    final fields = code.split('/');
+    if (fields.length < 4) return false;
+    if (!RegExp(r'^[A-Za-z0-9][A-Za-z0-9-]{2,23}$').hasMatch(fields.first)) {
+      return false;
+    }
+    // Something that anchors it as a WHEEL label rather than a reference
+    // number — a timestamp or a DDMonYY date, wherever it falls.
+    final hasTime = RegExp(r'\d{2}:\d{2}:\d{2}').hasMatch(code);
+    final hasDate = RegExp(r'\d{1,2}[A-Za-z]{3}\d{2}').hasMatch(code);
+    return hasTime || hasDate;
   }
 
   String? _rejectAsWheel(String code) {
