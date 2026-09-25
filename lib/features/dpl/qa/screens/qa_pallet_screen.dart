@@ -6,6 +6,9 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../maxion/sync/offline_outbox.dart';
+import '../../maxion/sync/offline_scan.dart';
+import '../../maxion/sync/sync_providers.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_response.dart';
 import '../../core/dpl_api_service.dart';
@@ -556,7 +559,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     if (res.isError || res.data == null) {
       // STICKER_VOIDED, ALREADY_ON_ANOTHER_PALLET and EXTERNAL_NOT_ALLOWED all
       // name a situation the operator can act on, so they are shown verbatim.
-      DplSnacks.error(context, res.error ?? 'Could not read that wheel label.');
+      DplSnacks.error(context, (res.floorMessage.isEmpty ? 'Could not read that wheel label.' : res.floorMessage));
       return null;
     }
 
@@ -779,7 +782,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
 
     if (res.isError) {
       // PALLET_ALREADY_OPEN and the SOURCE_* refusals all name the situation.
-      DplSnacks.error(context, res.error ?? 'Failed to open the pallet.');
+      DplSnacks.error(context, (res.floorMessage.isEmpty ? 'Failed to open the pallet.' : res.floorMessage));
       ref.invalidate(qaOpenPalletProvider);
       return;
     }
@@ -891,9 +894,9 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
         // Shown exactly as the server worded it: ALREADY_ON_ANOTHER_PALLET,
         // ITEM_UNKNOWN and the rest each name a situation the operator can act
         // on, and rewording them into something vaguer helps nobody.
-        _note(res.error ?? 'Refused', ok: false);
+        _note((res.floorMessage.isEmpty ? 'Refused' : res.floorMessage), ok: false);
         HapticFeedback.heavyImpact();
-        DplSnacks.error(context, res.error ?? 'That wheel was refused.');
+        DplSnacks.error(context, (res.floorMessage.isEmpty ? 'That wheel was refused.' : res.floorMessage));
 
         // ONE BAD WHEEL IS NOT THE END OF THE RUN.
         //
@@ -957,19 +960,30 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     _scanFocus.requestFocus();
     if (value.isEmpty) return;
 
-    final res = await ref.read(dplApiServiceProvider).scanWheelOntoPallet(
-          palletId: pallet.id,
-          code: value,
-        );
+    // Online first; on a dropped connection (NETWORK / TIMEOUT only — never a
+    // real refusal) the scan is queued on the handheld and synced later, in
+    // order, as this operator (backend migration 164).
+    final attempt = await scanToPalletOrQueue(
+      ref,
+      palletId: pallet.id,
+      code: value,
+      userId: ref.read(dplCurrentUserIdProvider) ?? 0,
+    );
     if (!mounted) return;
+    if (attempt.status == OfflineScanStatus.queued) {
+      _note('Queued offline: $value (syncs when back online)', ok: true);
+      HapticFeedback.selectionClick();
+      return;
+    }
+    final res = attempt.response!;
 
     if (res.isError) {
       // Every refusal from the server names the physical situation — wrong
       // part, already on another pallet, pallet full — so it is shown
       // verbatim rather than being reworded into something vaguer.
-      _note(res.error ?? 'Refused', ok: false);
+      _note((res.floorMessage.isEmpty ? 'Refused' : res.floorMessage), ok: false);
       HapticFeedback.heavyImpact();
-      DplSnacks.error(context, res.error ?? 'That wheel was refused.');
+      DplSnacks.error(context, (res.floorMessage.isEmpty ? 'That wheel was refused.' : res.floorMessage));
       return;
     }
 
@@ -1029,7 +1043,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     setState(() => _busy = false);
 
     if (res.isError) {
-      DplSnacks.error(context, res.error ?? 'Failed to discard the pallet.');
+      DplSnacks.error(context, (res.floorMessage.isEmpty ? 'Failed to discard the pallet.' : res.floorMessage));
       return;
     }
     setState(_recent.clear);
@@ -1047,6 +1061,20 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
   }
 
   Future<void> _close(DplPallet pallet) async {
+    // Wheels scanned while offline are still on their way. Closing now would
+    // close the pallet short and let the server refuse those scans later.
+    final waiting = ref
+        .read(dplOfflineOutboxProvider)
+        .pendingOf('pallet.scan', where: {'pallet_id': pallet.id});
+    if (waiting > 0) {
+      DplSnacks.warning(
+        context,
+        '$waiting wheel${waiting == 1 ? '' : 's'} scanned offline still to sync. '
+        'Close the pallet once they have gone through.',
+      );
+      ref.read(dplOfflineOutboxProvider.notifier).flush();
+      return;
+    }
     // A FULL pallet is not asked about.
     //
     // The dialog is not a safety check — it is where the REASON for closing
@@ -1078,7 +1106,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     setState(() => _busy = false);
 
     if (res.isError) {
-      DplSnacks.error(context, res.error ?? 'Failed to close the pallet.');
+      DplSnacks.error(context, (res.floorMessage.isEmpty ? 'Failed to close the pallet.' : res.floorMessage));
       return;
     }
 

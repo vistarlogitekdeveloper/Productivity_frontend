@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/local_storage_repository.dart';
 import '../../auth/auth_provider.dart';
+import 'dpl_language_provider.dart';
 import 'dpl_password_gate_provider.dart';
 
 /// A dedicated Dio instance for the DPL module.
@@ -32,6 +33,15 @@ final dplDioProvider = Provider<Dio>((ref) {
         if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        // Marathi / Hindi refusals for the floor (server adds message_local).
+        // Read per request, so switching language needs no rebuild of Dio.
+        String? lang;
+        try {
+          lang = ref.read(dplLanguageProvider);
+        } catch (_) {
+          lang = null;
+        }
+        if (lang != null) options.headers['X-App-Language'] = lang;
         return handler.next(options);
       },
       onError: (error, handler) {

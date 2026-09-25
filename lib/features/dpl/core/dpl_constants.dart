@@ -432,6 +432,57 @@ class DplPaths {
       '/manager/locations/$id/contents';
   static String qaPlanItemLocation(int planItemId) =>
       '/qa/plan-items/$planItemId/location';
+
+  // ---------------------------------------------------------------------------
+  // Maxion phases 1–4 and offline handhelds (backend migrations 159–164).
+  // See the backend's src/modules/dpl/API.md §7–12.
+  // ---------------------------------------------------------------------------
+  static String report(String key) => '/reports/$key';
+  static const String oemDashboard = '/reports/oem-dashboard';
+  static const String reportSubscriptions = '/reports/subscriptions';
+  static String reportSubscription(String key) => '/reports/subscriptions/$key';
+  static String reportSendNow(String key) => '/reports/subscriptions/$key/send-now';
+
+  static String tripUnloadPallet(int tripId, int palletId) => '/dispatch/trips/$tripId/pallets/$palletId';
+  static String tripShipment(int tripId) => '/dispatch/trips/$tripId/shipment';
+  static String tripGatePass(int tripId) => '/dispatch/trips/$tripId/gate-pass';
+  static const String gatePassVerify = '/logistics/gate-pass/verify';
+  static String logisticsMaster(String kind) => '/logistics/$kind';
+  static String logisticsMasterById(String kind, int id) => '/logistics/$kind/$id';
+  static const String lanes = '/logistics/lanes';
+  static String laneByCode(String code) => '/logistics/lanes/${Uri.encodeComponent(code)}';
+  static const String reversalsPending = '/logistics/reversals/pending';
+  static String slipReversal(int slipId) => '/logistics/slips/$slipId/reversal';
+  static String slipReversalApprove(int slipId) => '/logistics/slips/$slipId/reversal/approve';
+  static String slipReversalReject(int slipId) => '/logistics/slips/$slipId/reversal/reject';
+
+  static const String returns = '/returns';
+  static const String returnParts = '/returns/parts';
+  static String returnById(int id) => '/returns/$id';
+  static String returnScan(int id) => '/returns/$id/scan';
+  static String returnManualLines(int id) => '/returns/$id/manual-lines';
+  static String returnLine(int id, int lineId) => '/returns/$id/lines/$lineId';
+  static String returnDisposition(int id) => '/returns/$id/disposition';
+  static String returnClose(int id) => '/returns/$id/close';
+
+  static const String stockOpening = '/stock/opening';
+  static const String stockLots = '/stock/lots';
+  static const String stockReasons = '/stock/reasons';
+  static const String stockAdjustments = '/stock/adjustments';
+  static String stockAdjustmentApprove(int id) => '/stock/adjustments/$id/approve';
+  static String stockAdjustmentReject(int id) => '/stock/adjustments/$id/reject';
+  static const String stockCounts = '/stock/counts';
+  static const String stockCountLocations = '/stock/counts/locations';
+  static String stockCount(int id) => '/stock/counts/$id';
+  static String stockCountAction(int id, String action) => '/stock/counts/$id/$action';
+
+  static const String syncPush = '/sync/push';
+  static const String syncPull = '/sync/pull';
+  static const String syncStatus = '/sync/status';
+  static const String syncNumberBlock = '/sync/number-block';
+  static const String syncConflicts = '/sync/conflicts';
+  static String syncResolve(int id) => '/sync/conflicts/$id/resolve';
+  static const String syncDevices = '/sync/devices';
 }
 
 /// Allowed `context` values for the identity-verify endpoint.
@@ -534,6 +585,8 @@ class DplDispatchSlipStatus {
   static const String approved = 'approved';
   static const String dispatched = 'dispatched';
   static const String rejected = 'rejected';
+  /// A dispatched slip whose shipment a manager reversed (backend migration 160).
+  static const String reversed = 'reversed';
 
   static const List<String> all = <String>[
     pendingQa,
@@ -542,6 +595,7 @@ class DplDispatchSlipStatus {
     approved,
     dispatched,
     rejected,
+    reversed,
   ];
 
   /// Short, user-facing label.
@@ -559,6 +613,8 @@ class DplDispatchSlipStatus {
         return 'Dispatched';
       case rejected:
         return 'Rejected';
+      case reversed:
+        return 'Reversed';
       default:
         if (status.isEmpty) return '-';
         return status[0].toUpperCase() + status.substring(1);

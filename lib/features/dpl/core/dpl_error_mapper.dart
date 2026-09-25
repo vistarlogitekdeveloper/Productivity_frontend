@@ -32,6 +32,7 @@ class DplErrorMapper {
 
     String? apiMessage;
     String? apiCode;
+    String? apiLocal;
 
     if (data is Map) {
       final map = Map<String, dynamic>.from(data);
@@ -42,6 +43,10 @@ class DplErrorMapper {
       final rawCode = map['code'];
       if (rawCode is String && rawCode.trim().isNotEmpty) {
         apiCode = rawCode.trim();
+      }
+      final rawLocal = map['message_local'];
+      if (rawLocal is String && rawLocal.trim().isNotEmpty) {
+        apiLocal = rawLocal.trim();
       }
     } else if (data is String && data.trim().isNotEmpty) {
       apiMessage = data.trim();
@@ -101,6 +106,7 @@ class DplErrorMapper {
       message,
       code: apiCode,
       statusCode: statusCode,
+      errorLocal: apiLocal,
     );
   }
 

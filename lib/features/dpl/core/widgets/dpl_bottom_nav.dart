@@ -141,6 +141,14 @@ const dplManagerNavItems = <DplNavItem>[
   ),
 ];
 
+/// The fifth manager tab, added only when the manager holds a Maxion tool
+/// permission (see maxion_tools_screen.dart `hasAnyMaxionTool`).
+const dplManagerToolsNavItem = DplNavItem(
+  icon: Icons.handyman_outlined,
+  selectedIcon: Icons.handyman,
+  label: 'Tools',
+);
+
 /// Supervisor nav items (Today / Shift Summary / Profile).
 const dplSupervisorNavItems = <DplNavItem>[
   DplNavItem(

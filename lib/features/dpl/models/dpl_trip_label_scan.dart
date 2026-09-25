@@ -88,9 +88,30 @@ class DplTripPlanScan {
 }
 
 /// Scan progress across a whole trip — what the Send button is gated on.
+/// A whole pallet loaded onto a trip (backend migration 159).
+class DplLoadedPallet {
+  final int palletId;
+  final String palletNo;
+  final String? palletType;
+  final int qty;
+
+  const DplLoadedPallet({required this.palletId, required this.palletNo, required this.qty, this.palletType});
+
+  factory DplLoadedPallet.fromJson(Map<String, dynamic> j) => DplLoadedPallet(
+        palletId: parseIntOr(j['pallet_id']),
+        palletNo: parseStringOr(j['pallet_no']),
+        palletType: j['pallet_type'] as String?,
+        qty: parseIntOr(j['qty']),
+      );
+}
+
 class DplTripScanProgress {
   final int tripId;
   final List<DplTripPlanScan> plans;
+
+  /// Pallets scanned onto the trip whole (one scan of the pallet label loads
+  /// every wheel on it); each can be unloaded until a slip is cut.
+  final List<DplLoadedPallet> pallets;
 
   /// Client-side courtesy only. The server re-derives the same figure when a
   /// slip is cut, because the client cannot be the authority on whether
@@ -100,6 +121,7 @@ class DplTripScanProgress {
   const DplTripScanProgress({
     required this.tripId,
     this.plans = const [],
+    this.pallets = const [],
     this.isComplete = false,
   });
 
@@ -111,6 +133,12 @@ class DplTripScanProgress {
           ? rawPlans
               .whereType<Map>()
               .map((e) => DplTripPlanScan.fromJson(Map<String, dynamic>.from(e)))
+              .toList()
+          : const [],
+      pallets: json['pallets'] is List
+          ? (json['pallets'] as List)
+              .whereType<Map>()
+              .map((e) => DplLoadedPallet.fromJson(Map<String, dynamic>.from(e)))
               .toList()
           : const [],
       isComplete: json['is_complete'] is bool

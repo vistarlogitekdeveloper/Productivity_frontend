@@ -234,6 +234,26 @@ class DplPermission {
   static const String summaryView = 'summary.view';
   static const String reportsView = 'reports.view';
 
+  // --- Maxion phases 1–4 and offline (backend migrations 159–164) -----------
+  // Every one is off by default on the server and granted per organization,
+  // so all of them are opt-in here too: unknown permissions must hide them.
+  // Keep in step with src/modules/dpl/config/permissions.js.
+  static const String reportsStock = 'reports.stock';
+  static const String reportsSchedule = 'reports.schedule';
+  static const String tripsShipment = 'trips.shipment';
+  static const String gatepassView = 'gatepass.view';
+  static const String slipsReverse = 'slips.reverse';
+  static const String slipsReverseApprove = 'slips.reverse_approve';
+  static const String returnsReceive = 'returns.receive';
+  static const String returnsDisposition = 'returns.disposition';
+  static const String stockImport = 'stock.import';
+  static const String stockAdjust = 'stock.adjust';
+  static const String stockAdjustApprove = 'stock.adjust_approve';
+  static const String stockCount = 'stock.count';
+  static const String stockCountApprove = 'stock.count_approve';
+  static const String syncPush = 'sync.push';
+  static const String syncResolve = 'sync.resolve';
+
   /// Anything that opens the Administration panel.
   static const List<String> adminPanel = <String>[
     usersView,
@@ -267,6 +287,22 @@ class DplPermission {
     palletSpd,
     labelsScanExternal,
     palletTrolley,
+    // Maxion phases 1–4 and offline handhelds.
+    reportsStock,
+    reportsSchedule,
+    tripsShipment,
+    gatepassView,
+    slipsReverse,
+    slipsReverseApprove,
+    returnsReceive,
+    returnsDisposition,
+    stockImport,
+    stockAdjust,
+    stockAdjustApprove,
+    stockCount,
+    stockCountApprove,
+    syncPush,
+    syncResolve,
   };
 }
 
