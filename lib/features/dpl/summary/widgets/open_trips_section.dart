@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
+import '../../core/dpl_feature_flags.dart';
 import '../../core/widgets/dpl_snack.dart';
 import '../../manager/widgets/error_retry.dart';
 import '../../models/dpl_dispatch_slip.dart';
@@ -208,6 +209,15 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
     if (p == null) return false;
     return p.areComplete(_selected);
   }
+
+  /// True when an incomplete scan is actually holding the send back.
+  ///
+  /// Always `false` while [DplFeatureFlags.enforceLabelScanOnSend] is off: the
+  /// tally is still fetched and still shown, it just stops being a blocker.
+  /// Read this rather than `!_selectedFullyScanned` anywhere the answer drives
+  /// enablement or error styling, so one flag flip restores the gate whole.
+  bool get _scanGateBlocking =>
+      DplFeatureFlags.enforceLabelScanOnSend && !_selectedFullyScanned;
 
   /// Pieces still to scan across the ticked plans — drives the footer copy.
   int get _selectedUnscanned {
@@ -526,14 +536,15 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
     final Map<String, int>? availableByKey =
         _buildAvailableMap(summaryAsync);
 
-    // Sending is gated on THREE things now: plans ticked, a vehicle, and every
-    // ticked plan's labels physically scanned onto the trip. The scan gate is
-    // re-checked server-side when the slip is cut — this only keeps the button
-    // honest, because a client cannot know what is on a trolley.
+    // Sending is gated on plans ticked and a vehicle. The label-scan gate is
+    // currently OFF (see DplFeatureFlags.enforceLabelScanOnSend) — the panel
+    // below still shows the tally, but an unscanned trolley no longer blocks
+    // the button. The server keeps its own check either way; a client cannot
+    // know what is actually on a trolley.
     final canSend = !_submitting &&
         _selected.isNotEmpty &&
         !_vehicleMissing &&
-        _selectedFullyScanned;
+        !_scanGateBlocking;
 
     return Container(
       decoration: BoxDecoration(
@@ -580,8 +591,9 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
               },
             ),
           ],
-          // Label scanning — the gate that proves the pieces on the trolley
-          // are the pieces this system printed labels for.
+          // Label scanning — evidence that the pieces on the trolley are the
+          // pieces this system printed labels for. Informational while
+          // DplFeatureFlags.enforceLabelScanOnSend is off.
           if (openPlans.isNotEmpty) ...[
             const Divider(height: 1, color: DplColors.divider),
             _ScanPanel(
@@ -589,6 +601,7 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
               loading: _loadingScans,
               openPlans: openPlans,
               selected: _selected,
+              enforced: DplFeatureFlags.enforceLabelScanOnSend,
               onScan: _openScanner,
               onMasterSticker: _printMasterSticker,
             ),
@@ -638,7 +651,9 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
                               // Name the number still outstanding — "scan the
                               // labels" alone leaves the dispatcher counting
                               // the trolley to work out how many are missing.
-                              : (!_selectedFullyScanned
+                              // Only while the gate is armed: with it off this
+                              // would read as a refusal the button contradicts.
+                              : (_scanGateBlocking
                                   ? (_selectedUnscanned > 0
                                       ? 'Scan $_selectedUnscanned more label'
                                           '${_selectedUnscanned == 1 ? "" : "s"} to send'
@@ -651,7 +666,7 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
                         fontSize: 12.5,
                         color: _selected.isEmpty
                             ? DplColors.textSecondary
-                            : ((_vehicleMissing || !_selectedFullyScanned)
+                            : ((_vehicleMissing || _scanGateBlocking)
                                 ? DplColors.warning
                                 : DplColors.primaryDark),
                       ),
@@ -689,17 +704,23 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
   }
 }
 
-/// The scan gate: per-plan tally, a Scan button, and a master sticker per
+/// The scan panel: per-plan tally, a Scan button, and a master sticker per
 /// plan once its pieces are on the trip.
 ///
 /// Shown for the whole trip rather than per ticked plan because the dispatcher
 /// scans a trolley, not a selection — they load what is in front of them and
 /// tick afterwards.
+///
+/// [enforced] mirrors `DplFeatureFlags.enforceLabelScanOnSend`. It changes
+/// nothing about what is shown, only how it is coloured and labelled: an
+/// unfinished tally is a warning when it blocks the send and plain
+/// information when it does not.
 class _ScanPanel extends StatelessWidget {
   final DplTripScanProgress? progress;
   final bool loading;
   final List<DplTripPlan> openPlans;
   final Set<int> selected;
+  final bool enforced;
   final VoidCallback onScan;
   final ValueChanged<DplTripPlan> onMasterSticker;
 
@@ -708,6 +729,7 @@ class _ScanPanel extends StatelessWidget {
     required this.loading,
     required this.openPlans,
     required this.selected,
+    required this.enforced,
     required this.onScan,
     required this.onMasterSticker,
   });
@@ -724,9 +746,9 @@ class _ScanPanel extends StatelessWidget {
               const Icon(Icons.qr_code_scanner_rounded,
                   size: 16, color: DplColors.textSecondary),
               const SizedBox(width: 6),
-              const Text(
-                'LABEL SCAN',
-                style: TextStyle(
+              Text(
+                enforced ? 'LABEL SCAN' : 'LABEL SCAN · OPTIONAL',
+                style: const TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,
@@ -760,6 +782,7 @@ class _ScanPanel extends StatelessWidget {
               plan: plan,
               row: progress?.forPlan(plan.id),
               isSelected: selected.contains(plan.id),
+              enforced: enforced,
               onMasterSticker: () => onMasterSticker(plan),
             ),
         ],
@@ -772,12 +795,14 @@ class _ScanPlanRow extends StatelessWidget {
   final DplTripPlan plan;
   final DplTripPlanScan? row;
   final bool isSelected;
+  final bool enforced;
   final VoidCallback onMasterSticker;
 
   const _ScanPlanRow({
     required this.plan,
     required this.row,
     required this.isSelected,
+    required this.enforced,
     required this.onMasterSticker,
   });
 
@@ -816,7 +841,13 @@ class _ScanPlanRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: complete ? const Color(0xFF15803D) : DplColors.warning,
+              // Amber only when the shortfall actually stops the send. With
+              // the gate off it is a running total, not a fault.
+              color: complete
+                  ? const Color(0xFF15803D)
+                  : (enforced
+                      ? DplColors.warning
+                      : DplColors.textSecondary),
             ),
           ),
           // The master sticker describes what was SCANNED, so it only appears

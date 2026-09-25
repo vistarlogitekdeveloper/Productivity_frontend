@@ -47,10 +47,33 @@ class DplFeatureFlags {
   ///     is useful even when it is not a blocker — it just no longer stops
   ///     anyone.
   ///
-  /// Turning this off does NOT weaken the dispatch guarantee. Nothing
-  /// unlabelled can still ship: `createSlipFromTrip` refuses to cut a slip
-  /// until every planned piece has been physically scanned onto the trip
-  /// (`LABELS_NOT_SCANNED`), and that gate is untouched by this flag. This one
-  /// only governs how early the system complains.
+  /// Turning this off does NOT weaken the dispatch guarantee on its own.
+  /// `createSlipFromTrip` refuses to cut a slip until every planned piece has
+  /// been physically scanned onto the trip (`LABELS_NOT_SCANNED`), and that
+  /// gate is untouched by this flag — see [enforceLabelScanOnSend] for the
+  /// client half of it. This one only governs how early the system complains.
   static const bool enforceLabelStockOnPlan = false;
+
+  /// Block "Send to DEO" until every ticked plan's labels are scanned.
+  ///
+  /// Currently **OFF**, at the plant's request: labels are not yet printed for
+  /// every part, so requiring a full scan left dispatchers with a permanently
+  /// disabled Send button and no way to move a trip.
+  ///
+  /// When `true`:
+  ///   * Send stays disabled until every ticked plan reads `n / n scanned`.
+  ///   * The footer names the shortfall ("Scan 14 more labels to send").
+  ///
+  /// When `false` (today):
+  ///   * Send is gated on ticked plans + a vehicle no only.
+  ///   * The scan panel is still rendered and still fully usable — knowing a
+  ///     trolley is unscanned is useful even when it is not a blocker — it is
+  ///     just presented as information rather than as an error.
+  ///
+  /// This is the CLIENT half of the gate. The server keeps its own: if the
+  /// backend's scan enforcement is left on, `POST /dispatch/slips` still
+  /// answers `LABELS_NOT_SCANNED` and the dispatcher meets the same wall one
+  /// tap later, as a snack instead of a disabled button. Both halves have to
+  /// come off for scanning to be genuinely optional.
+  static const bool enforceLabelScanOnSend = false;
 }

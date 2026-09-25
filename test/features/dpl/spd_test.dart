@@ -20,7 +20,7 @@ DplSpdPack _pack({
   return DplSpdPack.fromJson({
     'id': 9,
     'pallet_no': no,
-    if (payload != null) 'qr_payload': payload,
+    'qr_payload': ?payload,
     'serial_no': serial,
     'part': {'customer_part_no': partNo, 'description': '102D1'},
     'status': 'closed',
@@ -59,8 +59,14 @@ void main() {
       // The reference app's label_stock.dart lists exactly two die-cuts the
       // plant buys and calls the small one the "Individual wheel / SPD pack
       // scanning label". A pack is one wheel going into a box.
-      expect(SpdLabelPdf.rollFormat.width, closeTo(50 * PdfPageFormat.mm, 0.01));
-      expect(SpdLabelPdf.rollFormat.height, closeTo(25 * PdfPageFormat.mm, 0.01));
+      expect(
+        SpdLabelPdf.rollFormat.width,
+        closeTo(50 * PdfPageFormat.mm, 0.01),
+      );
+      expect(
+        SpdLabelPdf.rollFormat.height,
+        closeTo(25 * PdfPageFormat.mm, 0.01),
+      );
       expect(SpdLabelPdf.rollFormat.marginLeft, 0);
     });
 
@@ -93,23 +99,33 @@ void main() {
       expect(doc.document.pdfPageList.pages.length, 1);
     });
 
-    test('a part number far longer than the label does not overflow it', () async {
-      final bytes = await SpdLabelPdf.buildRoll([
-        _pack(partNo: '546469500102ZX-EXPORT-VARIANT-WITH-EXTRA-TRIM-AND-FIXINGS'),
-      ]);
-      expect(bytes.length, greaterThan(500));
-    });
+    test(
+      'a part number far longer than the label does not overflow it',
+      () async {
+        final bytes = await SpdLabelPdf.buildRoll([
+          _pack(
+            partNo: '546469500102ZX-EXPORT-VARIANT-WITH-EXTRA-TRIM-AND-FIXINGS',
+          ),
+        ]);
+        expect(bytes.length, greaterThan(500));
+      },
+    );
   });
 
   group('DplPalletWheels', () {
     Map<String, dynamic> body() => {
-          'pallet': {'id': 1, 'pallet_no': 'P26000010', 'qty': 5, 'standard_qty': 5},
-          'wheels': [
-            {'id': 1, 'serial_no': 'GA2600000101', 'status': 'issued'},
-            {'id': 2, 'serial_no': 'GA2600000102', 'status': 'voided'},
-            {'id': 3, 'serial_no': 'GA2600000103', 'status': 'issued'},
-          ],
-        };
+      'pallet': {
+        'id': 1,
+        'pallet_no': 'P26000010',
+        'qty': 5,
+        'standard_qty': 5,
+      },
+      'wheels': [
+        {'id': 1, 'serial_no': 'GA2600000101', 'status': 'issued'},
+        {'id': 2, 'serial_no': 'GA2600000102', 'status': 'voided'},
+        {'id': 3, 'serial_no': 'GA2600000103', 'status': 'issued'},
+      ],
+    };
 
     test('a voided wheel is never offered for picking', () {
       // It was spoiled and retired. The server refuses it anyway, but finding
