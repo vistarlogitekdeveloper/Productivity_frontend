@@ -61,8 +61,6 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pendingCount = _pendingQaCount();
-
     // `labels.print_batch` does not add a tab — it decides WHICH of two
     // mutually exclusive ways of getting labels this plant uses.
     //
@@ -97,6 +95,20 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
     final canMerge = perms.can(DplPermission.palletMerge);
     // Taking wheels off a pallet for a spare-parts order (SSR §8).
     final canSpd = perms.can(DplPermission.palletSpd);
+    // The dispatch slips inbox — the screen QA had before any of this.
+    //
+    // Gated last and GRANTED by default, the opposite polarity to every other
+    // flag here, because it is the only one that is not new: a key defaulting
+    // to deny would have taken the tab away from every plant the moment this
+    // deployed. The administrator turns it off for a pack point that never
+    // approves a slip.
+    final canSlips = perms.can(DplPermission.slipsQaInbox);
+
+    // Read only when the tab exists. _pendingQaCount() WATCHES the slips list,
+    // so calling it unconditionally would keep fetching dispatch slips every
+    // build for a pack point that has been told not to see them — a round trip
+    // per rebuild for a badge on a tab that is not there.
+    final pendingCount = canSlips ? _pendingQaCount() : 0;
 
     final titles = <String>[
       if (canDirectPrint) 'QA — Print labels' else 'QA — Production',
@@ -105,7 +117,7 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
       if (canPutAway) 'QA — Put away',
       if (canSpd) 'QA — SPD',
       if (canViewPallets) 'QA — Pallets built',
-      'QA — Dispatch Slips',
+      if (canSlips) 'QA — Dispatch Slips',
     ];
     final tab = _tab.clamp(0, titles.length - 1);
 
@@ -172,7 +184,7 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
           if (canSpd) const QaSpdScreen(showAppBar: false),
           if (canViewPallets)
             const QaPalletRegisterScreen(showAppBar: false),
-          const DispatchSlipsInboxScreen(showAppBar: false),
+          if (canSlips) const DispatchSlipsInboxScreen(showAppBar: false),
         ],
       ),
       bottomNavigationBar: DplBottomNav(
@@ -221,13 +233,14 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
               selectedIcon: Icons.grid_view,
               label: 'Pallets built',
             ),
-          DplNavItem(
-            icon: pendingCount > 0
-                ? Icons.notifications_active_outlined
-                : Icons.receipt_long_outlined,
-            selectedIcon: Icons.receipt_long,
-            label: pendingCount > 0 ? 'Slips ($pendingCount)' : 'Slips',
-          ),
+          if (canSlips)
+            DplNavItem(
+              icon: pendingCount > 0
+                  ? Icons.notifications_active_outlined
+                  : Icons.receipt_long_outlined,
+              selectedIcon: Icons.receipt_long,
+              label: pendingCount > 0 ? 'Slips ($pendingCount)' : 'Slips',
+            ),
         ],
       ),
     );
@@ -263,10 +276,10 @@ class _ShiftSubtitle extends ConsumerWidget {
 
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF6B7280),
+        color: DplColors.textSecondary,
       ),
     );
   }

@@ -347,6 +347,10 @@ class DplPaths {
 
   // --- SPD conversion (SSR §8, Module 12) ---
   static const String qaSpdPacks = '/qa/spd';
+
+  /// Which item a scanned wheel label belongs to, so a pallet can be started
+  /// by scanning instead of by picking from a list.
+  static const String qaWheelResolve = '/qa/wheels/resolve';
   static String qaPalletWheels(int palletId) => '/qa/pallets/$palletId/wheels';
   static String qaPalletSpd(int palletId) => '/qa/pallets/$palletId/spd';
   /// Undo one wheel. The serial goes in the QUERY STRING, encoded.
@@ -376,6 +380,28 @@ class DplPaths {
   static const String warehousePalletResolve = '/warehouse/pallets/resolve';
   static String warehousePalletPutaway(int palletId) =>
       '/warehouse/pallets/$palletId/putaway';
+
+  // --- The wheel trolley (backend migration 157) ---
+  //
+  // On the WAREHOUSE prefix for the same reason putaway is. Parking is a
+  // pack-point job and merging a warehouse one, and which role does each
+  // differs by plant — so both have to be grantable, and a role-locked router
+  // cannot express that. One key, `pallet.trolley`.
+  static const String warehouseTrolleys = '/warehouse/trolleys';
+  static const String warehouseTrolleyPark = '/warehouse/trolleys/park';
+  static const String warehouseTrolleyUnpark = '/warehouse/trolleys/unpark';
+  static const String warehouseTrolleyMerge = '/warehouse/trolleys/merge';
+  static String warehouseTrolleyById(int trolleyId) =>
+      '/warehouse/trolleys/$trolleyId';
+  static String warehouseTrolleyWheels(int trolleyId) =>
+      '/warehouse/trolleys/$trolleyId/wheels';
+
+  /// What this cart should fill, and with how many. Suggestion only — it takes
+  /// no lock and writes nothing.
+  static String warehouseTrolleyPlan(int trolleyId) =>
+      '/warehouse/trolleys/$trolleyId/plan';
+  static String warehouseTrolleyEmpty(int trolleyId) =>
+      '/warehouse/trolleys/$trolleyId/empty';
 
   static const String qaCurrentShift = '/qa/current-shift';
   static const String qaScanResolve = '/qa/scan/resolve';

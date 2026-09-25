@@ -208,12 +208,42 @@ void main() {
         DplPermission.palletPutaway,
         DplPermission.palletSpd,
         DplPermission.labelsScanExternal,
+        DplPermission.palletTrolley,
       };
       expect(DplPermission.optInOnly, known);
       for (final k in DplPermission.optInOnly) {
         expect(k.trim(), isNotEmpty);
         expect(k, contains('.'));
       }
+    });
+
+    test('the QA Slips tab stays visible when the list is unknown', () {
+      // The tab predates every bit of the Maxion work, so it follows the
+      // PRE-EXISTING rule, not the opt-in one: if /auth/me hiccups, an
+      // operator must still have the screen they use every day. Putting
+      // slips.qa_inbox into optInOnly would blank it out on a bad network.
+      expect(
+        DplPermission.optInOnly.contains(DplPermission.slipsQaInbox),
+        isFalse,
+        reason: 'it is a switch OFF, so unknown must mean visible',
+      );
+      const unknown = DplPermissions.unknown();
+      expect(unknown.can(DplPermission.slipsQaInbox), isTrue);
+
+      // But an explicit answer is obeyed in both directions — that is what
+      // makes it a real switch rather than decoration.
+      final off = DplPermissions.of(const <String>[]);
+      expect(off.can(DplPermission.slipsQaInbox), isFalse);
+      final on = DplPermissions.of(const ['slips.qa_inbox']);
+      expect(on.can(DplPermission.slipsQaInbox), isTrue);
+    });
+
+    test('showing the Slips tab is a different question from seeing slips', () {
+      // slips.view is dispatch-side data access and QA has never held it.
+      // Collapsing the two would either hide a working screen or hand QA
+      // access nobody asked for.
+      expect(DplPermission.slipsQaInbox, 'slips.qa_inbox');
+      expect(DplPermission.slipsQaInbox, isNot(DplPermission.slipsView));
     });
 
     test('no PRE-EXISTING DPL capability was swept into the opt-in list', () {

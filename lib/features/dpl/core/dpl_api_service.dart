@@ -14,6 +14,7 @@ import '../models/dpl_machine.dart';
 import '../models/dpl_manpower_log.dart';
 import '../models/dpl_organization.dart';
 import '../models/dpl_pallet.dart';
+import '../models/dpl_wheel_trolley.dart';
 import '../models/dpl_spd.dart';
 import '../models/dpl_monthly_chart.dart';
 import '../models/dpl_part.dart';
@@ -3806,6 +3807,23 @@ class DplApiService {
   // SPD conversion (Maxion SSR §8, Module 12)
   // ---------------------------------------------------------------------------
 
+  /// Which item a scanned WHEEL label belongs to.
+  ///
+  /// Read-only: it creates nothing, so an operator who scans and then changes
+  /// their mind leaves no orphan wheel behind.
+  Future<DplApiResponse<DplWheelResolution>> resolveWheel(String code) {
+    return _send<DplWheelResolution>(
+      () => _dio.get(
+        DplPaths.qaWheelResolve,
+        queryParameters: {'code': code.trim()},
+      ),
+      fallback: 'Could not read that wheel label.',
+      fromJson: (data) => DplWheelResolution.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
   /// The wheels physically on a pallet, for the SPD picker.
   ///
   /// A separate call from the pallet itself because the pallet label
@@ -3920,6 +3938,168 @@ class DplApiService {
         data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
       ),
     );
+  }
+
+  // --- The wheel trolley (backend migration 157) ---
+  //
+  // On the WAREHOUSE prefix, not /qa. Parking is a pack-point job and merging
+  // a warehouse one, and which role does each differs by plant — the QA router
+  // is role-locked before any permission is read, so an endpoint there could
+  // never be granted to a storeman however the administrator sets the grid.
+
+  /// The carts still in use, oldest first.
+  Future<DplApiResponse<List<DplWheelTrolley>>> getTrolleys({
+    bool includeRetired = false,
+  }) {
+    return _send<List<DplWheelTrolley>>(
+      () => _dio.get(
+        DplPaths.warehouseTrolleys,
+        queryParameters: _cleanQuery({
+          'include_retired': includeRetired ? 'true' : null,
+        }),
+      ),
+      fallback: 'Failed to load the trolleys.',
+      fromJson: (data) => _parseListEnvelope(
+        data is Map ? data['trolleys'] ?? data : data,
+      ).map(DplWheelTrolley.fromJson).toList(),
+    );
+  }
+
+  Future<DplApiResponse<DplWheelTrolley>> createTrolley({String name = ''}) {
+    return _send<DplWheelTrolley>(
+      () => _dio.post(
+        DplPaths.warehouseTrolleys,
+        data: _cleanQuery({'name': name.trim().isEmpty ? null : name.trim()}),
+      ),
+      fallback: 'Failed to create the trolley.',
+      fromJson: (data) => DplWheelTrolley.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Park one wheel on a cart.
+  ///
+  /// [trolleyId] may be null: a plant with exactly one active cart never has
+  /// to say which, and a plant with none gets its first created rather than
+  /// being blocked on master data nobody told them to enter.
+  ///
+  /// [partId] is needed only for an OLD label nobody has scanned before —
+  /// there is no pallet to take the item from and nothing to guess with, and
+  /// a wrong item makes every merge suggestion for two items wrong.
+  Future<DplApiResponse<DplTrolleyParkResult>> parkWheelOnTrolley({
+    int? trolleyId,
+    required String code,
+    int? partId,
+  }) {
+    return _send<DplTrolleyParkResult>(
+      () => _dio.post(
+        DplPaths.warehouseTrolleyPark,
+        data: _cleanQuery({
+          'trolley_id': trolleyId,
+          'code': code,
+          'part_id': partId,
+        }),
+      ),
+      fallback: 'Failed to park that wheel.',
+      fromJson: (data) => DplTrolleyParkResult.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Take one wheel back off. The operator parked the wrong one.
+  Future<DplApiResponse<DplWheelTrolley>> unparkWheelFromTrolley({
+    required int trolleyId,
+    required String code,
+  }) {
+    return _send<DplWheelTrolley>(
+      () => _dio.post(
+        DplPaths.warehouseTrolleyUnpark,
+        data: {'trolley_id': trolleyId, 'code': code},
+      ),
+      fallback: 'Failed to take that wheel off.',
+      fromJson: _trolleyFromEnvelope,
+    );
+  }
+
+  Future<DplApiResponse<DplTrolleyContents>> getTrolleyWheels(
+    int trolleyId, {
+    int? partId,
+  }) {
+    return _send<DplTrolleyContents>(
+      () => _dio.get(
+        DplPaths.warehouseTrolleyWheels(trolleyId),
+        queryParameters: _cleanQuery({'part_id': partId}),
+      ),
+      fallback: 'Failed to load what is on the trolley.',
+      fromJson: (data) => DplTrolleyContents.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// What this cart should fill, and with how many.
+  ///
+  /// A SUGGESTION. It takes no lock and writes nothing, so leaving the screen
+  /// open cannot stop the floor, and the merge re-derives every fact under a
+  /// real lock — a stale plan produces an honest refusal, never a wrong write.
+  Future<DplApiResponse<DplTrolleyPlan>> getTrolleyPlan(int trolleyId) {
+    return _send<DplTrolleyPlan>(
+      () => _dio.get(DplPaths.warehouseTrolleyPlan(trolleyId)),
+      fallback: 'Failed to work out what this trolley can fill.',
+      fromJson: (data) => DplTrolleyPlan.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Move named wheels off a cart onto a closed pallet.
+  ///
+  /// All-or-nothing on the server: an operator who scanned twelve wheels and
+  /// had six land cannot tell which six without reading an audit log.
+  Future<DplApiResponse<DplTrolleyMergeResult>> mergeTrolleyIntoPallet({
+    required int palletId,
+    required int trolleyId,
+    required List<int> stickerIds,
+  }) {
+    return _send<DplTrolleyMergeResult>(
+      () => _dio.post(
+        DplPaths.warehouseTrolleyMerge,
+        data: {
+          'pallet_id': palletId,
+          'trolley_id': trolleyId,
+          'sticker_ids': stickerIds,
+        },
+      ),
+      fallback: 'Failed to move those wheels onto the pallet.',
+      fromJson: (data) => DplTrolleyMergeResult.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// Release everything on a cart back to unpacked.
+  Future<DplApiResponse<DplWheelTrolley>> emptyTrolley(int trolleyId) {
+    return _send<DplWheelTrolley>(
+      () => _dio.post(DplPaths.warehouseTrolleyEmpty(trolleyId)),
+      fallback: 'Failed to empty the trolley.',
+      fromJson: _trolleyFromEnvelope,
+    );
+  }
+
+  /// Park, unpark and empty all answer `{ trolley: {...} }`; create answers
+  /// the trolley directly. Tolerating both here keeps three call sites from
+  /// each repeating the same guess.
+  DplWheelTrolley _trolleyFromEnvelope(dynamic data) {
+    if (data is Map) {
+      final nested = data['trolley'];
+      if (nested is Map) {
+        return DplWheelTrolley.fromJson(Map<String, dynamic>.from(nested));
+      }
+      return DplWheelTrolley.fromJson(Map<String, dynamic>.from(data));
+    }
+    return const DplWheelTrolley();
   }
 
   /// Combine stored half pallets of the same item, with no new production.

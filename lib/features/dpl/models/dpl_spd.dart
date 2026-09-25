@@ -197,3 +197,74 @@ class DplSpdResult {
     );
   }
 }
+
+/// Which item a scanned WHEEL label belongs to — `GET /qa/wheels/resolve`.
+///
+/// Lets the pack point start a pallet by scanning rather than picking the item
+/// from a list the label already names. [part] is null when the item cannot be
+/// determined, which is normal for an old label whose item code is not in our
+/// master — the screen then falls back to the picker rather than guessing,
+/// because a pallet opened for the wrong item mislabels every wheel after it.
+class DplWheelResolution {
+  final String code;
+  final String source;
+  final int partId;
+  final String customerPartNo;
+  final String partDescription;
+  final int? machineId;
+  final String machineName;
+
+  /// The cart this wheel is parked on, when it is on one. Empty otherwise.
+  ///
+  /// Reported rather than refused. The operator is holding the wheel and the
+  /// usual next step is to take it off the cart and pack it, which the scan
+  /// does — but they must be TOLD, because drawing a wheel off a trolley
+  /// somebody else is planning a merge from is a decision, not a side effect.
+  final String trolleyNo;
+
+  /// How many are on that cart, so the size of what they are drawing down is
+  /// visible before they do it.
+  final int trolleyWheelQty;
+
+  /// Why the item could not be determined. Empty when it was.
+  final String reason;
+
+  const DplWheelResolution({
+    this.code = '',
+    this.source = 'app',
+    this.partId = 0,
+    this.customerPartNo = '',
+    this.partDescription = '',
+    this.machineId,
+    this.machineName = '',
+    this.trolleyNo = '',
+    this.trolleyWheelQty = 0,
+    this.reason = '',
+  });
+
+  factory DplWheelResolution.fromJson(Map<String, dynamic> json) {
+    final p = json['part'];
+    final m = json['machine'];
+    final t = json['trolley'];
+    final part = p is Map ? Map<String, dynamic>.from(p) : const {};
+    final machine = m is Map ? Map<String, dynamic>.from(m) : const {};
+    final trolley = t is Map ? Map<String, dynamic>.from(t) : const {};
+    return DplWheelResolution(
+      code: parseStringOr(json['code']),
+      source: parseStringOr(json['source'], 'app'),
+      partId: parseIntOr(part['id']),
+      customerPartNo: parseStringOr(part['customer_part_no']),
+      partDescription: parseStringOr(part['description']),
+      machineId: parseIntOrNull(machine['id']),
+      machineName: parseStringOr(machine['machine_name']),
+      trolleyNo: parseStringOr(trolley['trolley_no']),
+      trolleyWheelQty: parseIntOr(trolley['wheel_qty']),
+      reason: parseStringOr(json['reason']),
+    );
+  }
+
+  bool get hasPart => partId > 0;
+
+  /// True when this wheel is currently parked on a cart.
+  bool get isOnTrolley => trolleyNo.isNotEmpty;
+}

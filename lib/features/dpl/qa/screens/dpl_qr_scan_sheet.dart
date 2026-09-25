@@ -80,6 +80,9 @@ class _DplQrScanSheetState extends State<DplQrScanSheet> {
   bool _handled = false;
   String? _rejected;
 
+  /// Exactly what the camera read, shown under the refusal.
+  String? _rejectedRaw;
+
   @override
   void dispose() {
     _controller.dispose();
@@ -124,17 +127,17 @@ class _DplQrScanSheetState extends State<DplQrScanSheet> {
     // all clear four fields, and adoption MINTS a wheel. The camera reads QR
     // and DataMatrix — exactly what a URL poster or an asset tag carries.
     if (code.contains('://')) return false;
-    if (RegExp(r'\s').hasMatch(code)) return false;
+    // No global whitespace rule — the item-code pattern below already forbids
+    // a space in the FIRST field, which is what keeps free text out.
     final fields = code.split('/');
     if (fields.length < 4) return false;
-    if (!RegExp(r'^[A-Za-z0-9][A-Za-z0-9-]{2,23}$').hasMatch(fields.first)) {
-      return false;
-    }
-    // Something that anchors it as a WHEEL label rather than a reference
-    // number — a timestamp or a DDMonYY date, wherever it falls.
-    final hasTime = RegExp(r'\d{2}:\d{2}:\d{2}').hasMatch(code);
-    final hasDate = RegExp(r'\d{1,2}[A-Za-z]{3}\d{2}').hasMatch(code);
-    return hasTime || hasDate;
+    // The item-code shape is the clause that does the protective work: it
+    // alone refuses every false positive — 'PO' and '25' are too short, '' is
+    // empty, 'a' is one character. An earlier version also demanded a
+    // timestamp or a date somewhere in the string, which was over-fitted to
+    // the text printed BESIDE the QR rather than what the QR encodes, and
+    // refused real labels off the plant's own rolls.
+    return RegExp(r'^[A-Za-z0-9][A-Za-z0-9-]{2,23}$').hasMatch(fields.first);
   }
 
   String? _rejectAsWheel(String code) {
@@ -215,7 +218,15 @@ class _DplQrScanSheetState extends State<DplQrScanSheet> {
     if (reason != null) {
       // Stay open. The operator is holding a wheel and should be able to try
       // the next one without reopening the camera.
-      setState(() => _rejected = reason);
+      //
+      // The RAW text is shown alongside the reason. A refusal that does not
+      // say what was read leaves nobody — operator or developer — able to tell
+      // a smudged scan from a label the rules do not yet cover, and we spent
+      // real time guessing at a payload the camera could simply have shown us.
+      setState(() {
+        _rejected = reason;
+        _rejectedRaw = raw.trim();
+      });
       return;
     }
 
@@ -228,7 +239,14 @@ class _DplQrScanSheetState extends State<DplQrScanSheet> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Scan a wheel label'),
+        // Says which KIND, because this sheet refuses the other one by name
+        // and a title that contradicts the refusal makes the refusal look like
+        // a fault. The merge and putaway flows open it for pallets.
+        title: Text(
+          widget.kind == DplScanKind.pallet
+              ? 'Scan a pallet label'
+              : 'Scan a wheel label',
+        ),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         actions: [
@@ -271,20 +289,39 @@ class _DplQrScanSheetState extends State<DplQrScanSheet> {
                 if (_rejected != null)
                   Row(
                     children: [
-                      const Icon(
+                      // Not const: DplColors members are theme-aware getters.
+                      Icon(
                         Icons.error_outline,
                         color: DplColors.error,
                         size: 16,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          _rejected!,
-                          style: const TextStyle(
-                            color: DplColors.error,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12.5,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _rejected!,
+                              style: TextStyle(
+                                color: DplColors.error,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12.5,
+                              ),
+                            ),
+                            if (_rejectedRaw != null &&
+                                _rejectedRaw!.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                'Read: ${_rejectedRaw!}',
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],

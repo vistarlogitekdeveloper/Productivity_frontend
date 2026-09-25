@@ -14,8 +14,12 @@ import '../../core/widgets/dpl_card.dart';
 import '../../core/widgets/dpl_error_retry.dart';
 import '../../core/widgets/dpl_snack.dart';
 import '../../models/dpl_pallet.dart';
+import '../../models/dpl_spd.dart';
+import '../../models/dpl_wheel_trolley.dart';
 import '../../models/dpl_part.dart';
 import '../services/pallet_label_pdf.dart';
+import '../widgets/start_pallet_choice_sheet.dart';
+import '../widgets/trolley_picker_sheet.dart';
 import 'qa_putaway_screen.dart';
 import 'dpl_qr_scan_sheet.dart';
 import 'qa_direct_print_screen.dart' show qaDirectPartsProvider, qaDirectPartSearchProvider, qaMachinesProvider;
@@ -31,6 +35,15 @@ final qaHalfPalletsProvider =
     FutureProvider.autoDispose<DplApiResponse<List<DplPallet>>>((ref) async {
   return ref.watch(dplApiServiceProvider).getHalfPallets();
 });
+
+// NO qaTrolleysProvider HERE, deliberately.
+//
+// There was one, and nothing ever watched it — the park path reads the carts
+// directly because it needs them once, at the top of a run, not as reactive
+// state, and the merge screen has its own qaTrolleyPlansProvider. An
+// autoDispose provider that is never watched is never created, so the
+// invalidate that used to follow a park rebuilt precisely nothing while
+// reading as though it refreshed the list.
 
 /// Build a pallet: scan printed wheel labels onto it, then close it.
 ///
@@ -53,6 +66,11 @@ class QaPalletScreen extends ConsumerStatefulWidget {
 class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
   final _scanCtrl = TextEditingController();
   final _scanFocus = FocusNode();
+
+  /// The keyed-in way to START a pallet, for when the camera is not available.
+  /// Separate from [_scanCtrl], which belongs to the open-pallet view.
+  final _startCtrl = TextEditingController();
+
   bool _busy = false;
 
   /// The last few scans, newest first. Shown so an operator who looked away
@@ -62,6 +80,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
   @override
   void dispose() {
     _scanCtrl.dispose();
+    _startCtrl.dispose();
     _scanFocus.dispose();
     super.dispose();
   }
@@ -120,19 +139,50 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
                 style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Start one for the item you are packing, then scan each wheel '
-                'label onto it.',
-                style: TextStyle(fontSize: 12.5, color: Color(0xFF5D6A7A)),
+              Text(
+                'Scan any wheel for the item you are packing. The pallet opens '
+                'for that item and the wheel goes straight on.',
+                style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
               ),
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
                   onPressed: _busy ? null : _startPallet,
-                  icon: const Icon(Icons.add_box_outlined, size: 18),
-                  label: const Text('Start a pallet'),
+                  // Names what the press actually does now. "Start a pallet"
+                  // with a camera behind it reads as a mis-tap.
+                  icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+                  label: const Text('Scan a wheel to start'),
                 ),
+              ),
+              const SizedBox(height: 12),
+              // THE WAY IN WHEN THE CAMERA IS NOT.
+              //
+              // The button above is the only control this card used to have,
+              // and it opens the camera and nothing else — DplQrScanSheet has
+              // no manual entry, and its failure state offers only "Retry".
+              // So a denied camera permission, a desktop browser, a ring
+              // scanner that types instead of using the lens, or a lens too
+              // scratched to read a scuffed label all left the operator unable
+              // to start a pallet AT ALL, with no message saying why.
+              //
+              // The pallet's own scan field (see _scanCard) has always
+              // accepted a keyed-in serial for exactly this reason. Starting
+              // one had no equivalent until now.
+              TextField(
+                controller: _startCtrl,
+                enabled: !_busy,
+                textInputAction: TextInputAction.done,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  hintText: '…or type the wheel serial',
+                  prefixIcon: Icon(Icons.keyboard_alt_outlined),
+                  isDense: true,
+                  helperText: 'A hardware scanner types into here. So can you, '
+                      'when the label is too scuffed to read.',
+                  helperMaxLines: 3,
+                ),
+                onSubmitted: _busy ? null : _startPalletTyped,
               ),
             ],
           ),
@@ -170,9 +220,9 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
               ),
             ],
           ),
-          const Text(
+          Text(
             'Oldest first. Fill one of these before starting a fresh pallet.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF5D6A7A)),
+            style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
           ),
           const SizedBox(height: 10),
           async.when(
@@ -190,9 +240,9 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
               }
               final rows = res.data ?? const <DplPallet>[];
               if (rows.isEmpty) {
-                return const Text(
+                return Text(
                   'None waiting. Nothing has been left part-filled.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF5D6A7A)),
+                  style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
                 );
               }
               return Column(
@@ -203,7 +253,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
                       contentPadding: EdgeInsets.zero,
                       title: Text(
                         '${p.palletNo} · ${p.customerPartNo}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 13.5,
                         ),
@@ -217,7 +267,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
                           // old ones highlighted; a number alone gets skimmed.
                           color: (p.ageDays ?? 0) >= 7
                               ? DplColors.error
-                              : const Color(0xFF6B7280),
+                              : DplColors.textSecondary,
                           fontWeight: (p.ageDays ?? 0) >= 7
                               ? FontWeight.w700
                               : FontWeight.w500,
@@ -317,7 +367,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
                       pallet.customerPartNo.isEmpty
                           ? pallet.partDescription
                           : pallet.customerPartNo,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
                       ),
@@ -325,9 +375,9 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
                     if (pallet.machineName.isNotEmpty)
                       Text(
                         pallet.machineName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF5D6A7A),
+                          color: DplColors.textSecondary,
                         ),
                       ),
                   ],
@@ -364,20 +414,21 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
               child: LinearProgressIndicator(
                 value: pallet.progress,
                 minHeight: 8,
-                backgroundColor: const Color(0xFFEEF1F5),
+                backgroundColor: DplColors.neutralBg,
                 valueColor: AlwaysStoppedAnimation(
                   pallet.isFull ? DplColors.success : DplColors.primary,
                 ),
               ),
             )
           else
-            const Text(
+            Text(
               'No standard pallet quantity is set for this item, so there is '
               'no target to count against and this will close as a HALF '
               'pallet. Ask a manager to set it under Masters > Packaging Qtys. '
               'Until then, close when the pallet is done.',
               style: TextStyle(
                 fontSize: 12,
+                // Not const: DplColors members are theme-aware getters now.
                 color: DplColors.warning,
                 fontWeight: FontWeight.w600,
               ),
@@ -402,14 +453,14 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
         children: [
           Text(
             full ? 'Pallet full' : 'Scan a wheel label',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
           if (full) ...[
             const SizedBox(height: 6),
             Text(
               'All ${pallet.qty} are on. Close it above to print the pallet '
               'label — then start the next one.',
-              style: const TextStyle(fontSize: 12.5, color: Color(0xFF5D6A7A)),
+              style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
             ),
           ],
           const SizedBox(height: 10),
@@ -464,6 +515,63 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     );
   }
 
+  /// Scan a wheel to choose the item a new pallet is for.
+  ///
+  /// Returns null when the operator backed out. Returns a resolution with no
+  /// part when the label could not be tied to an item — the caller then falls
+  /// back to the picker, and the reason is shown so the operator knows why
+  /// they are being asked.
+  /// Start a pallet from a serial that was typed, or sent by a hardware
+  /// scanner, instead of read through the camera.
+  Future<void> _startPalletTyped(String raw) async {
+    final code = raw.trim();
+    // Cleared FIRST, so the next label can be keyed in while this one is still
+    // in flight and a refusal does not leave the old text to be re-submitted.
+    _startCtrl.clear();
+    if (code.isEmpty) return;
+    await _startPallet(typed: code);
+  }
+
+  ///
+  /// [typed] short-circuits the camera: the operator keyed the serial in, or a
+  /// hardware scanner typed it. Everything after that is identical, so there
+  /// is one place a label is turned into an item rather than two that drift.
+  Future<DplWheelResolution?> _scanForItem({String? typed}) async {
+    final perms = ref.read(dplPermissionsProvider);
+    var code = typed == null || typed.trim().isEmpty ? null : typed.trim();
+    if (code == null) {
+      code = await DplQrScanSheet.open(
+        context,
+        expecting: 'Scan any wheel for this pallet',
+        allowExternal: perms.can(DplPermission.labelsScanExternal),
+      );
+      if (code == null || !mounted) return null;
+    }
+
+    setState(() => _busy = true);
+    final res = await ref.read(dplApiServiceProvider).resolveWheel(code);
+    if (!mounted) return null;
+    setState(() => _busy = false);
+
+    if (res.isError || res.data == null) {
+      // STICKER_VOIDED, ALREADY_ON_ANOTHER_PALLET and EXTERNAL_NOT_ALLOWED all
+      // name a situation the operator can act on, so they are shown verbatim.
+      DplSnacks.error(context, res.error ?? 'Could not read that wheel label.');
+      return null;
+    }
+
+    final found = res.data!;
+    if (!found.hasPart) {
+      DplSnacks.warning(
+        context,
+        found.reason.isEmpty
+            ? 'That label does not name an item — choose it.'
+            : found.reason,
+      );
+    }
+    return found;
+  }
+
   /// Open the camera, read one label, and feed it through the same path a
   /// hardware scan takes — so there is one place where a scan is accepted or
   /// refused, not two that can drift.
@@ -508,7 +616,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         color: e.ok
-                            ? const Color(0xFF374151)
+                            ? DplColors.textPrimary
                             : DplColors.error,
                         fontWeight: e.ok ? FontWeight.w500 : FontWeight.w700,
                       ),
@@ -536,7 +644,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
           // prints the label."
           Text(
             pallet.closePreview,
-            style: const TextStyle(fontSize: 12.5, color: Color(0xFF5D6A7A)),
+            style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -576,18 +684,87 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
   // Actions
   // -------------------------------------------------------------------------
 
-  Future<void> _startPallet({DplPallet? half}) async {
+  /// Start a pallet.
+  ///
+  /// SCAN FIRST. The operator is holding a wheel whose label already names the
+  /// item, so asking them to find it in a list of 128 is asking a question
+  /// they have already answered — and a list is where the wrong item gets
+  /// picked, which then mislabels every wheel that follows.
+  ///
+  /// The picker is still there as a fallback, because an old label whose item
+  /// code is not in our master genuinely cannot be resolved, and guessing
+  /// would be worse than asking.
+  ///
+  /// Once the item IS known, the operator is asked what the wheel is joining
+  /// — a stored half pallet, a fresh pallet, or the trolley. That question is
+  /// asked here, before anything is created, because after a pallet exists the
+  /// only way out is a discard, and a discard that releases wheels is a worse
+  /// thing to put in an operator's way than a question.
+  ///
+  /// [half] means the operator already answered it by pressing Fill on the
+  /// stored list, so the sheet is skipped.
+  Future<void> _startPallet({DplPallet? half, String? typed}) async {
     int? partId = half?.partId;
     int? machineId;
 
+    // The wheel that chose the item. It goes onto the pallet straight after,
+    // so the operator never scans the same label twice.
+    String? seedCode;
+
+    // Which stored half pallet to bring back. Starts as whatever Fill passed
+    // and may be set by the choice sheet below.
+    DplPallet? source = half;
+
     if (half == null) {
-      final picked = await showDialog<_StartChoice>(
-        context: context,
-        builder: (_) => const _StartPalletDialog(),
+      final scanned = await _scanForItem(typed: typed);
+      if (!mounted) return;
+      if (scanned == null) return;
+
+      partId = scanned.partId;
+      machineId = scanned.machineId;
+      seedCode = scanned.code;
+      var partNo = scanned.customerPartNo;
+      var partDesc = scanned.partDescription;
+
+      // resolveWheel answers 0 rather than null when it cannot tell.
+      if (partId <= 0) {
+        // Could not tell from the label — fall back to the picker rather than
+        // opening a pallet for a guess.
+        final picked = await showDialog<_StartChoice>(
+          context: context,
+          builder: (_) => const _StartPalletDialog(),
+        );
+        if (picked == null || !mounted) return;
+        partId = picked.partId;
+        machineId = picked.machineId;
+        partNo = picked.partNo;
+        partDesc = picked.partDescription;
+      }
+
+      final decision = await StartPalletChoiceSheet.show(
+        context,
+        partId: partId,
+        customerPartNo: partNo,
+        partDescription: partDesc,
+        parkedOnTrolleyNo: scanned.trolleyNo,
       );
-      if (picked == null || !mounted) return;
-      partId = picked.partId;
-      machineId = picked.machineId;
+      // Dismissed. Nothing has been written, and the wheel is still unpacked.
+      if (decision == null || !mounted) return;
+
+      switch (decision.kind) {
+        case DplStartKind.trolley:
+          await _parkOnTrolley(
+            partId: partId,
+            customerPartNo: partNo,
+            code: seedCode,
+          );
+          return;
+        case DplStartKind.productionMerge:
+          source = decision.half;
+          break;
+        case DplStartKind.newPallet:
+          break;
+      }
     }
     if (partId == null || partId <= 0) return;
 
@@ -595,7 +772,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     final res = await ref.read(dplApiServiceProvider).openPallet(
           partId: partId,
           machineId: machineId,
-          fromHalfPalletId: half?.id,
+          fromHalfPalletId: source?.id,
         );
     if (!mounted) return;
     setState(() => _busy = false);
@@ -612,8 +789,163 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
       _note('Brought back ${half.palletNo} (${half.qty} wheels)', ok: true);
     }
     ref.invalidate(qaOpenPalletProvider);
+
+    // The wheel that chose the item goes straight on. Leaving it off would
+    // mean scanning the same label twice — and an operator who has already
+    // scanned it will reasonably assume it is on there.
+    if (seedCode != null && seedCode.isNotEmpty) {
+      final opened = res.data;
+      if (opened != null && opened.id > 0) {
+        await _scan(opened, seedCode);
+        return;
+      }
+    }
     ref.invalidate(qaHalfPalletsProvider);
     _scanFocus.requestFocus();
+  }
+
+  /// Park the scanned wheel on a trolley instead of opening a pallet for it.
+  ///
+  /// Nothing is opened, so there is no pallet to close and no half pallet
+  /// created — which is the entire point. The wheels wait on the cart until
+  /// somebody merges them into stored half pallets, in whatever combination
+  /// completes the most of them.
+  ///
+  /// The SAME wheel keeps being offered afterwards: an operator who parked one
+  /// is almost always about to park the next off the same run, and sending
+  /// them back through the three-way choice each time would make the feature
+  /// slower than opening a pallet they did not want.
+  Future<void> _parkOnTrolley({
+    required int partId,
+    required String customerPartNo,
+    String? code,
+  }) async {
+    // Which cart, decided ONCE before the loop.
+    //
+    // With none the server creates the first; with one it uses it; those are
+    // the cases that matter and neither asks. Only a plant running two lines
+    // into two carts gets a question, and then only once per run rather than
+    // once per wheel — the server would otherwise refuse every scan with
+    // TROLLEY_NOT_CHOSEN and the operator would have no way forward.
+    int? trolleyId;
+    setState(() => _busy = true);
+    final carts = await ref.read(dplApiServiceProvider).getTrolleys();
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    // A FAILED LOOKUP IS NOT AN EMPTY PLANT.
+    //
+    // `carts.data` is null on a timeout or a 500, and treating that as "no
+    // trolleys exist" would send trolleyId: null to a server that answers it
+    // by CREATING one — so a dropped connection would mint a phantom cart,
+    // and the wheel would land on it instead of on the one the operator is
+    // standing next to.
+    if (carts.isError) {
+      DplSnacks.error(context, carts.error ?? 'Could not load the trolleys.');
+      return;
+    }
+
+    final active = (carts.data ?? const <DplWheelTrolley>[])
+        .where((t) => t.isActive)
+        .toList(growable: false);
+    if (active.length > 1) {
+      final picked = await TrolleyPickerSheet.show(
+        context,
+        trolleys: active,
+        prompt: 'Park $customerPartNo on which trolley?',
+      );
+      if (picked == null || !mounted) return;
+      trolleyId = picked.id;
+    }
+
+    var next = code;
+    var parked = 0;
+    var refused = false;
+
+    while (true) {
+      if (next == null || next.isEmpty) {
+        next = await DplQrScanSheet.open(
+          context,
+          expecting: customerPartNo,
+          allowExternal: ref
+              .read(dplPermissionsProvider)
+              .can(DplPermission.labelsScanExternal),
+        );
+        if (!mounted) return;
+        // Backed out. Whatever was parked stays parked — it is on the cart.
+        if (next == null || next.isEmpty) break;
+      }
+
+      setState(() => _busy = true);
+      final res = await ref.read(dplApiServiceProvider).parkWheelOnTrolley(
+            trolleyId: trolleyId,
+            code: next,
+            // Only consulted for an old label nobody has scanned before, where
+            // there is no pallet to take the item from.
+            partId: partId,
+          );
+      if (!mounted) return;
+      setState(() => _busy = false);
+
+      if (res.isError) {
+        // Shown exactly as the server worded it: ALREADY_ON_ANOTHER_PALLET,
+        // ITEM_UNKNOWN and the rest each name a situation the operator can act
+        // on, and rewording them into something vaguer helps nobody.
+        _note(res.error ?? 'Refused', ok: false);
+        HapticFeedback.heavyImpact();
+        DplSnacks.error(context, res.error ?? 'That wheel was refused.');
+
+        // ONE BAD WHEEL IS NOT THE END OF THE RUN.
+        //
+        // These refusals are about the wheel in the operator's hand and
+        // nothing else: it is already on a cart, already packed, already
+        // shipped, voided, or of the wrong item. The right answer is to put it
+        // down and scan the next one — so the loop carries on, and only a
+        // refusal about the TROLLEY or the request itself stops it, because
+        // those would refuse every wheel that followed just the same.
+        const perWheel = {
+          'ALREADY_ON_THIS_TROLLEY',
+          'ALREADY_ON_ANOTHER_TROLLEY',
+          'ALREADY_ON_ANOTHER_PALLET',
+          'ALREADY_ON_A_TRIP',
+          'STICKER_VOIDED',
+          'STICKER_NOT_FOUND',
+          'WRONG_PART',
+          'ITEM_UNKNOWN',
+          'EMPTY_SCAN',
+        };
+        if (perWheel.contains(res.code)) {
+          next = null;
+          continue;
+        }
+
+        refused = true;
+        break;
+      }
+
+      parked += 1;
+      final out = res.data;
+      _note(
+        'Parked $next on ${out?.trolley.trolleyNo ?? 'the trolley'}',
+        ok: true,
+      );
+      HapticFeedback.selectionClick();
+      next = null;
+    }
+
+    if (!mounted || parked < 1) return;
+
+    // NOT when the run ended in a refusal. DplSnacks hides the current bar
+    // before showing the next, and nothing has been rebuilt since the red one
+    // went up — so a success message here would wipe the explanation off the
+    // screen before the operator could read a word of it, in the same frame.
+    if (refused) return;
+
+    DplSnacks.success(
+      context,
+      'Parked $parked wheel${parked == 1 ? '' : 's'} on the trolley. '
+      'Merge them into half pallets from the Merge screen.',
+    );
   }
 
   Future<void> _scan(DplPallet pallet, String code) async {
@@ -715,13 +1047,28 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
   }
 
   Future<void> _close(DplPallet pallet) async {
-    final reason = await showDialog<String?>(
-      context: context,
-      builder: (_) => _ClosePalletDialog(pallet: pallet),
-    );
-    // The dialog returns null when cancelled and '' when closed with no
-    // reason, so an empty string must not be treated as a cancel.
-    if (reason == null || !mounted) return;
+    // A FULL pallet is not asked about.
+    //
+    // The dialog is not a safety check — it is where the REASON for closing
+    // short is collected, and it only shows that field when the pallet is
+    // short. On a full pallet it therefore offered nothing but a sentence the
+    // operator has already read off the counter (5 / 5, green) and off the
+    // button itself, and the only possible answer was yes. On the busiest
+    // screen in the system that is a tap per pallet, all shift, for nothing.
+    //
+    // Short still asks, because closing short at a changeover is exactly the
+    // case a supervisor comes back and asks about, and the reason is only
+    // capturable while the operator is standing in front of the pallet.
+    String? reason = '';
+    if (!pallet.isFull) {
+      reason = await showDialog<String?>(
+        context: context,
+        builder: (_) => _ClosePalletDialog(pallet: pallet),
+      );
+      // The dialog returns null when cancelled and '' when closed with no
+      // reason, so an empty string must not be treated as a cancel.
+      if (reason == null || !mounted) return;
+    }
 
     setState(() => _busy = true);
     final res = await ref
@@ -858,7 +1205,20 @@ class _ScanEvent {
 class _StartChoice {
   final int partId;
   final int? machineId;
-  const _StartChoice({required this.partId, this.machineId});
+
+  /// Carried so the choice sheet that follows can NAME the item. Without
+  /// them it asks "where does this wheel go?" about nothing in particular,
+  /// and the operator has no way to catch a mis-pick before a pallet's worth
+  /// is packed under it.
+  final String partNo;
+  final String partDescription;
+
+  const _StartChoice({
+    required this.partId,
+    this.machineId,
+    this.partNo = '',
+    this.partDescription = '',
+  });
 }
 
 /// Pick the item, and optionally the work point.
@@ -931,7 +1291,7 @@ class _StartPalletDialogState extends ConsumerState<_StartPalletDialog> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.check_circle,
                       size: 16,
                       color: DplColors.success,
@@ -942,7 +1302,7 @@ class _StartPalletDialogState extends ConsumerState<_StartPalletDialog> {
                         selected.partNumber.isEmpty
                             ? selected.description
                             : selected.partNumber,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 13.5,
                         ),
@@ -959,13 +1319,13 @@ class _StartPalletDialogState extends ConsumerState<_StartPalletDialog> {
                       child: LinearProgressIndicator(minHeight: 2),
                     )
                   : parts.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 12),
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           child: Text(
                             'No items match.',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF5D6A7A),
+                              color: DplColors.textSecondary,
                             ),
                           ),
                         )
@@ -983,7 +1343,7 @@ class _StartPalletDialogState extends ConsumerState<_StartPalletDialog> {
                                 p.partNumber.isEmpty
                                     ? p.description
                                     : p.partNumber,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13.5,
                                 ),
@@ -994,7 +1354,7 @@ class _StartPalletDialogState extends ConsumerState<_StartPalletDialog> {
                                       p.name,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 11.5),
+                                      style: TextStyle(fontSize: 11.5),
                                     ),
                               onTap: () => setState(() => _partId = p.id),
                             );
@@ -1032,7 +1392,12 @@ class _StartPalletDialogState extends ConsumerState<_StartPalletDialog> {
           onPressed: _partId == null
               ? null
               : () => Navigator.of(context).pop(
-                    _StartChoice(partId: _partId!, machineId: _machineId),
+                    _StartChoice(
+                      partId: _partId!,
+                      machineId: _machineId,
+                      partNo: selected?.partNumber ?? '',
+                      partDescription: selected?.description ?? '',
+                    ),
                   ),
           child: const Text('Start'),
         ),
@@ -1074,7 +1439,7 @@ class _ClosePalletDialogState extends State<_ClosePalletDialog> {
           children: [
             Text(
               widget.pallet.closePreview,
-              style: const TextStyle(fontSize: 13.5, height: 1.4),
+              style: TextStyle(fontSize: 13.5, height: 1.4),
             ),
             if (short) ...[
               const SizedBox(height: 12),

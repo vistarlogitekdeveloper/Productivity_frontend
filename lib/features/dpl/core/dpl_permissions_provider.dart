@@ -183,6 +183,16 @@ class DplPermission {
   /// once every part prints from this app.
   static const String labelsScanExternal = 'labels.scan_external';
 
+  /// Park loose wheels on a trolley instead of opening a pallet for them, and
+  /// later merge the trolley into stored half pallets.
+  ///
+  /// Its own key because it changes what the pack point is FOR. A plant that
+  /// runs one item to a full pallet and moves on has no use for it and should
+  /// not be offered a third choice every time a pallet starts; a plant that
+  /// changes over mid-run and would otherwise create a half pallet each time
+  /// needs it badly.
+  static const String palletTrolley = 'pallet.trolley';
+
   /// Use the device camera to read wheel labels, instead of a hardware
   /// scanner or typing the serial. Separate so a plant issuing ring scanners
   /// can revoke it without touching the operator's ability to pack.
@@ -197,6 +207,21 @@ class DplPermission {
   static const String tripsScanLabels = 'trips.scan_labels';
 
   static const String slipsView = 'slips.view';
+
+  /// Whether the dispatch slips inbox appears in QA's bottom bar.
+  ///
+  /// Its own key, and deliberately NOT [slipsView]. That one is about seeing
+  /// slip data and QA has never held it — the list endpoint is role-guarded
+  /// rather than permission-guarded — so gating the tab on it would have
+  /// hidden a screen that works.
+  ///
+  /// GRANTED by default to the two roles that reach this shell, so the tab
+  /// stays where it has always been and an administrator switches it OFF for
+  /// a plant whose pack point never approves a slip. It is therefore NOT in
+  /// [optInOnly]: this capability predates the Maxion work, so an unknown
+  /// permission list must leave it showing rather than blank out a tab people
+  /// use every day.
+  static const String slipsQaInbox = 'slips.qa_inbox';
   static const String slipsCreate = 'slips.create';
   static const String slipsDeo = 'slips.deo';
   static const String slipsPdi = 'slips.pdi';
@@ -241,6 +266,7 @@ class DplPermission {
     palletPutaway,
     palletSpd,
     labelsScanExternal,
+    palletTrolley,
   };
 }
 
