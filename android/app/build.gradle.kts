@@ -44,6 +44,24 @@ android {
     }
 }
 
+// Point Mobile EmKit SDK. Ships as an .aar under android/app/libs and is
+// consumed as a local file dependency — Point Mobile publish no Maven
+// coordinate for it.
+//
+// Rugged Point Mobile handhelds (PM75, RS35 and family) deliver scan results
+// ONLY through this SDK's Kotlin/AIDL surface. A plain BroadcastReceiver on
+// `device.scanner.RESULT` — the action their public docs name — hears nothing
+// at all; see the long note in MainActivity.kt for what actually fires.
+//
+// The .aar is absent on every other device, and MainActivity catches that, so
+// this dependency does not stop the app building or running on a phone.
+dependencies {
+    implementation(fileTree(mapOf(
+        "dir" to "libs",
+        "include" to listOf("*.aar"),
+    )))
+}
+
 flutter {
     source = "../.."
 }

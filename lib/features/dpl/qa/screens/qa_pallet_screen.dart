@@ -172,6 +172,14 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
               TextField(
                 controller: _startCtrl,
                 enabled: !_busy,
+                // Focused on purpose, and it is what makes a handheld work
+                // here. A rugged scanner delivers its decode to whichever
+                // field has focus — by typing it in wedge mode, or through
+                // HardwareScanScope in intent mode — so an unfocused start
+                // view would mean the trigger did nothing at all on the one
+                // screen where a shift begins. The open-pallet field below
+                // autofocuses for the same reason.
+                autofocus: true,
                 textInputAction: TextInputAction.done,
                 textCapitalization: TextCapitalization.characters,
                 decoration: const InputDecoration(

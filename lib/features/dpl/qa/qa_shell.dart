@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/scanner/hardware_scanner.dart';
 import '../core/design/dpl_theme.dart';
 import '../core/dpl_permissions_provider.dart';
 import '../core/widgets/dpl_app_bar.dart';
@@ -36,6 +37,32 @@ class DplQaShell extends ConsumerStatefulWidget {
 
 class _DplQaShellState extends ConsumerState<DplQaShell> {
   int _tab = 0;
+
+  /// One stable key per tab slot, so a tab switch can find the screen that
+  /// just became visible. Sized to the most tabs this shell can ever show;
+  /// unused slots cost nothing.
+  final List<GlobalKey> _tabKeys = List.generate(8, (_) => GlobalKey());
+
+  GlobalKey _tabKey(int i) => _tabKeys[i];
+
+  /// Switch tabs, and hand the new screen the scanner.
+  ///
+  /// The focus call is the whole point. Hidden children of an IndexedStack
+  /// cannot hold focus and `autofocus` fires only once, so after a switch
+  /// NOTHING is focused — the handheld's trigger does nothing, and a
+  /// keyboard-wedge scanner types into the void in exactly the same way. The
+  /// operator sees a scan field sitting right there and a scanner that has
+  /// apparently died.
+  ///
+  /// Deferred to after the frame because the new child is not laid out yet
+  /// when setState returns, so its focus node is not attachable.
+  void _showTab(int i) {
+    setState(() => _tab = i);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      HardwareScanScope.focusScanFieldIn(_tabKeys[i].currentContext);
+    });
+  }
 
   @override
   void initState() {
@@ -121,6 +148,35 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
     ];
     final tab = _tab.clamp(0, titles.length - 1);
 
+    // Mounted ONCE, here, rather than on each tab.
+    //
+    // These tabs live in an IndexedStack, so every one of them is built and
+    // listening at the same time. A per-screen subscription would hand a
+    // single trigger pull to Pallet, Merge, Put away and SPD together — one
+    // press becoming a wheel packed, a pallet resolved and an SPD lookup at
+    // once. The scope routes each decode to whichever field has focus, so it
+    // reaches the tab the operator is actually looking at, and does it the
+    // same way a keyboard-wedge scanner already does.
+    return HardwareScanScope(
+      child: _buildShell(context, tab, canDirectPrint, canBuildPallets,
+          canMerge, canPutAway, canSpd, canViewPallets, canSlips, titles,
+          pendingCount),
+    );
+  }
+
+  Widget _buildShell(
+    BuildContext context,
+    int tab,
+    bool canDirectPrint,
+    bool canBuildPallets,
+    bool canMerge,
+    bool canPutAway,
+    bool canSpd,
+    bool canViewPallets,
+    bool canSlips,
+    List<String> titles,
+    int pendingCount,
+  ) {
     return Scaffold(
       backgroundColor: DplColors.pageBg,
       appBar: DplAppBar(
@@ -174,22 +230,28 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
       body: IndexedStack(
         index: tab,
         children: [
-          if (canDirectPrint)
-            const QaDirectPrintScreen(showAppBar: false)
-          else
-            const QaProductionScreen(showAppBar: false),
-          if (canBuildPallets) const QaPalletScreen(showAppBar: false),
-          if (canMerge) const QaPalletMergeScreen(showAppBar: false),
-          if (canPutAway) const QaPutawayScreen(showAppBar: false),
-          if (canSpd) const QaSpdScreen(showAppBar: false),
-          if (canViewPallets)
-            const QaPalletRegisterScreen(showAppBar: false),
-          if (canSlips) const DispatchSlipsInboxScreen(showAppBar: false),
+          for (final (i, screen) in <Widget>[
+            if (canDirectPrint)
+              const QaDirectPrintScreen(showAppBar: false)
+            else
+              const QaProductionScreen(showAppBar: false),
+            if (canBuildPallets) const QaPalletScreen(showAppBar: false),
+            if (canMerge) const QaPalletMergeScreen(showAppBar: false),
+            if (canPutAway) const QaPutawayScreen(showAppBar: false),
+            if (canSpd) const QaSpdScreen(showAppBar: false),
+            if (canViewPallets)
+              const QaPalletRegisterScreen(showAppBar: false),
+            if (canSlips) const DispatchSlipsInboxScreen(showAppBar: false),
+          ].indexed)
+            // Keyed so the tab switch below can reach INTO the newly visible
+            // screen and put focus on its scan field. Without that, a handheld
+            // is dead on every tab after the first — see _showTab.
+            KeyedSubtree(key: _tabKey(i), child: screen),
         ],
       ),
       bottomNavigationBar: DplBottomNav(
         currentIndex: tab,
-        onTap: (i) => setState(() => _tab = i),
+        onTap: _showTab,
         items: [
           if (canDirectPrint)
             const DplNavItem(
