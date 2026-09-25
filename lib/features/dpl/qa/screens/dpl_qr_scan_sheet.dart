@@ -149,12 +149,14 @@ class _DplQrScanSheetState extends State<DplQrScanSheet> {
       return 'That is a pallet number, not a wheel label.';
     }
 
-    // Named precisely: during the changeover this is the single most likely
-    // mis-scan, and "that does not look like a wheel label" would send the
-    // operator hunting for a fault that is really a setting.
+    // Named precisely, WITH the remedy. During the changeover this is the
+    // single most likely mis-scan, and it is not a fault at all — it is a
+    // setting that has not been switched on. Saying only "not set up yet"
+    // sends the operator to look for a broken scanner, or to the developer.
     if (_looksExternal(code)) {
-      return 'That is one of the old labels. This plant is not set up to '
-          'accept them yet.';
+      return 'That is one of the old labels. Ask an administrator to tick '
+          '“Accept the plant’s old labels” for this organization under '
+          'Administration → Access rules.';
     }
     return 'That does not look like a wheel label.';
   }
