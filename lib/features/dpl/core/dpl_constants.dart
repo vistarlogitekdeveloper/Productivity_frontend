@@ -349,8 +349,14 @@ class DplPaths {
   static const String qaSpdPacks = '/qa/spd';
   static String qaPalletWheels(int palletId) => '/qa/pallets/$palletId/wheels';
   static String qaPalletSpd(int palletId) => '/qa/pallets/$palletId/spd';
+  /// Undo one wheel. The serial goes in the QUERY STRING, encoded.
+  ///
+  /// A wheel adopted from one of the plant's old labels carries a serial full
+  /// of slashes (`19255/stdD1//48/...`). Interpolated into the path it would
+  /// split into extra segments, match no route, and 404 — so a mis-scanned old
+  /// label could never be taken back off.
   static String qaPalletUndoScan(int palletId, String serial) =>
-      '/qa/pallets/$palletId/scan/$serial';
+      '/qa/pallets/$palletId/scan?serial=${Uri.encodeQueryComponent(serial)}';
 
   /// The master pallet label's data — the client renders the PDF.
   ///
