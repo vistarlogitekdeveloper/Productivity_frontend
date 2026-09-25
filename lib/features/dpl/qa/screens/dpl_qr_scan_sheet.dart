@@ -32,21 +32,35 @@ class DplQrScanSheet extends StatefulWidget {
   /// every caller before the warehouse flow wanted.
   final DplScanKind kind;
 
+  /// Also accept wheel stickers printed by the plant's OTHER system.
+  ///
+  /// Off by default, and driven by `labels.scan_external`. During the
+  /// changeover an operator is holding two kinds of sticker; once the plant
+  /// stops printing the old ones this goes back off and the camera refuses
+  /// them again, which is how the transition actually ends.
+  final bool allowExternal;
+
   const DplQrScanSheet({
     super.key,
     this.expecting = '',
     this.kind = DplScanKind.wheel,
+    this.allowExternal = false,
   });
 
   static Future<String?> open(
     BuildContext context, {
     String expecting = '',
     DplScanKind kind = DplScanKind.wheel,
+    bool allowExternal = false,
   }) {
     return Navigator.of(context).push<String>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => DplQrScanSheet(expecting: expecting, kind: kind),
+        builder: (_) => DplQrScanSheet(
+          expecting: expecting,
+          kind: kind,
+          allowExternal: allowExternal,
+        ),
       ),
     );
   }
@@ -87,7 +101,30 @@ class _DplQrScanSheetState extends State<DplQrScanSheet> {
         : _rejectAsWheel(code);
   }
 
+  /// One of the plant's OTHER system's wheel stickers, e.g.
+  /// `19255/stdD1//48/24Sep26/11:37:04/A/48`.
+  ///
+  /// A NEGATIVE test, mirroring the server's: anything that is not
+  /// recognisably one of ours, and carries enough slash-separated structure to
+  /// be a label rather than a stray word, is theirs. Testing for their exact
+  /// layout would quietly stop matching the day a product line prints it
+  /// slightly differently — and the server is the authority regardless; this
+  /// only decides whether the camera keeps the viewfinder open.
+  bool _looksExternal(String code) {
+    if (code.contains('|')) return false;
+    if (RegExp(r'^GA\d{6,}$', caseSensitive: false).hasMatch(code)) return false;
+    if (RegExp(r'^(PM|P|H|M|SP)\d{6,}$', caseSensitive: false).hasMatch(code)) {
+      return false;
+    }
+    return code.split('/').length >= 4;
+  }
+
   String? _rejectAsWheel(String code) {
+    // Accepted only where an administrator has switched it on, so the plant
+    // can stop taking old labels by unticking a box rather than by shipping a
+    // build.
+    if (widget.allowExternal && _looksExternal(code)) return null;
+
     if (code.contains('|')) {
       final kind = code.split('|').first.toUpperCase();
       if (kind == 'GAM') {
@@ -112,6 +149,13 @@ class _DplQrScanSheetState extends State<DplQrScanSheet> {
       return 'That is a pallet number, not a wheel label.';
     }
 
+    // Named precisely: during the changeover this is the single most likely
+    // mis-scan, and "that does not look like a wheel label" would send the
+    // operator hunting for a fault that is really a setting.
+    if (_looksExternal(code)) {
+      return 'That is one of the old labels. This plant is not set up to '
+          'accept them yet.';
+    }
     return 'That does not look like a wheel label.';
   }
 

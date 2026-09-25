@@ -207,6 +207,7 @@ void main() {
         DplPermission.palletScanCamera,
         DplPermission.palletPutaway,
         DplPermission.palletSpd,
+        DplPermission.labelsScanExternal,
       };
       expect(DplPermission.optInOnly, known);
       for (final k in DplPermission.optInOnly) {

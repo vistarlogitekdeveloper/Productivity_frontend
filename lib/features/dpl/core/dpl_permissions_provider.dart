@@ -178,6 +178,11 @@ class DplPermission {
   /// customer order is a different authority from packing or storing it.
   static const String palletSpd = 'pallet.spd';
 
+  /// Accept wheel stickers printed by the plant's OTHER system during the
+  /// changeover. Its own key because it is meant to be switched OFF again
+  /// once every part prints from this app.
+  static const String labelsScanExternal = 'labels.scan_external';
+
   /// Use the device camera to read wheel labels, instead of a hardware
   /// scanner or typing the serial. Separate so a plant issuing ring scanners
   /// can revoke it without touching the operator's ability to pack.
@@ -235,6 +240,7 @@ class DplPermission {
     palletScanCamera,
     palletPutaway,
     palletSpd,
+    labelsScanExternal,
   };
 }
 

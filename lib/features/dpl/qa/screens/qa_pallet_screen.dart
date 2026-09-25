@@ -428,8 +428,16 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
               isDense: true,
               helperText: full
                   ? 'Close this pallet before scanning the next wheel.'
-                  : 'A hardware scanner types the code and presses enter. A '
-                      'scuffed label can be keyed in by hand.',
+                  : ref
+                          .watch(dplPermissionsProvider)
+                          .can(DplPermission.labelsScanExternal)
+                      // Say it out loud. An operator holding a roll of the old
+                      // stickers has no way of knowing the app will take them,
+                      // and will go looking for a printer instead.
+                      ? 'Scans our labels and the plant\u2019s older ones. Each '
+                          'old label is accepted once only.'
+                      : 'A hardware scanner types the code and presses enter. A '
+                          'scuffed label can be keyed in by hand.',
               helperMaxLines: 3,
             ),
             // A hardware scanner ends with a newline, so this is the real
@@ -463,6 +471,11 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     final code = await DplQrScanSheet.open(
       context,
       expecting: pallet.customerPartNo,
+      // The camera has to accept whatever the keyboard path accepts, or the
+      // two disagree about what a valid label is and the operator learns to
+      // distrust one of them.
+      allowExternal:
+          ref.read(dplPermissionsProvider).can(DplPermission.labelsScanExternal),
     );
     if (code == null || !mounted) return;
     await _scan(pallet, code);
