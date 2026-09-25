@@ -956,17 +956,39 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     );
   }
 
-  Future<void> _scan(DplPallet pallet, String code) async {
+  /// Accept a scan immediately, send it in turn.
+  ///
+  /// The field is cleared and refocused at once — an operator working at speed
+  /// must never wait for a round trip before the next wheel — but the requests
+  /// themselves are QUEUED rather than fired all at once.
+  ///
+  /// A hardware trigger is the reason. It fires far faster than a round trip,
+  /// so several scans used to be in flight together, each one deciding against
+  /// a count that was already stale. The server is authoritative and refuses
+  /// the overflow, but the operator then got a burst of red refusals for
+  /// wheels they were never going to fit. One at a time, the count catches up
+  /// between scans, the field disables itself the moment the pallet is full,
+  /// and the wheels that cannot fit are simply never sent.
+  Future<void> _scan(DplPallet pallet, String code) {
     final value = code.trim();
-    // Clear and re-focus FIRST, so the next wheel can be scanned while this
-    // one is still in flight. An operator working at speed must never wait for
-    // a round trip to be able to scan again.
     _scanCtrl.clear();
     _scanFocus.requestFocus();
-    if (value.isEmpty) return;
+    if (value.isEmpty) return Future.value();
 
+    // Chained, and the error is swallowed HERE rather than allowed to break
+    // the chain — one refused wheel must not stop the ones behind it.
+    _scanQueue = _scanQueue
+        .then((_) => _sendScan(pallet.id, value))
+        .catchError((_) {});
+    return _scanQueue;
+  }
+
+  /// Wheels waiting their turn. Starts resolved so the first scan goes at once.
+  Future<void> _scanQueue = Future<void>.value();
+
+  Future<void> _sendScan(int palletId, String value) async {
     final res = await ref.read(dplApiServiceProvider).scanWheelOntoPallet(
-          palletId: pallet.id,
+          palletId: palletId,
           code: value,
         );
     if (!mounted) return;

@@ -164,6 +164,23 @@ class MainActivity : FlutterActivity() {
             val extraKeys = intent.extras?.keySet()?.joinToString(",") ?: "<none>"
             Log.i(TAG, "onReceive action=${intent.action} extras=[$extraKeys]")
 
+            // A FAILED READ IS NOT A BARCODE.
+            //
+            // Point Mobile broadcasts on every trigger pull, successful or
+            // not, and when the engine cannot decode anything it puts the
+            // literal string "READ_FAIL" in the decode value. Forwarding that
+            // sent it all the way to the server, which answered "READ_FAIL is
+            // not a label this system printed" — a red banner blaming the
+            // operator for aiming slightly wrong, once per missed pull.
+            //
+            // Checked two ways because the firmware is not documented and the
+            // string is not an SDK constant: the explicit result flag when the
+            // firmware sets one, and the sentinel value otherwise.
+            if (!decodeSucceeded(intent)) {
+                Log.i(TAG, "read failed — nothing to forward")
+                return
+            }
+
             // Two shapes carry a decode on these devices:
             //   1. device.scanner.EVENT with EXTRA_EVENT_DECODE_VALUE (bytes)
             //      plus EXTRA_EVENT_DECODE_LENGTH. This is what current Point
@@ -178,6 +195,31 @@ class MainActivity : FlutterActivity() {
             }
             Log.i(TAG, "FORWARD len=${payload.length}")
             sink.success(payload.trim())
+        }
+
+        /**
+         * Whether this broadcast carries a real decode.
+         *
+         * The firmware fires on EVERY trigger pull. Two independent signals
+         * say a pull found nothing, and both are checked because neither is
+         * documented and "READ_FAIL" is not an SDK constant — it is a string
+         * the ScannerService invents:
+         *
+         *   * EXTRA_EVENT_DECODE_RESULT, when the firmware sets it. Seen as
+         *     both a boolean and an int depending on build, so both are read.
+         *   * the decode value being the sentinel itself.
+         */
+        private fun decodeSucceeded(intent: Intent): Boolean {
+            val extras = intent.extras
+            if (extras != null && extras.containsKey(EXTRA_EVENT_DECODE_RESULT)) {
+                when (val flag = extras.get(EXTRA_EVENT_DECODE_RESULT)) {
+                    is Boolean -> if (!flag) return false
+                    is Int -> if (flag == 0) return false
+                    is String -> if (flag.equals(READ_FAIL, ignoreCase = true)) return false
+                }
+            }
+            val value = extractDecodedBytes(intent) ?: extractDecodedString(intent)
+            return value != null && !value.trim().equals(READ_FAIL, ignoreCase = true)
         }
 
         /**
@@ -227,6 +269,16 @@ class MainActivity : FlutterActivity() {
         private const val EXTRA_EVENT_DECODE_VALUE = "EXTRA_EVENT_DECODE_VALUE"
         private const val EXTRA_EVENT_BYTES_VALUE = "EXTRA_EVENT_BYTES_VALUE"
         private const val EXTRA_EVENT_DECODE_LENGTH = "EXTRA_EVENT_DECODE_LENGTH"
+
+        /** Set by the firmware on a pull that decoded nothing. */
+        private const val EXTRA_EVENT_DECODE_RESULT = "EXTRA_EVENT_DECODE_RESULT"
+
+        /**
+         * What the ScannerService puts in the decode value when the engine
+         * read nothing. Not an SDK constant — it appears nowhere in
+         * EmkitSDK.A11-3.24.1.aar — so it is matched literally.
+         */
+        private const val READ_FAIL = "READ_FAIL"
 
         // String extras seen on older firmware and other vendors.
         private val DATA_KEYS = listOf(

@@ -158,6 +158,10 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
     // reaches the tab the operator is actually looking at, and does it the
     // same way a keyboard-wedge scanner already does.
     return HardwareScanScope(
+      // Which tab is on screen. The scope cannot work this out for itself —
+      // every tab is mounted at once and, on a freshly-opened one, none of
+      // them holds focus.
+      activeArea: _tabKeys[tab],
       child: _buildShell(context, tab, canDirectPrint, canBuildPallets,
           canMerge, canPutAway, canSpd, canViewPallets, canSlips, titles,
           pendingCount),

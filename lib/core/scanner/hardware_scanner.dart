@@ -108,9 +108,30 @@ class HardwareScanner {
 ///
 /// Mount it once, above the screens that scan.
 class HardwareScanScope extends StatefulWidget {
-  const HardwareScanScope({super.key, required this.child});
+  const HardwareScanScope({
+    super.key,
+    required this.child,
+    this.activeArea,
+  });
 
   final Widget child;
+
+  /// The subtree the operator is actually looking at, when the caller knows.
+  ///
+  /// FOCUS ALONE IS NOT ENOUGH, and the device proved it. On a PM75 the
+  /// decode arrived, reached Dart and went nowhere, because NOTHING held
+  /// focus: the Pallet tab's field is built while the tab is still offstage
+  /// inside the IndexedStack, offstage subtrees cannot take focus, and
+  /// `autofocus` is one-shot — it asks once, is refused, and never asks again.
+  /// `dumpsys input_method` showed `mServedView=null` with the scan field
+  /// sitting right there on screen.
+  ///
+  /// So when nothing is focused, the scan is delivered to the first field in
+  /// THIS subtree instead. The caller passes the key of the visible tab, which
+  /// is the one piece of knowledge the scope cannot work out for itself.
+  /// Pushed routes need no help — they are not offstage, so their field really
+  /// does hold focus and the focused path wins.
+  final GlobalKey? activeArea;
 
   /// Put focus on the first scannable field inside [context]'s subtree.
   ///
@@ -162,19 +183,55 @@ class _HardwareScanScopeState extends State<HardwareScanScope> {
   }
 
   void _deliver(String code) {
-    final target = _focusedField();
+    // Whatever the operator is typing into wins. A pushed route — putaway, the
+    // trolley fill — really does hold focus, and so does a field they tapped.
+    var target = _focusedField();
+
+    // Nothing focused. That is the NORMAL state of a freshly-opened tab, not
+    // an edge case: an IndexedStack builds its children offstage, offstage
+    // subtrees cannot take focus, and autofocus asks exactly once. So fall
+    // back to the first field in the subtree the shell says is visible.
     if (target == null) {
-      // Nothing is waiting for a scan. Dropped deliberately and quietly: on a
-      // screen with no scan field there is nothing sensible to do with a
-      // barcode, and guessing would fire an action the operator did not ask
-      // for. Every screen that scans keeps its field focused for exactly this.
+      target = _firstFieldIn(widget.activeArea?.currentContext);
+      // Put the cursor there too. The next scan then takes the fast path, a
+      // wedge scanner has somewhere to type, and the operator can see where
+      // their keystrokes are going.
+      final node = target?.focusNode;
+      if (node != null && node.canRequestFocus && !node.hasFocus) {
+        node.requestFocus();
+      }
+    }
+
+    if (target == null) {
+      // Genuinely nowhere to put it — a screen with no scan field at all.
+      // Dropped quietly, because guessing a handler would fire an action the
+      // operator never asked for.
       return;
     }
+
     // onSubmitted is called with the value directly rather than by writing to
     // the controller first, because every handler in this app takes the string
     // as its argument and clears the field itself. Writing the text as well
     // would show it for one frame and risk a second submit through onChanged.
     target.onSubmitted?.call(code);
+  }
+
+  /// The first field that can take a scan inside [context]'s subtree.
+  static EditableText? _firstFieldIn(BuildContext? context) {
+    if (context is! Element || !context.mounted) return null;
+    EditableText? found;
+    void walk(Element element) {
+      if (found != null) return;
+      final widget = element.widget;
+      if (widget is EditableText && widget.focusNode.canRequestFocus) {
+        found = widget;
+        return;
+      }
+      element.visitChildren(walk);
+    }
+
+    context.visitChildren(walk);
+    return found;
   }
 
   /// The [EditableText] behind whatever currently holds focus.
