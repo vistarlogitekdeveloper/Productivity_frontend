@@ -11,6 +11,7 @@ import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_snack.dart';
+import '../../models/dpl_leci_scan.dart';
 import '../../models/dpl_consolidated_slip.dart';
 import '../../models/dpl_trip_journey_event.dart';
 import '../../tracking/services/trip_location_tracker.dart';
@@ -534,7 +535,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _LeciPhotoSheet(),
+      builder: (_) => _LeciPhotoSheet(tripId: widget.tripId),
     );
     if (!mounted || result == null) return;
     await _submitLeciPhoto(result);
@@ -710,14 +711,18 @@ class _LeciPhotoResult {
 /// paper + type the truck no. Pops a [_LeciPhotoResult] on confirm. Mirrors
 /// the trolley-photo capture UX (rear camera, retrieve-lost-data recovery
 /// for when Android kills the app behind the camera intent).
-class _LeciPhotoSheet extends StatefulWidget {
-  const _LeciPhotoSheet();
+class _LeciPhotoSheet extends ConsumerStatefulWidget {
+  const _LeciPhotoSheet({required this.tripId});
+
+  /// Needed so the slip can be read against THIS trip's vehicle — the scan
+  /// reports whether what it read will pass gate-in's plate cross-check.
+  final int tripId;
 
   @override
-  State<_LeciPhotoSheet> createState() => _LeciPhotoSheetState();
+  ConsumerState<_LeciPhotoSheet> createState() => _LeciPhotoSheetState();
 }
 
-class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
+class _LeciPhotoSheetState extends ConsumerState<_LeciPhotoSheet> {
   final _picker = ImagePicker();
   final _truckCtrl = TextEditingController();
   final _leciCtrl = TextEditingController();
@@ -725,6 +730,10 @@ class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
   String _filename = 'leci.jpg';
   bool _capturing = false;
   String? _error;
+  bool _scanning = false;
+  DplLeciScan? _scan;
+  /// Set when the slip could not be read — advisory only, never blocking.
+  String? _scanNote;
 
   @override
   void initState() {
@@ -761,6 +770,57 @@ class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
       _filename = picked.name.isEmpty ? 'leci.jpg' : picked.name;
       _capturing = false;
       _error = null;
+      // A new photo invalidates the previous reading.
+      _scan = null;
+    });
+    // Read the slip straight away. The driver is at a gate with a queue
+    // behind them, so making them press a second button to do the obvious
+    // next thing would waste the only advantage this has over typing.
+    await _readSlip();
+  }
+
+  /// Ask the backend to read the captured slip, and prefill what it found.
+  ///
+  /// Best-effort by design: if the scan fails, times out or reads nothing,
+  /// the sheet is exactly as usable as it was before this feature existed —
+  /// the driver types the truck number and submits. Nothing here can block a
+  /// gate-in.
+  Future<void> _readSlip() async {
+    final bytes = _bytes;
+    if (bytes == null || _scanning) return;
+    setState(() => _scanning = true);
+
+    final res = await ref.read(dplApiServiceProvider).leciScanTrip(
+          widget.tripId,
+          photoBytes: bytes,
+          filename: _filename,
+        );
+    if (!mounted) return;
+
+    if (res.isError || res.data == null) {
+      setState(() {
+        _scanning = false;
+        // Deliberately not surfaced as an error: reading the slip is a
+        // convenience, and the driver still has a working form.
+        _scanNote = 'Could not read the slip automatically — type the truck number.';
+      });
+      return;
+    }
+
+    final scan = res.data!;
+    setState(() {
+      _scanning = false;
+      _scan = scan;
+      // Never overwrite what the driver already typed — they are holding the
+      // paper and we are not.
+      if (scan.hasTruckNo && _truckCtrl.text.trim().isEmpty) {
+        _truckCtrl.text = scan.leciTruckNo!;
+      }
+      final leciNo = scan.leciNo;
+      if (leciNo != null && leciNo.isNotEmpty && _leciCtrl.text.trim().isEmpty) {
+        _leciCtrl.text = leciNo;
+      }
+      _scanNote = null;
     });
   }
 
@@ -789,6 +849,136 @@ class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
         _error = 'Could not capture the photo: $e';
       });
     }
+  }
+
+  /// What the slip reading found, and whether it agrees with this trip.
+  ///
+  /// The plate comparison is the useful part: gate-in rejects a truck number
+  /// that does not match the trip vehicle, so showing the answer HERE turns a
+  /// post-submit 409 into something the driver can sort out while still
+  /// standing at the gate.
+  Widget _scanPanel() {
+    if (_scanning) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Reading the slip…',
+              style: TextStyle(color: DplColors.textSecondary, fontSize: 12.5),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_scanNote != null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Text(
+          _scanNote!,
+          style: const TextStyle(
+            color: DplColors.textSecondary,
+            fontSize: 12.5,
+          ),
+        ),
+      );
+    }
+
+    final scan = _scan;
+    if (scan == null) return const SizedBox.shrink();
+
+    if (!scan.hasTruckNo) {
+      // Read nothing usable. Point at the truck, not the paper: the plate on
+      // the vehicle is the thing that has to be right.
+      final photo = scan.warnings.where((w) => w.isPhotoQuality).toList();
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              photo.isNotEmpty
+                  ? photo.first.message
+                  : 'No truck number could be read — type it from the plate on the truck.',
+              style: const TextStyle(
+                color: DplColors.warning,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final ok = scan.plateConfirmedByTrip;
+    final attention = scan.plateNeedsAttention;
+    final color = ok
+        ? DplColors.success
+        : attention
+            ? DplColors.warning
+            : DplColors.textSecondary;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                ok
+                    ? Icons.verified_outlined
+                    : attention
+                        ? Icons.warning_amber_rounded
+                        : Icons.document_scanner_outlined,
+                size: 16,
+                color: color,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  ok
+                      ? 'Truck ${scan.leciTruckNo} — matches this trip'
+                      : 'Read truck ${scan.leciTruckNo}',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Only when there is something to act on. On an exact match the
+          // headline above already says everything.
+          if (!ok && scan.plateNote != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              scan.plateNote!,
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.3,
+                color: DplColors.textPrimary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   // Truck number softened to optional (2026-07-25). Photo is still the
@@ -841,8 +1031,9 @@ class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  "Barcode won't scan? Snap a clear photo of the LECI paper "
-                  'and enter the truck number from it.',
+                  "Barcode won't scan? Snap a clear photo of the LECI paper — "
+                  'the truck number is read from it automatically. Check it '
+                  'against the plate before submitting.',
                   style: TextStyle(
                     color: DplColors.textSecondary,
                     fontSize: 12.5,
@@ -914,6 +1105,7 @@ class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
                     ),
                   ),
                 ],
+                _scanPanel(),
                 const SizedBox(height: 14),
                 TextField(
                   controller: _truckCtrl,

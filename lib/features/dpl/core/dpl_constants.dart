@@ -208,6 +208,11 @@ class DplPaths {
   static String tripGateOut(int id) => '/dispatch/trips/$id/gate-out';
   static String tripGateIn(int id) => '/dispatch/trips/$id/gate-in';
   static String tripTataGateIn(int id) => '/dispatch/trips/$id/tata-gate-in';
+  // Reads the truck number off a photographed LECI slip so the driver does
+  // not type a number plate at the gate. Records NOTHING — it feeds the
+  // gate-in form, which is what keeps an OCR misread from tripping
+  // tata-gate-in's VEHICLE_MISMATCH check. See DplLeciScan.
+  static String tripLeciScan(int id) => '/dispatch/trips/$id/leci-scan';
   static String tripTataDockIn(int id) => '/dispatch/trips/$id/tata-dock-in';
   static String tripTataDockOut(int id) => '/dispatch/trips/$id/tata-dock-out';
   static String tripTataGateOut(int id) => '/dispatch/trips/$id/tata-gate-out';

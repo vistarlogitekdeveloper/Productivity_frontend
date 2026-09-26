@@ -40,6 +40,7 @@ import '../models/dpl_consolidated_slip.dart';
 import '../models/dpl_dispatch_slip.dart';
 import '../models/dpl_dispatch_slips_bulk.dart';
 import '../models/dpl_dispatch_trip.dart';
+import '../models/dpl_leci_scan.dart';
 import '../models/dpl_trip_journey_event.dart';
 import '../models/dpl_trip_location.dart';
 import '../models/dpl_identity.dart';
@@ -3192,6 +3193,44 @@ class DplApiService {
       ),
       fallback: 'Failed to record gate-in (return).',
       fromJson: _oneJourneyEvent,
+    );
+  }
+
+  /// `POST /dispatch/trips/:id/leci-scan` — role: `dpl_driver`.
+  ///
+  /// Reads the truck number and LECI number off the photographed slip, so the
+  /// driver does not type a number plate into a phone at the gate. Also
+  /// reports whether what it read agrees with the vehicle on this trip.
+  ///
+  /// RECORDS NOTHING. That is the point, not an omission: [tataGateInTrip]
+  /// rejects a `leci_truck_no` that does not match the trip vehicle with
+  /// `409 VEHICLE_MISMATCH`, so feeding OCR into it would let one misread
+  /// character strand a loaded truck at the gate. This fills the form, the
+  /// driver confirms, and gate-in runs unchanged. Safe to call again on every
+  /// retake.
+  Future<DplApiResponse<DplLeciScan>> leciScanTrip(
+    int tripId, {
+    required Uint8List photoBytes,
+    String filename = 'leci.jpg',
+  }) {
+    return _send<DplLeciScan>(
+      () => _dio.post(
+        DplPaths.tripLeciScan(tripId),
+        data: FormData.fromMap({
+          'leci_photo': MultipartFile.fromBytes(
+            photoBytes,
+            filename: filename,
+            // Same reason as the gate-in upload: without an explicit
+            // content-type Dio sends application/octet-stream and the
+            // backend's image filter rejects the part.
+            contentType: _leciPhotoMediaType(filename),
+          ),
+        }),
+      ),
+      fallback: 'Could not read the LECI slip.',
+      fromJson: (data) => DplLeciScan.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : const {},
+      ),
     );
   }
 

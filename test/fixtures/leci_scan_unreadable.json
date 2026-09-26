@@ -1,0 +1,40 @@
+{
+  "success": true,
+  "data": {
+    "scanId": null,
+    "readable": true,
+    "leci_truck_no": null,
+    "leci_no": null,
+    "tripVehicle": "MH12AB1234",
+    "plateCheck": {
+      "status": "unknown",
+      "matchesTrip": null,
+      "note": "No truck number could be read from the slip."
+    },
+    "review": {},
+    "warnings": [
+      {
+        "code": "NO_TEXT_DETECTED",
+        "message": "Almost no printed text was found in this image. Check that the document is in frame and in focus."
+      },
+      {
+        "code": "NO_FIELDS_FOUND",
+        "message": "No fields could be read from this document. If the photo looks clear, the layout may need a new profile."
+      },
+      {
+        "code": "NO_TRUCK_NUMBER_READ",
+        "message": "No truck number could be read from the slip — type it from the plate on the truck, not from the paper.",
+        "fields": [
+          "leci_truck_no"
+        ]
+      }
+    ],
+    "confidence": 0,
+    "durationMs": 867,
+    "recordsNothing": true,
+    "trip": {
+      "id": 503,
+      "status": "in_transit"
+    }
+  }
+}
