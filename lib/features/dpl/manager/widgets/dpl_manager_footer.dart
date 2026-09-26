@@ -1,3 +1,5 @@
+import '../../core/dpl_permissions_provider.dart';
+import '../../maxion/maxion_tools_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,7 +47,10 @@ class DplManagerFooter extends ConsumerWidget {
               label: 'Plans',
             ),
           ]
-        : dplManagerNavItems;
+        : [
+            ...dplManagerNavItems,
+            if (hasAnyMaxionTool(ref.watch(dplPermissionsProvider))) dplManagerToolsNavItem,
+          ];
 
     final index = rawIndex.clamp(0, items.length - 1);
 

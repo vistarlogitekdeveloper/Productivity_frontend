@@ -209,6 +209,21 @@ void main() {
         DplPermission.palletSpd,
         DplPermission.labelsScanExternal,
         DplPermission.palletTrolley,
+        DplPermission.reportsStock,
+        DplPermission.reportsSchedule,
+        DplPermission.tripsShipment,
+        DplPermission.gatepassView,
+        DplPermission.slipsReverse,
+        DplPermission.slipsReverseApprove,
+        DplPermission.returnsReceive,
+        DplPermission.returnsDisposition,
+        DplPermission.stockImport,
+        DplPermission.stockAdjust,
+        DplPermission.stockAdjustApprove,
+        DplPermission.stockCount,
+        DplPermission.stockCountApprove,
+        DplPermission.syncPush,
+        DplPermission.syncResolve,
       };
       expect(DplPermission.optInOnly, known);
       for (final k in DplPermission.optInOnly) {

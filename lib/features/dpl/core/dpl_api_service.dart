@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -53,6 +54,15 @@ import 'dpl_api_client.dart';
 import 'dpl_api_response.dart';
 import 'dpl_constants.dart';
 import 'dpl_error_mapper.dart';
+import '../models/dpl_customer_return.dart';
+import '../models/dpl_logistics.dart';
+import '../models/dpl_oem_dashboard.dart';
+import '../models/dpl_report_subscription.dart';
+import '../models/dpl_report_table.dart';
+import '../models/dpl_stock_control.dart';
+import '../models/dpl_sync.dart';
+
+part 'dpl_api_maxion.dart';
 
 /// Single, central wrapper around every DPL endpoint.
 ///
@@ -89,6 +99,7 @@ class DplApiService {
               map['error']?.toString() ?? fallback,
               code: map['code']?.toString(),
               statusCode: response.statusCode,
+              errorLocal: map['message_local']?.toString(),
             );
           }
           final data = map['data'];

@@ -9,6 +9,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:printing/printing.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../maxion/logistics/reversal_widgets.dart';
+import '../../core/dpl_permissions_provider.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../auth/auth_provider.dart';
 import '../../core/design/dpl_theme.dart';
@@ -94,6 +96,20 @@ class _DispatchSlipDetailScreenState
                 ? null
                 : () => _printSlip(context, ref, slipForActions),
           ),
+          // Shipment reversal (backend migration 160): only a dispatched slip,
+          // and only somebody holding slips.reverse. A manager approves it.
+          if (slipForActions != null &&
+              slipForActions.status == 'dispatched' &&
+              ref.watch(dplPermissionsProvider).can(DplPermission.slipsReverse))
+            IconButton(
+              tooltip: 'Request a shipment reversal',
+              icon: const Icon(Icons.undo_outlined),
+              onPressed: () async {
+                await showRequestReversalSheet(context, ref,
+                    slipId: slipForActions.id, slipNo: slipForActions.slipNo);
+                ref.invalidate(dplDispatchSlipDetailProvider(widget.slipId));
+              },
+            ),
         ],
       ),
       body: async.when(

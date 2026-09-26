@@ -1,3 +1,5 @@
+import '../core/dpl_permissions_provider.dart';
+import '../maxion/maxion_tools_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -70,6 +72,14 @@ class DplSummaryShell extends ConsumerWidget {
             ? const DplDashboardSwitcher(current: DplDashboardMode.dispatch)
             : null,
         actions: [
+          // Maxion tools: shipment & gate pass, returns, reports, counts…
+          if (hasAnyMaxionTool(ref.watch(dplPermissionsProvider)))
+            IconButton(
+              tooltip: 'Tools',
+              icon: const Icon(Icons.handyman_outlined),
+              onPressed: () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => const DplMaxionToolsScreen())),
+            ),
           // Dispatch role can pull the monthly Buffer Creation Plan as an
           // Excel workbook (Opn Stock at TML / Production at GA / Dispatch
           // From GA / Customer Plan, per part per day). Hidden for QA/PDI

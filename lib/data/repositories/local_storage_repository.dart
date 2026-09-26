@@ -112,6 +112,17 @@ class LocalStorageRepository {
   // request, so a stale snapshot can only ever hide something.
   // ------------------------------------------------------------
 
+  /// 'mr' or 'hi' when the operator picked Marathi or Hindi; null = English.
+  String? getDplLanguage() => _prefs.getString(AppConstants.dplLanguageKey);
+
+  Future<void> saveDplLanguage(String? code) async {
+    if (code == null) {
+      await _prefs.remove(AppConstants.dplLanguageKey);
+    } else {
+      await _prefs.setString(AppConstants.dplLanguageKey, code);
+    }
+  }
+
   Future<void> saveDplPermissions(List<String> keys) async {
     await _prefs.setStringList(AppConstants.dplPermissionsKey, keys);
   }
@@ -147,8 +158,31 @@ class LocalStorageRepository {
     await _prefs.remove(AppConstants.dplMustChangePasswordKey);
   }
 
+  /// Clears everything about the signed-in person, but keeps what belongs to
+  /// the device ([AppConstants.deviceScopedKeys]): the offline outbox of
+  /// unsynced floor work, its sequence counter, the device id and the floor
+  /// language. Logging out must never throw away scans already made.
   Future<void> clearAll() async {
+    final keep = <String, Object>{};
+    for (final k in AppConstants.deviceScopedKeys) {
+      final v = _prefs.get(k);
+      if (v != null) keep[k] = v;
+    }
     await _prefs.clear();
+    for (final e in keep.entries) {
+      final v = e.value;
+      if (v is String) {
+        await _prefs.setString(e.key, v);
+      } else if (v is int) {
+        await _prefs.setInt(e.key, v);
+      } else if (v is bool) {
+        await _prefs.setBool(e.key, v);
+      } else if (v is double) {
+        await _prefs.setDouble(e.key, v);
+      } else if (v is List) {
+        await _prefs.setStringList(e.key, v.map((x) => x.toString()).toList());
+      }
+    }
   }
 }
 

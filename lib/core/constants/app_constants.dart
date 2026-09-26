@@ -28,6 +28,24 @@ class AppConstants {
   /// the person is allowed to do. Advisory only — the server re-checks every
   /// request, so a stale copy here can hide a button but can never grant one.
   static const String dplPermissionsKey = 'DPL_PERMISSIONS';
+  /// The floor language the operator chose for DPL messages: 'mr', 'hi', or absent (English).
+  static const String dplLanguageKey = 'DPL_LANGUAGE';
+
+  /// Keys that belong to the DEVICE, not the signed-in person, and must
+  /// survive logout. The offline outbox holds floor work not yet synced
+  /// (each item already names the operator who did it); losing it on a
+  /// shift change would silently drop real scans, and a new device id would
+  /// orphan the server-side sequence. The floor language is the handheld's
+  /// setting too.
+  static const String dplSyncOutboxKey = 'dpl_sync_outbox_v1';
+  static const String dplSyncNextSeqKey = 'dpl_sync_next_seq';
+  static const String dplDeviceIdKey = 'dpl_device_id';
+  static const List<String> deviceScopedKeys = [
+    dplSyncOutboxKey,
+    dplSyncNextSeqKey,
+    dplDeviceIdKey,
+    dplLanguageKey,
+  ];
 
   /// True while the backend says this account is still on a password somebody
   /// else chose — an administrator created it, or reset it. The router forces

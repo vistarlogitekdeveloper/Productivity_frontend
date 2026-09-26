@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../journey/widgets/scanner_error_view.dart';
+import '../../maxion/common/maxion_kit.dart';
 import '../../models/dpl_trip_label_scan.dart';
 
 /// Scans the labels this system printed onto a trip, before it goes to the DEO.
@@ -18,6 +19,12 @@ import '../../models/dpl_trip_label_scan.dart';
 /// Every refusal is spoken in terms of the piece in the operator's hand —
 /// "already on trip #4", "not on this trip", "one too many" — because "invalid"
 /// tells someone holding a physical part nothing about what to do with it.
+///
+/// Pallets (backend migration 159): scanning a pallet label (`MWP|…`, or its
+/// number typed in) loads every wheel on it in one go, and the pallet appears
+/// in the panel with an Unload action until a slip is cut. A single wheel that
+/// sits on a pallet is refused — the pallet is what ships. When the operator
+/// has chosen Marathi or Hindi, refusals show that line above the English.
 class TripLabelScanScreen extends ConsumerStatefulWidget {
   final int tripId;
   final int tripNumber;
@@ -84,6 +91,7 @@ class _TripLabelScanScreenState extends ConsumerState<TripLabelScanScreen> {
   }
 
   Future<void> _submit(String code) async {
+    final before = {for (final p in _progress?.pallets ?? const <DplLoadedPallet>[]) p.palletId};
     final res = await ref.read(dplApiServiceProvider).scanLabelToTrip(
           tripId: widget.tripId,
           code: code,
@@ -94,11 +102,18 @@ class _TripLabelScanScreenState extends ConsumerState<TripLabelScanScreen> {
       _busy = false;
       if (res.isError) {
         _lastWasError = true;
-        _lastMessage = res.error ?? 'That label could not be scanned.';
+        final msg = res.floorMessage.trim();
+        _lastMessage = msg.isEmpty ? 'That label could not be scanned.' : msg;
       } else {
         _lastWasError = false;
         _progress = res.data ?? _progress;
-        _lastMessage = 'Scanned.';
+        // A pallet label loads the whole pallet; say so, with its count.
+        final loaded = (_progress?.pallets ?? const <DplLoadedPallet>[])
+            .where((p) => !before.contains(p.palletId))
+            .toList();
+        _lastMessage = loaded.isEmpty
+            ? 'Scanned.'
+            : 'Pallet ${loaded.first.palletNo} loaded — ${loaded.first.qty} wheels.';
       }
     });
 
@@ -150,11 +165,46 @@ class _TripLabelScanScreenState extends ConsumerState<TripLabelScanScreen> {
       _busy = false;
       if (res.isError) {
         _lastWasError = true;
-        _lastMessage = res.error ?? 'Could not undo that scan.';
+        final msg = res.floorMessage.trim();
+        _lastMessage = msg.isEmpty ? 'Could not undo that scan.' : msg;
       } else {
         _lastWasError = false;
         _progress = res.data ?? _progress;
         _lastMessage = 'Removed $serial.';
+      }
+    });
+  }
+
+  /// Take a whole pallet back off the trip (refused once a slip is cut).
+  Future<void> _unloadPallet(DplLoadedPallet pallet) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text('Unload ${pallet.palletNo}?'),
+        content: Text('All ${pallet.qty} wheels on it come off this trip.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Keep')),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Unload')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    final res = await ref.read(dplApiServiceProvider).unloadPalletFromTrip(
+          tripId: widget.tripId,
+          palletId: pallet.palletId,
+        );
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      if (res.isError) {
+        _lastWasError = true;
+        final msg = res.floorMessage.trim();
+        _lastMessage = msg.isEmpty ? 'Could not unload that pallet.' : msg;
+      } else {
+        _lastWasError = false;
+        _progress = res.data ?? _progress;
+        _lastMessage = 'Unloaded ${pallet.palletNo}.';
       }
     });
   }
@@ -174,8 +224,9 @@ class _TripLabelScanScreenState extends ConsumerState<TripLabelScanScreen> {
         appBar: DplAppBar(
           title: 'Scan labels · Trip #${widget.tripNumber}',
           actions: [
+            const DplLanguageMenuButton(),
             IconButton(
-              tooltip: 'Enter serial by hand',
+              tooltip: 'Enter serial or pallet number by hand',
               icon: const Icon(Icons.keyboard_alt_outlined),
               onPressed: _busy ? null : _manualEntry,
             ),
@@ -224,6 +275,7 @@ class _TripLabelScanScreenState extends ConsumerState<TripLabelScanScreen> {
                 complete: complete,
                 busy: _busy,
                 onUndo: _undo,
+                onUnloadPallet: _unloadPallet,
                 onDone: () => Navigator.of(context).pop(progress),
               ),
             ),
@@ -240,6 +292,7 @@ class _ProgressPanel extends StatelessWidget {
   final bool complete;
   final bool busy;
   final ValueChanged<String> onUndo;
+  final ValueChanged<DplLoadedPallet> onUnloadPallet;
   final VoidCallback onDone;
 
   const _ProgressPanel({
@@ -247,6 +300,7 @@ class _ProgressPanel extends StatelessWidget {
     required this.complete,
     required this.busy,
     required this.onUndo,
+    required this.onUnloadPallet,
     required this.onDone,
   });
 
@@ -274,6 +328,25 @@ class _ProgressPanel extends StatelessWidget {
                 ),
               )
             else ...[
+              if (p.pallets.isNotEmpty) ...[
+                Text('Pallets on this truck', style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    for (final pallet in p.pallets)
+                      InputChip(
+                        avatar: const Icon(Icons.inventory_2_outlined, size: 16),
+                        label: Text('${pallet.palletNo} · ${pallet.qty}'),
+                        onDeleted: busy ? null : () => onUnloadPallet(pallet),
+                        deleteIcon: const Icon(Icons.remove_circle_outline, size: 18),
+                        deleteButtonTooltipMessage: 'Unload this pallet',
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
               for (final plan in p.plans)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
