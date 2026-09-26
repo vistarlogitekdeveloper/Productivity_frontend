@@ -133,8 +133,15 @@ final List<DplMaxionTool> dplMaxionTools = [
 
 /// The tools this user may open. With permissions unknown every Maxion key is
 /// opt-in denied, so the hub is empty rather than full of refusals.
-List<DplMaxionTool> visibleMaxionTools(DplPermissions perms) =>
-    dplMaxionTools.where((t) => perms.canAny(t.anyOf)).toList();
+///
+/// Nothing shows until the server grants at least one Maxion key. The masters
+/// tile is gated by `masters.view`, which predates Maxion: without this rule a
+/// manager on a backend lacking migrations 159–164 would get a Tools tab whose
+/// only screen 404s on every call.
+List<DplMaxionTool> visibleMaxionTools(DplPermissions perms) {
+  if (!perms.canAny(DplPermission.maxionKeys)) return const [];
+  return dplMaxionTools.where((t) => perms.canAny(t.anyOf)).toList();
+}
 
 /// Whether to show the Tools entry at all in a shell.
 bool hasAnyMaxionTool(DplPermissions perms) =>

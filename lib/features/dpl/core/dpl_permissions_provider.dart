@@ -254,6 +254,27 @@ class DplPermission {
   static const String syncPush = 'sync.push';
   static const String syncResolve = 'sync.resolve';
 
+  /// The keys the Maxion integration added (backend migrations 159–164). A
+  /// backend without those migrations grants none of them, whatever the role —
+  /// which is how the app tells that the Maxion endpoints are not there.
+  static const List<String> maxionKeys = <String>[
+    reportsStock,
+    reportsSchedule,
+    tripsShipment,
+    gatepassView,
+    slipsReverse,
+    slipsReverseApprove,
+    returnsReceive,
+    returnsDisposition,
+    stockImport,
+    stockAdjust,
+    stockAdjustApprove,
+    stockCount,
+    stockCountApprove,
+    syncPush,
+    syncResolve,
+  ];
+
   /// Anything that opens the Administration panel.
   static const List<String> adminPanel = <String>[
     usersView,
