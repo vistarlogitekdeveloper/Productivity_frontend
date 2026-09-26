@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
+import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_permissions_provider.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 
@@ -22,11 +24,11 @@ class DplMastersHubScreen extends ConsumerWidget {
     final canViewPallets =
         ref.watch(dplPermissionsProvider).can(DplPermission.palletView);
     final body = Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF8FBFF), Color(0xFFF2FFF9), Color(0xFFF7F2FF)],
+          colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
         ),
       ),
       child: ListView(
@@ -35,19 +37,19 @@ class DplMastersHubScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.95),
+              color: DplColors.cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2EAF6)),
+              border: Border.all(color: DplColors.divider),
             ),
-            child: const Text(
+            child: Text(
               'Manage master data used across plans and reports.',
-              style: TextStyle(color: Color(0xFF5D6A7A)),
+              style: TextStyle(color: DplColors.textSecondary),
             ),
           ),
           const SizedBox(height: 12),
           _OptionCard(
             icon: Icons.precision_manufacturing_outlined,
-            color: const Color(0xFF1D4ED8),
+            color: VistarPalette.info,
             title: 'Machines',
             subtitle: 'Production machines used for daily plans.',
             onTap: () => context.push('/dpl/manager/masters/machines'),
@@ -55,7 +57,7 @@ class DplMastersHubScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           _OptionCard(
             icon: Icons.inventory_2_outlined,
-            color: const Color(0xFF047857),
+            color: VistarPalette.ok,
             title: 'Parts',
             subtitle: 'Searchable, paginated parts catalogue.',
             onTap: () => context.push('/dpl/manager/masters/parts'),
@@ -63,7 +65,7 @@ class DplMastersHubScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           _OptionCard(
             icon: Icons.report_outlined,
-            color: const Color(0xFFB45309),
+            color: VistarPalette.warn,
             title: 'Downtime Reasons',
             subtitle: 'Planned & unplanned reasons used by the Pareto report.',
             onTap: () =>
@@ -91,7 +93,7 @@ class DplMastersHubScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           _OptionCard(
             icon: Icons.verified_user_outlined,
-            color: const Color(0xFFB45309),
+            color: VistarPalette.warn,
             title: 'Identity Audit',
             subtitle: 'Supervisor selfies captured per shift — view '
                 'photo, capture time and flag suspicious entries.',
@@ -105,7 +107,7 @@ class DplMastersHubScreen extends ConsumerWidget {
           // dispatch-planning hub.
           _OptionCard(
             icon: Icons.layers_outlined,
-            color: const Color(0xFF6B1F8C),
+            color: DplColors.primary,
             title: 'Stocking Norm',
             subtitle:
                 'Per-part safe-stock target at the customer. Configure '
@@ -115,7 +117,7 @@ class DplMastersHubScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           _OptionCard(
             icon: Icons.inventory_outlined,
-            color: const Color(0xFFB45309),
+            color: VistarPalette.warn,
             title: 'Customer Opening Stock',
             subtitle:
                 'What the customer is currently holding per part. '
@@ -126,7 +128,7 @@ class DplMastersHubScreen extends ConsumerWidget {
           const SizedBox(height: 10),
           _OptionCard(
             icon: Icons.warehouse_outlined,
-            color: const Color(0xFF1D4ED8),
+            color: VistarPalette.info,
             title: 'Opening Stock at GA',
             subtitle:
                 'Opening stock held at GA per part. Refresh monthly — '
@@ -203,9 +205,9 @@ class _OptionCard extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.95),
+            color: DplColors.cardBg,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: DplColors.divider),
           ),
           child: Row(
             children: [
@@ -232,7 +234,7 @@ class _OptionCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(color: Color(0xFF5D6A7A)),
+                      style: TextStyle(color: DplColors.textSecondary),
                     ),
                   ],
                 ),

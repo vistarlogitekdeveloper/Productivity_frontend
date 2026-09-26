@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_card.dart';
@@ -97,8 +98,8 @@ class QaPlanDetailScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('dd MMM yyyy').format(plan.planDate),
-                  style: const TextStyle(
-                    color: Color(0xFF5D6A7A),
+                  style: TextStyle(
+                    color: VistarPalette.txt2,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -170,15 +171,15 @@ class _QaPlanItemCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: VistarPalette.surface3,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '#${item.planNo}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
-                    color: Color(0xFF334155),
+                    color: VistarPalette.txt,
                   ),
                 ),
               ),
@@ -200,8 +201,8 @@ class _QaPlanItemCard extends ConsumerWidget {
                       item.partDescription.isEmpty
                           ? item.partName
                           : item.partDescription,
-                      style: const TextStyle(
-                        color: Color(0xFF5D6A7A),
+                      style: TextStyle(
+                        color: VistarPalette.txt2,
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
@@ -236,8 +237,8 @@ class _QaPlanItemCard extends ConsumerWidget {
                   valueColor: summary == null
                       ? null
                       : (summary.remainingQty > 0
-                          ? const Color(0xFF15803D)
-                          : const Color(0xFF9CA3AF)),
+                          ? VistarPalette.ok
+                          : VistarPalette.txt3),
                 ),
               ),
             ],
@@ -282,9 +283,9 @@ class _LocationRow extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: VistarPalette.surface2,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: VistarPalette.line),
         ),
         child: Row(
           children: [
@@ -294,8 +295,8 @@ class _LocationRow extends ConsumerWidget {
                   : Icons.place_rounded,
               size: 18,
               color: assignment == null
-                  ? const Color(0xFF94A3B8)
-                  : const Color(0xFF15803D),
+                  ? VistarPalette.txt3
+                  : VistarPalette.ok,
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -304,10 +305,10 @@ class _LocationRow extends ConsumerWidget {
                 children: [
                   Text(
                     assignment == null ? 'Not stored yet' : 'Stored at',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF64748B),
+                      color: VistarPalette.txt2,
                     ),
                   ),
                   Text(
@@ -321,8 +322,8 @@ class _LocationRow extends ConsumerWidget {
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                       color: assignment == null
-                          ? const Color(0xFF475569)
-                          : const Color(0xFF111827),
+                          ? VistarPalette.txt2
+                          : VistarPalette.txt,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -492,12 +493,12 @@ class _ActionRow extends ConsumerWidget {
     if (res != null && res.isError) {
       return Row(
         children: [
-          const Icon(Icons.error_outline, size: 16, color: Color(0xFFB91C1C)),
+          Icon(Icons.error_outline, size: 16, color: VistarPalette.bad),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               res.error ?? 'Could not read the sticker count.',
-              style: const TextStyle(fontSize: 12, color: Color(0xFFB91C1C)),
+              style: TextStyle(fontSize: 12, color: VistarPalette.bad),
             ),
           ),
           TextButton(

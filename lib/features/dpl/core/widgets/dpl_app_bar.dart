@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../dpl_organization_provider.dart';
 import 'dpl_user_menu.dart';
 import 'vistar_logo.dart';
@@ -9,18 +11,18 @@ import 'vistar_logo.dart';
 ///
 /// Layout (left → right):
 ///   * Leading — back arrow when the route can pop, otherwise the
-///     Vistar wordmark logo.
+///     Vistar "S" glyph (plus the Bricolage product name on wide screens —
+///     the wordmark itself is reserved for splash and login).
 ///   * Title — bold display + optional [subtitle] widget below (e.g. a
 ///     "Live • updated 12s ago" indicator).
 ///   * Actions — caller-supplied widgets followed by [DplUserMenu]
 ///     (when [showProfile] is true).
 ///
 /// Visual identity:
-///   * White surface, no Material elevation.
-///   * Brand-purple accent strip at the very top (the Vistar swoosh:
-///     magenta → orange → yellow). This is the recognizable "Vistar
-///     bar" across every screen.
-///   * 1px neutral divider at the bottom.
+///   * Card surface (deep ink in dark mode), no Material elevation.
+///   * The Vistar ribbon as a 3px strip at the very top. This is the
+///     recognizable "Vistar bar" across every screen.
+///   * Hairline divider at the bottom.
 class DplAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String title;
   final Widget? subtitle;
@@ -39,15 +41,12 @@ class DplAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.bottom,
   });
 
-  // Brand tokens — kept inline so this widget has no design-system
-  // import beyond VistarLogo / DplUserMenu.
-  static const _accentMagenta = Color(0xFFA4257A);
-  static const _accentOrange = Color(0xFFE54B2A);
-  static const _accentYellow = Color(0xFFF5A623);
-  static const _surface = Color(0xFFFFFFFF);
-  static const _divider = Color(0xFFE5E7EB);
-  static const _textPrimary = Color(0xFF111827);
-  static const _textMuted = Color(0xFF6B7280);
+  // Brand tokens — resolved against the active light / dark palette.
+  static Color get _surface =>
+      VistarPalette.isDark ? VistarPalette.bg2 : VistarPalette.surface;
+  static Color get _divider => VistarPalette.line;
+  static Color get _textPrimary => VistarPalette.txt;
+  static Color get _textMuted => VistarPalette.txt3;
 
   static const double _baseHeight = 72;
   static const double _accentStripHeight = 3;
@@ -70,11 +69,9 @@ class DplAppBar extends ConsumerWidget implements PreferredSizeWidget {
     // Leading slot has two flavors:
     //   * Back arrow — fixed 56dp slot so titles align consistently
     //     across screens that can/can't pop.
-    //   * Vistar wordmark — sized to its natural aspect ratio with
-    //     tight horizontal padding. No SizedBox reservation, so the
-    //     title sits immediately to the right of the logo and we
-    //     don't leak whitespace when the asset has transparent
-    //     padding.
+    //   * Vistar "S" glyph — plus the Bricolage product name and a
+    //     hairline separator on wide screens. No SizedBox reservation,
+    //     so the title sits immediately to the right of the brand.
     final Widget leadingWidget;
     if (leading != null) {
       leadingWidget = leading!;
@@ -84,7 +81,7 @@ class DplAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: Center(
           child: IconButton(
             tooltip: 'Back',
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
               color: _textPrimary,
             ),
@@ -94,10 +91,43 @@ class DplAppBar extends ConsumerWidget implements PreferredSizeWidget {
       );
     } else {
       leadingWidget = Padding(
-        padding: EdgeInsets.fromLTRB(isPhone ? 12 : 16, 0, isPhone ? 6 : 10, 0),
-        child: VistarLogo(
-          height: isPhone ? 56 : 64,
-          showWordmark: true,
+        padding: EdgeInsets.fromLTRB(isPhone ? 12 : 16, 0, isPhone ? 8 : 14, 0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            VistarLogo(height: isPhone ? 34 : 38),
+            if (!isPhone) ...[
+              const SizedBox(width: 10),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Vistar Pulse',
+                    style: GoogleFonts.bricolageGrotesque(
+                      color: _textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
+                      height: 1.05,
+                    ),
+                  ),
+                  Text(
+                    'PRODUCTION · DISPATCH',
+                    style: GoogleFonts.manrope(
+                      color: _textMuted,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.6,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 14),
+              Container(width: 1, height: 28, color: _divider),
+            ],
+          ],
         ),
       );
     }
@@ -110,19 +140,15 @@ class DplAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Brand accent strip — instant Vistar recognition.
+            // Brand accent strip — the Vistar ribbon, instant recognition.
             Container(
               height: _accentStripHeight,
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [_accentMagenta, _accentOrange, _accentYellow],
-                ),
+                gradient: VistarPalette.ribbonFlat,
               ),
             ),
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(color: _divider, width: 1),
                 ),
@@ -141,10 +167,11 @@ class DplAppBar extends ConsumerWidget implements PreferredSizeWidget {
                             Flexible(
                               child: Text(
                                 title,
-                                style: TextStyle(
+                                style: GoogleFonts.bricolageGrotesque(
                                   color: _textPrimary,
                                   fontWeight: FontWeight.w800,
-                                  fontSize: isPhone ? 15 : 17,
+                                  fontSize: isPhone ? 16 : 18,
+                                  letterSpacing: -0.4,
                                   height: 1.15,
                                 ),
                                 maxLines: 1,
@@ -161,7 +188,7 @@ class DplAppBar extends ConsumerWidget implements PreferredSizeWidget {
                           Padding(
                             padding: const EdgeInsets.only(top: 2),
                             child: DefaultTextStyle(
-                              style: const TextStyle(
+                              style: GoogleFonts.manrope(
                                 color: _textMuted,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -206,17 +233,17 @@ class _OrgPill extends StatelessWidget {
         vertical: isPhone ? 2 : 3,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3E8F9),
+        color: VistarPalette.primaryTint,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFD8BFE9)),
+        border: Border.all(color: VistarPalette.primaryLine),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.business_rounded,
             size: 11,
-            color: Color(0xFF4A1163),
+            color: VistarPalette.primaryInk,
           ),
           const SizedBox(width: 4),
           ConstrainedBox(
@@ -224,7 +251,7 @@ class _OrgPill extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: const Color(0xFF4A1163),
+                color: VistarPalette.primaryInk,
                 fontWeight: FontWeight.w700,
                 fontSize: isPhone ? 10.5 : 11.5,
                 height: 1.0,

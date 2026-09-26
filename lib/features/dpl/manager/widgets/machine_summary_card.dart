@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import 'status_badge.dart';
 
 /// Single card on the Manager Dashboard's "Machines" list.
@@ -66,7 +67,7 @@ class DplMachineSummaryCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(isPhone ? 12 : 16),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,7 +138,7 @@ class DplMachineSummaryCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: completionPct.clamp(0, 1),
                   minHeight: isPhone ? 5 : 6,
-                  backgroundColor: const Color(0xFFEEF1F5),
+                  backgroundColor: VistarPalette.surface3,
                 ),
               ),
               SizedBox(height: isPhone ? 6 : 8),
@@ -146,7 +147,7 @@ class DplMachineSummaryCard extends StatelessWidget {
                   Icon(
                     Icons.person_outline,
                     size: isPhone ? 14 : 16,
-                    color: const Color(0xFF5D6A7A),
+                    color: VistarPalette.txt2,
                   ),
                   const SizedBox(width: 4),
                   Expanded(
@@ -155,7 +156,7 @@ class DplMachineSummaryCard extends StatelessWidget {
                           ? 'No supervisor assigned'
                           : supervisorName,
                       style: TextStyle(
-                        color: const Color(0xFF5D6A7A),
+                        color: VistarPalette.txt2,
                         fontWeight: FontWeight.w600,
                         fontSize: isPhone ? 12 : 14,
                       ),
@@ -170,14 +171,14 @@ class DplMachineSummaryCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: VistarPalette.surface3,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                        border: Border.all(color: VistarPalette.line2),
                       ),
                       child: Text(
                         '$planCount plans',
                         style: TextStyle(
-                          color: const Color(0xFF334155),
+                          color: VistarPalette.txt,
                           fontWeight: FontWeight.w700,
                           fontSize: isPhone ? 10 : 11,
                           height: 1.0,
@@ -189,7 +190,7 @@ class DplMachineSummaryCard extends StatelessWidget {
                   Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: isPhone ? 12 : 14,
-                    color: const Color(0xFF5D6A7A),
+                    color: VistarPalette.txt2,
                   ),
                 ],
               ),
@@ -212,7 +213,7 @@ class DplMachineSummaryCard extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: isPhone ? 10 : 11,
-            color: const Color(0xFF5D6A7A),
+            color: VistarPalette.txt2,
             fontWeight: FontWeight.w600,
             height: 1.1,
           ),
@@ -251,14 +252,14 @@ class _ShiftChip extends StatelessWidget {
         vertical: isPhone ? 2 : 3,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
+        color: VistarPalette.infoBg,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFC7D2FE)),
+        border: Border.all(color: VistarPalette.infoLine),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: const Color(0xFF3730A3),
+          color: VistarPalette.infoInk,
           fontWeight: FontWeight.w700,
           fontSize: isPhone ? 10 : 11,
           height: 1.0,

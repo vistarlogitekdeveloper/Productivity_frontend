@@ -72,7 +72,7 @@ class AssignDriverButton extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 3),
-            const Icon(Icons.lock_rounded,
+            Icon(Icons.lock_rounded,
                 size: 12, color: DplColors.textSecondary),
           ],
         ),
@@ -169,7 +169,7 @@ class _BlockedChip extends StatelessWidget {
         // outer context would then make "Got it" throw ("Looking up a
         // deactivated widget's ancestor is unsafe") and silently stop working.
         builder: (dialogCtx) => AlertDialog(
-          icon: const Icon(Icons.local_shipping_outlined,
+          icon: Icon(Icons.local_shipping_outlined,
               color: DplColors.warning, size: 32),
           title: const Text("Can't assign a driver yet"),
           content: Text(
@@ -285,7 +285,7 @@ class _DriverPickerSheetState extends ConsumerState<_DriverPickerSheet> {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.75,
         ),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: DplColors.pageBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -322,7 +322,7 @@ class _DriverPickerSheetState extends ConsumerState<_DriverPickerSheet> {
                           child: Text(
                             'Trip #${widget.tripId}'
                             '${hasDriver ? " · currently: ${widget.currentDriverName}" : ""}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: DplColors.textSecondary,
                             ),
@@ -365,7 +365,7 @@ class _DriverPickerSheetState extends ConsumerState<_DriverPickerSheet> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline,
+                Icon(Icons.error_outline,
                     color: DplColors.error, size: 40),
                 const SizedBox(height: 12),
                 Text(
@@ -383,7 +383,7 @@ class _DriverPickerSheetState extends ConsumerState<_DriverPickerSheet> {
         }
         final drivers = snap.data ?? const <DplDriverUser>[];
         if (drivers.isEmpty) {
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.all(24),
             child: Center(
               child: Column(
@@ -412,7 +412,7 @@ class _DriverPickerSheetState extends ConsumerState<_DriverPickerSheet> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           itemCount: drivers.length,
           separatorBuilder: (_, _) =>
-              const Divider(height: 1, color: DplColors.divider),
+              Divider(height: 1, color: DplColors.divider),
           itemBuilder: (_, i) => _driverTile(drivers[i]),
         );
       },
@@ -444,7 +444,7 @@ class _DriverPickerSheetState extends ConsumerState<_DriverPickerSheet> {
       subtitle: busyElsewhere
           ? Text(
               'On trip #${d.activeTripNumber ?? d.activeTripId} — unavailable',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 color: DplColors.error,
                 fontWeight: FontWeight.w600,
@@ -464,9 +464,9 @@ class _DriverPickerSheetState extends ConsumerState<_DriverPickerSheet> {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : (busyElsewhere
-              ? const Icon(Icons.block_rounded,
+              ? Icon(Icons.block_rounded,
                   color: DplColors.textSecondary, size: 18)
-              : const Icon(Icons.chevron_right_rounded,
+              : Icon(Icons.chevron_right_rounded,
                   color: DplColors.textSecondary)),
       onTap: (busy || busyElsewhere) ? null : () => _assign(d),
     );

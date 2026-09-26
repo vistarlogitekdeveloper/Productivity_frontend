@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../../data/models/production_entry_model.dart';
 import 'report_export_service.dart';
@@ -13,18 +14,18 @@ class ReportsListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const reports = <_ReportMeta>[
+    final reports = <_ReportMeta>[
       _ReportMeta(
         title: 'Daily Production',
         subtitle: 'Day-wise output and quality insight',
         icon: Icons.today_outlined,
-        accent: Color(0xFF1565C0),
+        accent: VistarPalette.info,
       ),
       _ReportMeta(
         title: 'Shift Performance',
         subtitle: 'Compare Shift A/B/C productivity',
         icon: Icons.schedule_outlined,
-        accent: Color(0xFF2E7D32),
+        accent: VistarPalette.ok,
       ),
       _ReportMeta(
         title: 'Machine Performance',
@@ -36,7 +37,7 @@ class ReportsListScreen extends StatelessWidget {
         title: 'Rejection Analysis',
         subtitle: 'Find top rejection reasons quickly',
         icon: Icons.rule_folder_outlined,
-        accent: Color(0xFFC62828),
+        accent: VistarPalette.bad,
       ),
       _ReportMeta(
         title: 'Item Productivity',
@@ -48,16 +49,16 @@ class ReportsListScreen extends StatelessWidget {
         title: 'Downtime Report',
         subtitle: 'Machine downtime windows and duration',
         icon: Icons.timer_off_outlined,
-        accent: Color(0xFFAD1457),
+        accent: VistarPalette.pink,
       ),
     ];
 
     final body = Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF5F9FF), Color(0xFFF0FFF8), Color(0xFFF7F3FF)],
+          colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
         ),
       ),
       child: ListView(
@@ -608,11 +609,11 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF8FBFF), Color(0xFFF2FFF9), Color(0xFFF7F2FF)],
+            colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
           ),
         ),
         child: RefreshIndicator(
@@ -711,9 +712,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.96),
+                    color: VistarPalette.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2EAF6)),
+                    border: Border.all(color: VistarPalette.line),
                   ),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -723,7 +724,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       horizontalMargin: 10,
                       columnSpacing: 14,
                       headingRowColor: WidgetStateProperty.all(
-                        const Color(0xFFF3F8FF),
+                        VistarPalette.surface2,
                       ),
                       columns: const [
                         DataColumn(label: Text('Date')),
@@ -935,11 +936,7 @@ class _ReportsHero extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF133F8A), Color(0xFF1A7C89), Color(0xFF3A9B73)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: VistarPalette.heroGradient,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -979,9 +976,9 @@ class _ReportCard extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.95),
+            color: VistarPalette.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
           ),
           child: Row(
             children: [
@@ -1008,7 +1005,7 @@ class _ReportCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       meta.subtitle,
-                      style: const TextStyle(color: Color(0xFF5D6A7A)),
+                      style: TextStyle(color: VistarPalette.txt2),
                     ),
                   ],
                 ),
@@ -1032,9 +1029,9 @@ class _ReportHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Row(
         children: [
@@ -1042,12 +1039,12 @@ class _ReportHeader extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF185ADB).withValues(alpha: 0.12),
+              color: VistarPalette.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.insights_outlined,
-              color: Color(0xFF185ADB),
+              color: VistarPalette.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -1063,7 +1060,7 @@ class _ReportHeader extends StatelessWidget {
                 ),
                 Text(
                   'Read-only report insights. Use Review Actions tab for approval workflow.',
-                  style: const TextStyle(color: Color(0xFF5D6A7A)),
+                  style: TextStyle(color: VistarPalette.txt2),
                 ),
               ],
             ),
@@ -1085,16 +1082,16 @@ class _StatCard extends StatelessWidget {
       width: 156,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(color: Color(0xFF617286), fontSize: 12),
+            style: TextStyle(color: VistarPalette.txt2, fontSize: 12),
           ),
           const SizedBox(height: 4),
           Text(
@@ -1138,9 +1135,9 @@ class _FilterPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         children: [
@@ -1216,7 +1213,7 @@ class _FilterPanel extends StatelessWidget {
               child: Text(
                 'Date range uses 7:00 AM to 7:00 AM.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF5F6C7B),
+                  color: VistarPalette.txt2,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1277,9 +1274,9 @@ class _ItemProductivityCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1364,9 +1361,9 @@ class _ProductivityTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFF),
+        color: VistarPalette.surface2,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         children: [
@@ -1374,7 +1371,7 @@ class _ProductivityTable extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             child: Row(
               children: [
-                Icon(icon, size: 18, color: const Color(0xFF185ADB)),
+                Icon(icon, size: 18, color: VistarPalette.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1461,9 +1458,9 @@ class _DowntimeTable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1472,7 +1469,7 @@ class _DowntimeTable extends StatelessWidget {
           dataRowMaxHeight: 92,
           horizontalMargin: 10,
           columnSpacing: 14,
-          headingRowColor: WidgetStateProperty.all(const Color(0xFFFFF0F6)),
+          headingRowColor: WidgetStateProperty.all(VistarPalette.surface2),
           columns: const [
             DataColumn(label: Text('Date')),
             DataColumn(label: Text('Shift')),
@@ -1532,7 +1529,7 @@ class _DowntimeTable extends StatelessWidget {
                     durLabel,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFAD1457),
+                      color: VistarPalette.pink,
                     ),
                   ),
                 ),
@@ -1565,9 +1562,9 @@ class _StateCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1579,7 +1576,7 @@ class _StateCard extends StatelessWidget {
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(color: Color(0xFF5D6A7A))),
+          Text(subtitle, style: TextStyle(color: VistarPalette.txt2)),
         ],
       ),
     );
@@ -1624,9 +1621,9 @@ class _EntryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1647,31 +1644,31 @@ class _EntryCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Date: ${_formatDate(entry.entryDate)} | Shift: ${_safeText(entry.shift)}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
           const SizedBox(height: 3),
           Text(
             'Operator: ${_operatorLabel()} | RC: ${_safeText(entry.rcNumber)}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
           const SizedBox(height: 3),
           Text(
             'Actual: ${entry.actualQuantity} | Reject: ${entry.rejectionQuantity} | Parts/Hr: ${entry.partsPerHour.toStringAsFixed(1)}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
           if ((entry.notes ?? '').trim().isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               'Note: ${entry.notes!.trim()}',
-              style: const TextStyle(color: Color(0xFF5D6A7A)),
+              style: TextStyle(color: VistarPalette.txt2),
             ),
           ],
           if (canManage) ...[
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'Quick Actions',
               style: TextStyle(
-                color: Color(0xFF4C596A),
+                color: VistarPalette.txt2,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
@@ -1684,25 +1681,25 @@ class _EntryCard extends StatelessWidget {
                 _EntryActionButton(
                   label: 'Edit',
                   icon: Icons.edit_outlined,
-                  color: const Color(0xFF185ADB),
+                  color: VistarPalette.primary,
                   onTap: () => onAction(_RowAction.edit),
                 ),
                 _EntryActionButton(
                   label: 'Approve',
                   icon: Icons.check_circle_outline,
-                  color: const Color(0xFF127944),
+                  color: VistarPalette.ok,
                   onTap: () => onAction(_RowAction.approve),
                 ),
                 _EntryActionButton(
                   label: 'Reject',
                   icon: Icons.cancel_outlined,
-                  color: const Color(0xFFB32929),
+                  color: VistarPalette.bad,
                   onTap: () => onAction(_RowAction.reject),
                 ),
                 _EntryActionButton(
                   label: 'Pending',
                   icon: Icons.schedule_outlined,
-                  color: const Color(0xFF8D5A00),
+                  color: VistarPalette.warn,
                   onTap: () => onAction(_RowAction.pending),
                 ),
               ],
@@ -1771,14 +1768,14 @@ class _StatusPill extends StatelessWidget {
     Color bgColor;
     Color textColor;
     if (status == 'APPROVED') {
-      bgColor = const Color(0xFFE7F8EF);
-      textColor = const Color(0xFF127944);
+      bgColor = VistarPalette.okBg;
+      textColor = VistarPalette.ok;
     } else if (status == 'REJECTED') {
-      bgColor = const Color(0xFFFFEAEA);
-      textColor = const Color(0xFFB32929);
+      bgColor = VistarPalette.badBg;
+      textColor = VistarPalette.bad;
     } else {
-      bgColor = const Color(0xFFFFF6E2);
-      textColor = const Color(0xFF8D5A00);
+      bgColor = VistarPalette.warnBg;
+      textColor = VistarPalette.warn;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1822,9 +1819,9 @@ class _Pager extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1840,9 +1837,9 @@ class _Pager extends StatelessWidget {
                 const Spacer(),
                 Text(
                   'Page ${currentPage + 1} / $totalPages | $totalRecords records',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF4C596A),
+                    color: VistarPalette.txt2,
                   ),
                 ),
                 const Spacer(),
@@ -1861,9 +1858,9 @@ class _Pager extends StatelessWidget {
               Text(
                 'Page ${currentPage + 1} / $totalPages | $totalRecords records',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF4C596A),
+                  color: VistarPalette.txt2,
                 ),
               ),
               const SizedBox(height: 10),
@@ -2103,14 +2100,14 @@ class _EntryEditDialogState extends State<_EntryEditDialog> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFECEA),
+                      color: VistarPalette.badBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFFFB4AA)),
+                      border: Border.all(color: VistarPalette.badLine),
                     ),
                     child: Text(
                       _dialogError!,
-                      style: const TextStyle(
-                        color: Color(0xFF8F1D18),
+                      style: TextStyle(
+                        color: VistarPalette.badInk,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

@@ -107,7 +107,7 @@ class _DispatchSlipVerifierScreenState
   Widget build(BuildContext context) {
     Widget body;
     if (_busy) {
-      body = const Center(
+      body = Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -581,7 +581,7 @@ class _SectionCard extends StatelessWidget {
         children: [
           Text(
             title.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w800,
               fontSize: 10.5,
@@ -619,7 +619,7 @@ class _Kv extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
@@ -641,7 +641,7 @@ class _Kv extends StatelessWidget {
                 if (sub != null && sub!.trim().isNotEmpty)
                   Text(
                     sub!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 11.5,
@@ -679,7 +679,7 @@ class _ItemsCard extends StatelessWidget {
         children: [
           Text(
             'ITEMS (${slip.items.length})',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w800,
               fontSize: 10.5,
@@ -689,16 +689,16 @@ class _ItemsCard extends StatelessWidget {
           const SizedBox(height: 6),
           for (var i = 0; i < slip.items.length; i++) ...[
             if (i > 0)
-              const Divider(height: 14, color: DplColors.divider),
+              Divider(height: 14, color: DplColors.divider),
             _ItemRow(item: slip.items[i], fmt: fmt, index: i + 1),
           ],
           const SizedBox(height: 8),
-          const Divider(height: 1, color: DplColors.divider),
+          Divider(height: 1, color: DplColors.divider),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Total qty',
                 style: TextStyle(
                   color: DplColors.textSecondary,
@@ -708,7 +708,7 @@ class _ItemsCard extends StatelessWidget {
               ),
               Text(
                 '${fmt.format(slip.totalQty)} NOS',
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 13.5,
@@ -741,7 +741,7 @@ class _ItemRow extends StatelessWidget {
           width: 22,
           child: Text(
             '$index.',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w800,
               fontSize: 12,
@@ -754,7 +754,7 @@ class _ItemRow extends StatelessWidget {
             children: [
               Text(
                 item.machineName.isEmpty ? '-' : item.machineName,
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w700,
                   fontSize: 11.5,
@@ -763,7 +763,7 @@ class _ItemRow extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 item.partName.isEmpty ? '-' : item.partName,
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
@@ -774,7 +774,7 @@ class _ItemRow extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
                     'Customer P/N: ${item.customerPartNo}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 11.5,
@@ -787,7 +787,7 @@ class _ItemRow extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
                     item.description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 11.5,
@@ -800,7 +800,7 @@ class _ItemRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '${fmt.format(item.qty)} NOS',
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textPrimary,
             fontWeight: FontWeight.w800,
             fontSize: 13,
@@ -850,7 +850,7 @@ class _SignedPayloadCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            children: const [
+            children: [
               Icon(
                 Icons.qr_code_2_rounded,
                 size: 16,
@@ -934,7 +934,7 @@ class _NestedGroup extends StatelessWidget {
         children: [
           Text(
             name.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.primaryDark,
               fontWeight: FontWeight.w800,
               fontSize: 10.5,

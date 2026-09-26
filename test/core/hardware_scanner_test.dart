@@ -27,61 +27,6 @@ class _ScanField extends StatelessWidget {
       );
 }
 
-/// A miniature of the QA shell: two scan screens in an IndexedStack, keyed so
-/// a tab switch can reach into the one that just became visible, exactly as
-/// qa_shell.dart does.
-class _TabHarness extends StatefulWidget {
-  const _TabHarness({required this.onFirst, required this.onSecond});
-
-  final ValueChanged<String> onFirst;
-  final ValueChanged<String> onSecond;
-
-  @override
-  State<_TabHarness> createState() => _TabHarnessState();
-}
-
-class _TabHarnessState extends State<_TabHarness> {
-  int _tab = 0;
-  final _keys = List.generate(2, (_) => GlobalKey());
-
-  void _show(int i) {
-    setState(() => _tab = i);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      HardwareScanScope.focusScanFieldIn(_keys[i].currentContext);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => HardwareScanScope(
-        child: Scaffold(
-          body: Column(
-            children: [
-              TextButton(onPressed: () => _show(1), child: const Text('switch')),
-              Expanded(
-                child: IndexedStack(
-                  index: _tab,
-                  children: [
-                    KeyedSubtree(
-                      key: _keys[0],
-                      child: TextField(
-                        autofocus: true,
-                        onSubmitted: widget.onFirst,
-                      ),
-                    ),
-                    KeyedSubtree(
-                      key: _keys[1],
-                      child: TextField(onSubmitted: widget.onSecond),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-}
-
 void main() {
   tearDown(() => HardwareScanner.instance.resetForTest());
 
@@ -265,36 +210,173 @@ void main() {
     });
   });
 
-  group('switching tabs', () {
-    testWidgets('focus follows the visible tab, so the trigger keeps working',
-        (tester) async {
-      // THE BUG THIS EXISTS TO STOP. Hidden children of an IndexedStack cannot
-      // hold focus, and autofocus fires once and only once — so the moment the
-      // operator switches tabs, NOTHING is focused and the handheld does
-      // nothing at all. A keyboard-wedge scanner types into the void in
-      // exactly the same situation, which is the "the scanner stopped working
-      // after I looked at another screen" report with no visible cause.
-      final first = <String>[];
-      final second = <String>[];
+  group('when nothing holds focus at all', () {
+    testWidgets('the scan still reaches the visible tab', (tester) async {
+      // THE BUG A PM75 FOUND. The decode arrived, reached Dart and went
+      // nowhere, because nothing had focus: an IndexedStack builds its
+      // children offstage, offstage subtrees cannot take focus, and autofocus
+      // asks exactly once — it is refused while offstage and never asks again.
+      // dumpsys input_method showed mServedView=null with the scan field
+      // plainly on screen.
+      final visible = <String>[];
+      final hidden = <String>[];
+      final areas = List.generate(2, (_) => GlobalKey());
 
       await tester.pumpWidget(
-        MaterialApp(home: _TabHarness(onFirst: first.add, onSecond: second.add)),
+        MaterialApp(
+          home: HardwareScanScope(
+            // Tab 1 is the one on screen.
+            activeArea: areas[1],
+            child: Scaffold(
+              body: IndexedStack(
+                index: 1,
+                children: [
+                  KeyedSubtree(
+                    key: areas[0],
+                    child: TextField(onSubmitted: hidden.add),
+                  ),
+                  KeyedSubtree(
+                    key: areas[1],
+                    child: TextField(onSubmitted: visible.add),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       );
       await tester.pump();
 
-      HardwareScanner.instance.emitForTest('before');
-      await tester.pump();
-      expect(first, ['before'], reason: 'tab 0 starts focused');
+      // Deliberately no autofocus anywhere — this is the real device state.
+      expect(FocusManager.instance.primaryFocus?.hasPrimaryFocus, anyOf(isNull, isTrue));
 
-      await tester.tap(find.text('switch'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      HardwareScanner.instance.emitForTest('after');
+      HardwareScanner.instance.emitForTest('GA2600000147');
       await tester.pump();
 
-      expect(second, ['after'], reason: 'the newly visible tab now gets it');
-      expect(first, ['before'], reason: 'and the hidden one does not');
+      expect(visible, ['GA2600000147'], reason: 'the tab on screen gets it');
+      expect(hidden, isEmpty, reason: 'the offstage tab does not');
+    });
+
+    testWidgets('and it does NOT take focus, so no keyboard appears',
+        (tester) async {
+      // On a rugged handheld the trigger is the input, and a soft keyboard
+      // covers half the screen. An earlier version focused the field after
+      // delivering, which raised the keyboard on the first scan of every
+      // session and hid the very list the operator had navigated to.
+      final got = <String>[];
+      final area = GlobalKey();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: HardwareScanScope(
+            activeArea: area,
+            child: Scaffold(
+              body: KeyedSubtree(
+                key: area,
+                child: TextField(onSubmitted: got.add),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      HardwareScanner.instance.emitForTest('first');
+      await tester.pump();
+
+      expect(got, ['first'], reason: 'delivered by position, not by cursor');
+      final focused = FocusManager.instance.primaryFocus;
+      expect(
+        focused?.context?.widget,
+        isNot(isA<EditableText>()),
+        reason: 'nothing was focused, so no keyboard was raised',
+      );
+    });
+
+    testWidgets('a pushed screen claims scans off the tab underneath',
+        (tester) async {
+      // A pushed route sits OUTSIDE activeArea — that key points at the tab
+      // still mounted behind it. Without the claim, a wheel scanned on the
+      // trolley fill screen would be handed to the Merge tab behind it, and
+      // the wrong screen would act on a real wheel.
+      final behind = <String>[];
+      final onTop = <String>[];
+      final tabArea = GlobalKey();
+      final pushedArea = GlobalKey();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: HardwareScanScope(
+            activeArea: tabArea,
+            child: Scaffold(
+              body: KeyedSubtree(
+                key: tabArea,
+                child: TextField(onSubmitted: behind.add),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      HardwareScanScope.claimArea(pushedArea);
+      addTearDown(() => HardwareScanScope.releaseArea(pushedArea));
+
+      // The pushed screen's own subtree, mounted over the top.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: HardwareScanScope(
+            activeArea: tabArea,
+            child: Scaffold(
+              body: Stack(
+                children: [
+                  KeyedSubtree(
+                    key: tabArea,
+                    child: TextField(onSubmitted: behind.add),
+                  ),
+                  KeyedSubtree(
+                    key: pushedArea,
+                    child: TextField(onSubmitted: onTop.add),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      HardwareScanner.instance.emitForTest('GA2600000147');
+      await tester.pump();
+
+      expect(onTop, ['GA2600000147'], reason: 'the screen on top gets it');
+      expect(behind, isEmpty, reason: 'and the tab behind does not');
+
+      // Once it closes, the tab underneath takes over again.
+      HardwareScanScope.releaseArea(pushedArea);
+      HardwareScanner.instance.emitForTest('GA2600000148');
+      await tester.pump();
+      expect(behind, ['GA2600000148']);
+    });
+
+    testWidgets('a screen with no field at all still drops it quietly',
+        (tester) async {
+      final area = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: HardwareScanScope(
+            activeArea: area,
+            child: Scaffold(
+              body: KeyedSubtree(key: area, child: const Text('no fields')),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      HardwareScanner.instance.emitForTest('GA2600000147');
+      await tester.pump();
+      expect(tester.takeException(), isNull);
     });
   });
 

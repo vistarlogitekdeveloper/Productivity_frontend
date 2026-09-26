@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../dpl/core/dpl_api_service.dart';
 import 'auth_provider.dart';
@@ -147,14 +148,14 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFECEA),
+                      color: VistarPalette.badBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFFFB4AA)),
+                      border: Border.all(color: VistarPalette.badLine),
                     ),
                     child: Text(
                       _errorText!,
-                      style: const TextStyle(
-                        color: Color(0xFF8F1D18),
+                      style: TextStyle(
+                        color: VistarPalette.badInk,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

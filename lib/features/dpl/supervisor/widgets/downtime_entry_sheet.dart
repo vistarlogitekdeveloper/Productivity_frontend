@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_constants.dart';
 import '../../manager/widgets/error_retry.dart';
@@ -178,10 +179,10 @@ class _DowntimeEntrySheetState extends ConsumerState<DowntimeEntrySheet> {
                     ),
                     onPressed: canSave ? _save : null,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFB45309),
+                      backgroundColor: VistarPalette.warnSolid,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(0xFFE5E7EB),
-                      disabledForegroundColor: const Color(0xFF9CA3AF),
+                      disabledBackgroundColor: VistarPalette.surface3,
+                      disabledForegroundColor: VistarPalette.txt3,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -204,18 +205,18 @@ class _DowntimeEntrySheetState extends ConsumerState<DowntimeEntrySheet> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: VistarPalette.surface2,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFD9E2EF)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF5D6A7A), size: 18),
+          Icon(icon, color: VistarPalette.txt2, size: 18),
           const SizedBox(width: 10),
           Text(
             '$label: ',
-            style: const TextStyle(
-              color: Color(0xFF5D6A7A),
+            style: TextStyle(
+              color: VistarPalette.txt2,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -305,13 +306,13 @@ class _ReasonPicker extends StatelessWidget {
           ),
           items: [
             if (planned.isNotEmpty) ...[
-              const DropdownMenuItem<int>(
+              DropdownMenuItem<int>(
                 enabled: false,
                 value: -1,
                 child: Text(
                   'Planned',
                   style: TextStyle(
-                    color: Color(0xFF1D4ED8),
+                    color: VistarPalette.info,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -323,13 +324,13 @@ class _ReasonPicker extends StatelessWidget {
                   )),
             ],
             if (unplanned.isNotEmpty) ...[
-              const DropdownMenuItem<int>(
+              DropdownMenuItem<int>(
                 enabled: false,
                 value: -2,
                 child: Text(
                   'Unplanned',
                   style: TextStyle(
-                    color: Color(0xFFB45309),
+                    color: VistarPalette.warn,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -358,14 +359,14 @@ class _ReasonPicker extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
+        color: VistarPalette.warnBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFCD34D)),
+        border: Border.all(color: VistarPalette.warnLine),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFFB45309)),
+          Icon(icon, color: VistarPalette.warn),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -373,16 +374,16 @@ class _ReasonPicker extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Color(0xFF92400E),
+                  style: TextStyle(
+                    color: VistarPalette.warnInk,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   message,
-                  style: const TextStyle(
-                    color: Color(0xFF92400E),
+                  style: TextStyle(
+                    color: VistarPalette.warnInk,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -393,7 +394,7 @@ class _ReasonPicker extends StatelessWidget {
                   icon: const Icon(Icons.refresh, size: 16),
                   label: const Text('Refresh'),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF92400E),
+                    foregroundColor: VistarPalette.warnInk,
                     padding: EdgeInsets.zero,
                     minimumSize: const Size(0, 28),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,

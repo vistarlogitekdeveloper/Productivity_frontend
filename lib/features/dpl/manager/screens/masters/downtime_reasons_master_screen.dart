@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/theme/vistar_palette.dart';
 import '../../../../../core/widgets/shimmer_skeleton.dart';
+import '../../../core/design/dpl_theme.dart';
 import '../../../core/dpl_api_service.dart';
 import '../../../core/dpl_constants.dart';
 import '../../../core/widgets/dpl_app_bar.dart';
@@ -142,7 +144,7 @@ class DplDowntimeReasonsMasterScreen extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB3261E),
+              backgroundColor: VistarPalette.badSolid,
             ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete'),
@@ -186,7 +188,7 @@ class _ReasonCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: const Color(0xFFE2EAF6)),
+          border: Border.all(color: DplColors.divider),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -209,16 +211,16 @@ class _ReasonCard extends StatelessWidget {
                   horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: isPlanned
-                    ? const Color(0xFFE0EFFF)
-                    : const Color(0xFFFEF3C7),
+                    ? VistarPalette.infoBg
+                    : VistarPalette.warnBg,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 DplDowntimeCategory.label(reason.category),
                 style: TextStyle(
                   color: isPlanned
-                      ? const Color(0xFF1D4ED8)
-                      : const Color(0xFFB45309),
+                      ? VistarPalette.info
+                      : VistarPalette.warn,
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
                 ),
@@ -227,7 +229,7 @@ class _ReasonCard extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 20),
               onPressed: onDelete,
-              color: const Color(0xFFB3261E),
+              color: VistarPalette.bad,
             ),
           ],
         ),
@@ -301,14 +303,14 @@ class _ReasonDialogState extends State<_ReasonDialog> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFECEA),
+                  color: VistarPalette.badBg,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFFB4AA)),
+                  border: Border.all(color: VistarPalette.badLine),
                 ),
                 child: Text(
                   _error!,
-                  style: const TextStyle(
-                    color: Color(0xFF8F1D18),
+                  style: TextStyle(
+                    color: VistarPalette.badInk,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

@@ -45,24 +45,20 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
 
   GlobalKey _tabKey(int i) => _tabKeys[i];
 
-  /// Switch tabs, and hand the new screen the scanner.
+  /// Switch tabs.
   ///
-  /// The focus call is the whole point. Hidden children of an IndexedStack
-  /// cannot hold focus and `autofocus` fires only once, so after a switch
-  /// NOTHING is focused — the handheld's trigger does nothing, and a
-  /// keyboard-wedge scanner types into the void in exactly the same way. The
-  /// operator sees a scan field sitting right there and a scanner that has
-  /// apparently died.
+  /// NOTHING IS FOCUSED HERE, deliberately. An earlier version moved focus
+  /// into the new tab's scan field so the handheld had somewhere to deliver
+  /// to — which worked, and raised the soft keyboard over half the screen on
+  /// every single tab change. On a rugged handheld that keyboard is pure
+  /// obstruction: the trigger is the input, and the operator wants to see the
+  /// SPD list or the part list they just navigated to.
   ///
-  /// Deferred to after the frame because the new child is not laid out yet
-  /// when setState returns, so its focus node is not attachable.
-  void _showTab(int i) {
-    setState(() => _tab = i);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      HardwareScanScope.focusScanFieldIn(_tabKeys[i].currentContext);
-    });
-  }
+  /// It is not needed either. HardwareScanScope routes a decode to the first
+  /// field in the visible tab whether or not anything holds focus — see
+  /// `activeArea`. The keyboard now appears only when somebody taps a field,
+  /// which is the only time anyone wants it.
+  void _showTab(int i) => setState(() => _tab = i);
 
   @override
   void initState() {

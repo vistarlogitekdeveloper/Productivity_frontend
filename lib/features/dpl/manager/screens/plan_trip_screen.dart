@@ -587,7 +587,7 @@ class _PlanTripScreenState extends ConsumerState<PlanTripScreen> {
                 ),
                 child: Text(
                   '${_trips.length}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.primaryDark,
                     fontWeight: FontWeight.w800,
                     fontSize: 11,
@@ -733,7 +733,7 @@ class _TodaysTripsCard extends ConsumerWidget {
                 ),
               ),
             ),
-            error: (e, _) => const Text(
+            error: (e, _) => Text(
               'Could not load today\'s trips. Pull to refresh.',
               style: TextStyle(
                 color: DplColors.textSecondary,
@@ -745,7 +745,7 @@ class _TodaysTripsCard extends ConsumerWidget {
               if (res.isError) {
                 return Text(
                   res.error ?? 'Could not load today\'s trips.',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.textSecondary,
                     fontWeight: FontWeight.w600,
                     fontSize: 12.5,
@@ -779,7 +779,7 @@ class _TodaysTripsHeader extends ConsumerWidget {
     final planForDate = ref.watch(dplManagerPlanForDateProvider);
     return Row(
       children: [
-        const Icon(Icons.local_shipping_outlined,
+        Icon(Icons.local_shipping_outlined,
             size: 18, color: DplColors.primaryDark),
         const SizedBox(width: 6),
         Text(_titleFor(planForDate), style: DplText.h3()),
@@ -790,7 +790,7 @@ class _TodaysTripsHeader extends ConsumerWidget {
         // doubles as a coordination view for multi-manager orgs.
         Text(
           'My trips only',
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textSecondary,
             fontWeight: FontWeight.w700,
             fontSize: 11.5,
@@ -872,7 +872,7 @@ class _TodaysTripsBody extends StatelessWidget {
           children: [
             Text(
               DateFormat('EEE, dd MMM').format(planForDate),
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
@@ -889,7 +889,7 @@ class _TodaysTripsBody extends StatelessWidget {
                     'trips.'
                 : 'No trips submitted yet for this date. The first '
                     'trip you submit will land here.',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w600,
               fontSize: 12.5,
@@ -942,7 +942,7 @@ class _TodaysTripsBody extends StatelessWidget {
                 ),
                 child: Text(
                   '${fmt.format(totalNos)} NOS planned today',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.primaryDark,
                     fontWeight: FontWeight.w800,
                     fontSize: 11.5,
@@ -963,7 +963,7 @@ class _TodaysTripsBody extends StatelessWidget {
                   ),
                   child: Text(
                     '${fmt.format(dispatchedNos)} NOS dispatched',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.success,
                       fontWeight: FontWeight.w800,
                       fontSize: 11.5,
@@ -980,7 +980,7 @@ class _TodaysTripsBody extends StatelessWidget {
                   ),
                   child: Text(
                     '$cancelled cancelled',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.error,
                       fontWeight: FontWeight.w800,
                       fontSize: 11.5,
@@ -991,9 +991,9 @@ class _TodaysTripsBody extends StatelessWidget {
           ),
           if (plantRows.length > 1) ...[
             const SizedBox(height: 10),
-            const Divider(color: DplColors.divider, height: 1),
+            Divider(color: DplColors.divider, height: 1),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'PER PLANT',
               style: TextStyle(
                 color: DplColors.textSecondary,
@@ -1045,7 +1045,7 @@ class _TripStatTile extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w700,
               fontSize: 10,
@@ -1064,7 +1064,7 @@ class _TripStatTile extends StatelessWidget {
                 TextSpan(text: value),
                 TextSpan(
                   text: '  $unit',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.textSecondary,
                     fontWeight: FontWeight.w600,
                     fontSize: 11,
@@ -1116,12 +1116,12 @@ class _PlantChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.factory_rounded,
+          Icon(Icons.factory_rounded,
               size: 12, color: DplColors.textSecondary),
           const SizedBox(width: 5),
           Text(
             stat.plantName.isEmpty ? stat.plantCode : stat.plantName,
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textPrimary,
               fontWeight: FontWeight.w800,
               fontSize: 11.5,
@@ -1130,7 +1130,7 @@ class _PlantChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '${stat.tripCount}× · ${fmt.format(stat.totalQty)} NOS',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w700,
               fontSize: 11,
@@ -1196,7 +1196,7 @@ class _PlanForDatePicker extends ConsumerWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: DplColors.primary,
                   shape: BoxShape.circle,
                 ),
@@ -1207,7 +1207,7 @@ class _PlanForDatePicker extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'PLANNING FOR',
                 style: TextStyle(
                   color: DplColors.primaryDark,
@@ -1239,14 +1239,14 @@ class _PlanForDatePicker extends ConsumerWidget {
               Expanded(
                 child: Text(
                   dateLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.primaryDark,
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 22,
                 color: DplColors.primaryDark,
@@ -1307,7 +1307,7 @@ class _ProductionSummaryCard extends StatelessWidget {
               const Spacer(),
               Text(
                 DateFormat('EEE, dd MMM').format(DateTime.now()),
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -1396,7 +1396,7 @@ class _SubmitBar extends StatelessWidget {
 
     return SafeArea(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: DplColors.cardBg,
           border: Border(
             top: BorderSide(color: DplColors.divider),
@@ -1495,7 +1495,7 @@ class _SummaryTile extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w700,
               fontSize: 10,
@@ -1515,7 +1515,7 @@ class _SummaryTile extends StatelessWidget {
                 if (unit.isNotEmpty)
                   TextSpan(
                     text: '  $unit',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 11,
@@ -1538,7 +1538,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11.5,
         fontWeight: FontWeight.w800,
         letterSpacing: 1.1,
@@ -1578,7 +1578,7 @@ class _NoTripsCard extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 DplColors.primaryTint,
-                Colors.white,
+                DplColors.cardBg,
               ],
             ),
           ),
@@ -1589,13 +1589,13 @@ class _NoTripsCard extends StatelessWidget {
                 height: 52,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: DplColors.cardBg,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: DplColors.primary.withValues(alpha: 0.25),
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.local_shipping_rounded,
                   color: DplColors.primaryDark,
                   size: 26,
@@ -1609,7 +1609,7 @@ class _NoTripsCard extends StatelessWidget {
                   children: [
                     Text('Ready to plan a trip?', style: DplText.h3()),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Tap here to add Trip 1. You can carry up to '
                       '$_maxPlansPerTrip parts per trip and submit '
                       'multiple trips at once.',
@@ -1735,14 +1735,14 @@ class _TripCard extends StatelessWidget {
         children: [
           // Header
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: DplColors.primaryTint,
               borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
             ),
             padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.local_shipping_rounded,
                   color: DplColors.primaryDark,
                   size: 20,
@@ -1750,7 +1750,7 @@ class _TripCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   trip.number == null ? 'New Trip' : 'Trip ${trip.number}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
                     color: DplColors.primaryDark,
@@ -1761,13 +1761,13 @@ class _TripCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: DplColors.cardBg,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
                     '${trip.plans.length}/$_maxPlansPerTrip plans · '
                     '$tripTotal NOS',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.primaryDark,
                       fontWeight: FontWeight.w700,
                       fontSize: 10.5,
@@ -1777,7 +1777,7 @@ class _TripCard extends StatelessWidget {
                 const Spacer(),
                 IconButton(
                   tooltip: 'Remove trip',
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.close_rounded,
                     color: DplColors.primaryDark,
                   ),
@@ -1844,7 +1844,7 @@ class _TripCard extends StatelessWidget {
           else
             for (var i = 0; i < trip.plans.length; i++) ...[
               if (i > 0)
-                const Divider(height: 1, color: DplColors.divider),
+                Divider(height: 1, color: DplColors.divider),
               _PlanRow(
                 index: i + 1,
                 plan: trip.plans[i],
@@ -2042,7 +2042,7 @@ class _PlanRowState extends State<_PlanRow> {
                     color: DplColors.warningBg,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Needs setup',
                     style: TextStyle(
                       color: DplColors.warning,
@@ -2107,7 +2107,7 @@ class _PlanRowState extends State<_PlanRow> {
             children: [
               Text(
                 'Plan ${widget.index}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 12.5,
                   color: DplColors.textPrimary,
@@ -2116,7 +2116,7 @@ class _PlanRowState extends State<_PlanRow> {
               const Spacer(),
               IconButton(
                 tooltip: 'Remove plan',
-                icon: const Icon(
+                icon: Icon(
                   Icons.delete_outline_rounded,
                   size: 18,
                   color: DplColors.textSecondary,
@@ -2207,7 +2207,7 @@ class _PlanRowState extends State<_PlanRow> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline_rounded,
                     size: 13,
                     color: DplColors.warning,
@@ -2216,7 +2216,7 @@ class _PlanRowState extends State<_PlanRow> {
                   Expanded(
                     child: Text(
                       descriptionNote,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.warning,
                         fontWeight: FontWeight.w700,
                         fontSize: 11,
@@ -2230,10 +2230,10 @@ class _PlanRowState extends State<_PlanRow> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.calculate_outlined,
+              Icon(Icons.calculate_outlined,
                   size: 18, color: DplColors.textSecondary),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 'Qty',
                 style: TextStyle(
                   color: DplColors.textSecondary,
@@ -2378,7 +2378,7 @@ class _PlanRowState extends State<_PlanRow> {
                             'produced pieces before planning more.'
                         : 'Only ${stock.availableQty} labelled NOS are free to dispatch. '
                             'Reduce the qty.',
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.error,
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
@@ -2479,13 +2479,13 @@ class _MultipleOfPackHint extends StatelessWidget {
     final upper = (maxQty != null && upperRaw > maxQty!) ? null : upperRaw;
     return Row(
       children: [
-        const Icon(Icons.warning_amber_rounded,
+        Icon(Icons.warning_amber_rounded,
             size: 14, color: DplColors.warning),
         const SizedBox(width: 4),
         Flexible(
           child: Text(
             'Not a multiple of $pack — try',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.warning,
               fontWeight: FontWeight.w700,
               fontSize: 11,
@@ -2524,7 +2524,7 @@ class _PackSuggestionChip extends StatelessWidget {
         ),
         child: Text(
           '$value',
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.warning,
             fontWeight: FontWeight.w800,
             fontSize: 11,
@@ -2559,7 +2559,7 @@ class _PickerField<T> extends StatelessWidget {
       decoration: InputDecoration(
         prefixIcon: Icon(icon, size: 18, color: DplColors.textSecondary),
         labelText: label,
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           color: DplColors.textSecondary,
           fontWeight: FontWeight.w700,
           fontSize: 12,
@@ -2574,7 +2574,7 @@ class _PickerField<T> extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: DplColors.divider),
+          borderSide: BorderSide(color: DplColors.divider),
         ),
       ),
       child: DropdownButtonHideUnderline(
@@ -2583,7 +2583,7 @@ class _PickerField<T> extends StatelessWidget {
           isExpanded: true,
           hint: Text(
             hint,
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textTertiary,
               fontSize: 13,
             ),

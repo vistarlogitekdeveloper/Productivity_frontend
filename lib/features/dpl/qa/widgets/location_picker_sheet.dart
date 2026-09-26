@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_api_service.dart';
 import '../../models/dpl_location.dart';
 
@@ -140,8 +141,8 @@ class _LocationPickerSheetState extends ConsumerState<LocationPickerSheet> {
                     'Storing ${widget.requiredQty} piece'
                     '${widget.requiredQty == 1 ? '' : 's'}. Locations without '
                     'enough room cannot be selected.',
-                    style: const TextStyle(
-                      color: Color(0xFF5D6A7A),
+                    style: TextStyle(
+                      color: VistarPalette.txt2,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -199,12 +200,12 @@ class _LocationPickerSheetState extends ConsumerState<LocationPickerSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: Color(0xFFB91C1C)),
+            Icon(Icons.error_outline, color: VistarPalette.bad),
             const SizedBox(height: 8),
             Text(
               _error!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFFB91C1C)),
+              style: TextStyle(color: VistarPalette.bad),
             ),
             const SizedBox(height: 10),
             OutlinedButton(
@@ -222,7 +223,7 @@ class _LocationPickerSheetState extends ConsumerState<LocationPickerSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.inbox_outlined, color: Color(0xFF94A3B8), size: 34),
+            Icon(Icons.inbox_outlined, color: VistarPalette.txt3, size: 34),
             const SizedBox(height: 10),
             Text(
               _searchCtrl.text.trim().isEmpty
@@ -230,8 +231,8 @@ class _LocationPickerSheetState extends ConsumerState<LocationPickerSheet> {
                       'in Masters → Storage Locations.'
                   : 'No location matches "${_searchCtrl.text.trim()}".',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF5D6A7A),
+              style: TextStyle(
+                color: VistarPalette.txt2,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -264,14 +265,14 @@ class _LocationPickerSheetState extends ConsumerState<LocationPickerSheet> {
                 ),
               ),
               if (isCurrent)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(left: 6),
                   child: Text(
                     'Current',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF3730A3),
+                      color: VistarPalette.infoInk,
                     ),
                   ),
                 ),
@@ -286,13 +287,13 @@ class _LocationPickerSheetState extends ConsumerState<LocationPickerSheet> {
                 child: LinearProgressIndicator(
                   value: loc.fillRatio,
                   minHeight: 5,
-                  backgroundColor: const Color(0xFFEEF1F5),
+                  backgroundColor: VistarPalette.surface3,
                   valueColor: AlwaysStoppedAnimation(
                     loc.isFull
-                        ? const Color(0xFFB91C1C)
+                        ? VistarPalette.bad
                         : (fits
-                            ? const Color(0xFF16A34A)
-                            : const Color(0xFFF59E0B)),
+                            ? VistarPalette.ok
+                            : VistarPalette.warn),
                   ),
                 ),
               ),
@@ -307,16 +308,16 @@ class _LocationPickerSheetState extends ConsumerState<LocationPickerSheet> {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: fits || isCurrent
-                      ? const Color(0xFF5D6A7A)
-                      : const Color(0xFFB45309),
+                      ? VistarPalette.txt2
+                      : VistarPalette.warn,
                 ),
               ),
             ],
           ),
           trailing: fits || isCurrent
               ? const Icon(Icons.chevron_right_rounded)
-              : const Icon(Icons.block_rounded,
-                  size: 18, color: Color(0xFFB45309)),
+              : Icon(Icons.block_rounded,
+                  size: 18, color: VistarPalette.warn),
           onTap: (fits || isCurrent)
               ? () => Navigator.of(context).pop(loc)
               : null,

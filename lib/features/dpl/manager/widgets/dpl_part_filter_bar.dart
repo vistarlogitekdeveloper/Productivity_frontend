@@ -245,12 +245,12 @@ class _DplPartFilterBarState extends ConsumerState<DplPartFilterBar> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide:
-                          const BorderSide(color: DplColors.divider),
+                          BorderSide(color: DplColors.divider),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                       borderSide:
-                          const BorderSide(color: DplColors.divider),
+                          BorderSide(color: DplColors.divider),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -381,7 +381,7 @@ class _ChipRow extends StatelessWidget {
           width: 64,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.9,

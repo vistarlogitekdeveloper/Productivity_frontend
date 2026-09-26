@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
+import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_constants.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../models/dpl_production_plan.dart';
@@ -376,7 +378,7 @@ class _PlanRow extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: DplColors.divider),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
@@ -385,7 +387,7 @@ class _PlanRow extends StatelessWidget {
                 width: 4,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1D4ED8),
+                  color: VistarPalette.info,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -403,7 +405,7 @@ class _PlanRow extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Supervisor: ${plan.supervisorName.isEmpty ? "—" : plan.supervisorName}',
-                      style: const TextStyle(color: Color(0xFF5D6A7A)),
+                      style: TextStyle(color: DplColors.textSecondary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

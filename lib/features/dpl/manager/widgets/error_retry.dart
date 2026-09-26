@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
+
 class DplErrorRetry extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
@@ -18,17 +20,17 @@ class DplErrorRetry extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: 48,
-              color: Color(0xFFB3261E),
+              color: VistarPalette.bad,
             ),
             const SizedBox(height: 10),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF8F1D18),
+              style: TextStyle(
+                color: VistarPalette.badInk,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -56,7 +58,7 @@ class DplSnack {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(message),
-        backgroundColor: Colors.green.shade700,
+        backgroundColor: VistarPalette.okSolid,
         behavior: SnackBarBehavior.floating,
       ));
   }
@@ -66,7 +68,7 @@ class DplSnack {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red.shade700,
+        backgroundColor: VistarPalette.badSolid,
         behavior: SnackBarBehavior.floating,
       ));
   }

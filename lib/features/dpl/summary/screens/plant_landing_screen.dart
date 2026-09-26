@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
 import '../../../auth/auth_provider.dart';
 import '../../core/design/dpl_theme.dart';
@@ -172,25 +173,28 @@ class PlantLandingScreen extends ConsumerWidget {
   PlantCardPalette _paletteFor(int index) {
     switch (index % 3) {
       case 0:
-        return const PlantCardPalette(
-          accent: Color(0xFF6B1F8C),
-          accentDark: Color(0xFF4A1163),
-          surface: Color(0xFFF3E8F9),
-          edge: Color(0xFFD8BFE9),
+        return PlantCardPalette(
+          accent: DplColors.primary,
+          accentDark: DplColors.primaryDark,
+          surface: DplColors.primaryTint,
+          edge: VistarPalette.primaryLine,
+          fill: DplColors.primary,
         );
       case 1:
-        return const PlantCardPalette(
-          accent: Color(0xFFB45309),
-          accentDark: Color(0xFF7C3A05),
-          surface: Color(0xFFFEF3C7),
-          edge: Color(0xFFFCD9A1),
+        return PlantCardPalette(
+          accent: VistarPalette.warn,
+          accentDark: VistarPalette.warnInk,
+          surface: VistarPalette.warnBg,
+          edge: VistarPalette.warnLine,
+          fill: VistarPalette.warnSolid,
         );
       default:
-        return const PlantCardPalette(
-          accent: Color(0xFF0E7C66),
-          accentDark: Color(0xFF064E40),
-          surface: Color(0xFFD9F0E9),
-          edge: Color(0xFFA4D9C8),
+        return PlantCardPalette(
+          accent: VistarPalette.ok,
+          accentDark: VistarPalette.okInk,
+          surface: VistarPalette.okBg,
+          edge: VistarPalette.okLine,
+          fill: VistarPalette.okSolid,
         );
     }
   }
@@ -221,7 +225,7 @@ class _LandingHeader extends StatelessWidget {
                 color: DplColors.primary.withValues(alpha: 0.15),
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.factory_outlined,
               size: 18,
               color: DplColors.primaryDark,
@@ -234,7 +238,7 @@ class _LandingHeader extends StatelessWidget {
               children: [
                 Text('Select a plant', style: DplText.h3()),
                 const SizedBox(height: 2),
-                const Text(
+                Text(
                   'Pick the plant you want to dispatch from. '
                   'Each slip you create is scoped to one plant.',
                   style: TextStyle(
@@ -291,14 +295,14 @@ class _DispatchPvaLandingCard extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.local_shipping_rounded,
+                    Icon(Icons.local_shipping_rounded,
                         size: 18, color: DplColors.primaryDark),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text('Dispatch — Plan vs Actual',
                           style: DplText.h3()),
                     ),
-                    const Text(
+                    Text(
                       'Details',
                       style: TextStyle(
                         color: DplColors.primaryDark,
@@ -306,7 +310,7 @@ class _DispatchPvaLandingCard extends ConsumerWidget {
                         fontSize: 12,
                       ),
                     ),
-                    const Icon(Icons.chevron_right_rounded,
+                    Icon(Icons.chevron_right_rounded,
                         size: 18, color: DplColors.primaryDark),
                   ],
                 ),
@@ -354,7 +358,7 @@ class _PvaMiniStat extends StatelessWidget {
       children: [
         Text(
           period.label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 9.5,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.6,
@@ -374,7 +378,7 @@ class _PvaMiniStat extends StatelessWidget {
               TextSpan(text: fmt.format(actual)),
               TextSpan(
                 text: ' / ${fmt.format(plan)}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 11.5,

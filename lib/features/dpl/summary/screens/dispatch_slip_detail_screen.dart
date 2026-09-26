@@ -359,7 +359,7 @@ class _HeaderSummary extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   '${slip.machineLabel} • Qty ${slip.qty}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.textSecondary,
                     fontWeight: FontWeight.w700,
                     fontSize: 12.5,
@@ -395,7 +395,7 @@ class _FromTripBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.local_shipping_rounded,
             size: 11,
             color: DplColors.primaryDark,
@@ -403,7 +403,7 @@ class _FromTripBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             'Trip #$tripNumber',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.primaryDark,
               fontWeight: FontWeight.w800,
               fontSize: 10.5,
@@ -2075,7 +2075,7 @@ class _Timeline extends StatelessWidget {
           for (final e in entries) ...[
             _TimelineRow(entry: e),
             if (e != entries.last)
-              const Divider(height: 12, color: DplColors.divider),
+              Divider(height: 12, color: DplColors.divider),
           ],
         ],
       ),
@@ -2136,7 +2136,7 @@ class _TimelineRow extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 1),
                   child: Text(
                     dateFmt.format(entry.at!.toLocal()),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 11.5,
@@ -2300,7 +2300,7 @@ class _ScanToActCta extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            children: const [
+            children: [
               Icon(Icons.lock_outline, size: 18, color: DplColors.warning),
               SizedBox(width: 8),
               Expanded(
@@ -2321,7 +2321,7 @@ class _ScanToActCta extends StatelessWidget {
             child: Text(
               'Approve / Reject is hidden until the scanned QR matches '
               '$slipNo. This makes sure you have the paper slip in hand.',
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontWeight: FontWeight.w600,
                 fontSize: 11.5,
@@ -2355,7 +2355,7 @@ class _VerifiedPill extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Icon(Icons.verified_outlined, size: 14, color: DplColors.success),
           SizedBox(width: 4),
           Text(
@@ -2391,7 +2391,7 @@ class _ApprovalRow extends StatelessWidget {
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: DplColors.error,
-              side: const BorderSide(color: DplColors.error),
+              side: BorderSide(color: DplColors.error),
             ),
             onPressed: () => DispatchSlipActionSheet.show(
               context,

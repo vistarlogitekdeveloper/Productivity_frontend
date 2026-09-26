@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
+import '../../core/design/dpl_theme.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_dashboard_switcher.dart';
 import '../../models/dpl_dashboard_summary.dart';
@@ -110,9 +112,9 @@ class _DplManagerDashboardScreenState
             if (isPhone)
               IconButton(
                 tooltip: 'Dispatch Planning',
-                icon: const Icon(
+                icon: Icon(
                   Icons.local_shipping_outlined,
-                  color: Color(0xFF6B1F8C),
+                  color: DplColors.primary,
                 ),
                 onPressed: () =>
                     context.push('/dpl/manager/dispatch-planning'),
@@ -130,8 +132,8 @@ class _DplManagerDashboardScreenState
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF6B1F8C),
-                    side: const BorderSide(color: Color(0xFF6B1F8C), width: 1.4),
+                    foregroundColor: DplColors.primary,
+                    side: BorderSide(color: DplColors.primary, width: 1.4),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -142,9 +144,9 @@ class _DplManagerDashboardScreenState
             if (isPhone)
               IconButton(
                 tooltip: 'Upload Plan',
-                icon: const Icon(
+                icon: Icon(
                   Icons.upload_file_outlined,
-                  color: Color(0xFF6B1F8C),
+                  color: DplColors.primary,
                 ),
                 onPressed: () => context.push('/dpl/manager/upload-plan'),
               )
@@ -160,7 +162,7 @@ class _DplManagerDashboardScreenState
                     style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF6B1F8C),
+                    backgroundColor: DplColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     shape: RoundedRectangleBorder(
@@ -188,11 +190,11 @@ class _DplManagerDashboardScreenState
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF8FBFF), Color(0xFFF2FFF9), Color(0xFFF7F2FF)],
+            colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
           ),
         ),
         child: RefreshIndicator(
@@ -255,17 +257,17 @@ class _LiveIndicator extends StatelessWidget {
         Container(
           width: 6,
           height: 6,
-          decoration: const BoxDecoration(
-            color: Color(0xFF15803D),
+          decoration: BoxDecoration(
+            color: VistarPalette.ok,
             shape: BoxShape.circle,
           ),
         ),
         const SizedBox(width: 5),
         Text(
           _label(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: Color(0xFF5D6A7A),
+            color: DplColors.textSecondary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -473,7 +475,7 @@ class _DashboardBody extends StatelessWidget {
         Text(
           dateFmt.format(summary.date),
           style: TextStyle(
-            color: const Color(0xFF5D6A7A),
+            color: DplColors.textSecondary,
             fontWeight: FontWeight.w600,
             fontSize: isPhone ? 12 : 14,
           ),
@@ -592,9 +594,9 @@ Future<void> _showMachinePlanPicker(
                         const SizedBox(height: 2),
                         Text(
                           '${m.plans.length} plans on this date',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF5D6A7A),
+                            color: DplColors.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -639,7 +641,7 @@ class _PlanPickerTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: DplColors.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -666,14 +668,14 @@ class _PlanPickerTile extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEEF2FF),
+                            color: VistarPalette.infoBg,
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: const Color(0xFFC7D2FE)),
+                            border: Border.all(color: VistarPalette.infoLine),
                           ),
                           child: Text(
                             label,
-                            style: const TextStyle(
-                              color: Color(0xFF3730A3),
+                            style: TextStyle(
+                              color: VistarPalette.infoInk,
                               fontWeight: FontWeight.w700,
                               fontSize: 11,
                             ),
@@ -711,27 +713,27 @@ class _PlanPickerTile extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.person_outline,
                       size: 14,
-                      color: Color(0xFF5D6A7A),
+                      color: DplColors.textSecondary,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         plan.supervisorName,
-                        style: const TextStyle(
-                          color: Color(0xFF5D6A7A),
+                        style: TextStyle(
+                          color: DplColors.textSecondary,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 12,
-                      color: Color(0xFF5D6A7A),
+                      color: DplColors.textSecondary,
                     ),
                   ],
                 ),
@@ -757,9 +759,9 @@ class _PlanPickerKv extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
-            color: Color(0xFF5D6A7A),
+            color: DplColors.textSecondary,
             fontWeight: FontWeight.w600,
             height: 1.1,
           ),
@@ -802,7 +804,7 @@ class _KpiStrip extends ConsumerWidget {
       ratioActual: summary.totalActualQty,
       ratioPlan: summary.totalPlanQty,
       pct: summary.completionPct,
-      color: const Color(0xFF1D4ED8),
+      color: VistarPalette.info,
       icon: Icons.today_outlined,
       fmt: fmt,
     );
@@ -816,7 +818,7 @@ class _KpiStrip extends ConsumerWidget {
             ratioActual: 0,
             ratioPlan: 0,
             pct: 0,
-            color: const Color(0xFF047857),
+            color: VistarPalette.ok,
             icon: Icons.calendar_month_outlined,
             fmt: fmt,
           )
@@ -826,7 +828,7 @@ class _KpiStrip extends ConsumerWidget {
             ratioActual: mtd.actualQty,
             ratioPlan: mtd.planQty,
             pct: mtd.completionPct,
-            color: const Color(0xFF047857),
+            color: VistarPalette.ok,
             icon: Icons.calendar_month_outlined,
             fmt: fmt,
           );
@@ -837,7 +839,7 @@ class _KpiStrip extends ConsumerWidget {
       sublabel: 'Today',
       value: _formatHrsMin(summary.totalDowntimeMinutes),
       icon: Icons.timer_off_outlined,
-      color: const Color(0xFFB45309),
+      color: VistarPalette.warn,
     );
 
     final cards = <Widget>[todayCard, mtdCard, downtimeCard];
@@ -905,11 +907,11 @@ class _KpiCard extends StatelessWidget {
   });
 
   Color _achColor(double p) {
-    if (ratioPlan == 0) return const Color(0xFF5D6A7A);
-    if (p >= 1.0) return const Color(0xFF1D4ED8);
-    if (p >= 0.9) return const Color(0xFF047857);
-    if (p >= 0.7) return const Color(0xFFB45309);
-    return const Color(0xFFB3261E);
+    if (ratioPlan == 0) return DplColors.textSecondary;
+    if (p >= 1.0) return VistarPalette.info;
+    if (p >= 0.9) return VistarPalette.ok;
+    if (p >= 0.7) return VistarPalette.warn;
+    return VistarPalette.bad;
   }
 
   @override
@@ -920,7 +922,7 @@ class _KpiCard extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: DplColors.divider),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -958,8 +960,8 @@ class _KpiCard extends StatelessWidget {
                     ),
                     Text(
                       sublabel,
-                      style: const TextStyle(
-                        color: Color(0xFF5D6A7A),
+                      style: TextStyle(
+                        color: DplColors.textSecondary,
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
                         height: 1.1,
@@ -992,7 +994,7 @@ class _KpiCard extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(color: Colors.black),
+                style: TextStyle(color: DplColors.textPrimary),
                 children: [
                   TextSpan(
                     text: fmt.format(ratioActual),
@@ -1004,11 +1006,11 @@ class _KpiCard extends StatelessWidget {
                   ),
                   TextSpan(
                     text: ' / ${fmt.format(ratioPlan)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'monospace',
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
-                      color: Color(0xFF5D6A7A),
+                      color: DplColors.textSecondary,
                     ),
                   ),
                 ],
@@ -1021,7 +1023,7 @@ class _KpiCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: pct.clamp(0.0, 1.0),
               minHeight: 4,
-              backgroundColor: const Color(0xFFEEF1F5),
+              backgroundColor: VistarPalette.surface3,
               valueColor: AlwaysStoppedAnimation(achColor),
             ),
           ),
@@ -1053,7 +1055,7 @@ class _KpiCardSimple extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: DplColors.divider),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -1091,8 +1093,8 @@ class _KpiCardSimple extends StatelessWidget {
                     ),
                     Text(
                       sublabel,
-                      style: const TextStyle(
-                        color: Color(0xFF5D6A7A),
+                      style: TextStyle(
+                        color: DplColors.textSecondary,
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
                         height: 1.1,
@@ -1180,11 +1182,11 @@ class _ShiftTile extends StatelessWidget {
   const _ShiftTile({required this.shift, required this.fmt});
 
   Color _achColor(double p) {
-    if (shift.planQty == 0) return const Color(0xFF5D6A7A);
-    if (p >= 1.0) return const Color(0xFF1D4ED8);
-    if (p >= 0.9) return const Color(0xFF047857);
-    if (p >= 0.7) return const Color(0xFFB45309);
-    return const Color(0xFFB3261E);
+    if (shift.planQty == 0) return DplColors.textSecondary;
+    if (p >= 1.0) return VistarPalette.info;
+    if (p >= 0.9) return VistarPalette.ok;
+    if (p >= 0.7) return VistarPalette.warn;
+    return VistarPalette.bad;
   }
 
   @override
@@ -1196,7 +1198,7 @@ class _ShiftTile extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: DplColors.divider),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -1210,12 +1212,12 @@ class _ShiftTile extends StatelessWidget {
                 height: 24,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
+                  color: VistarPalette.infoBg,
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.schedule_outlined,
-                  color: Color(0xFF3730A3),
+                  color: VistarPalette.infoInk,
                   size: 14,
                 ),
               ),
@@ -1226,8 +1228,8 @@ class _ShiftTile extends StatelessWidget {
                   children: [
                     Text(
                       shift.displayLabel,
-                      style: const TextStyle(
-                        color: Color(0xFF3730A3),
+                      style: TextStyle(
+                        color: VistarPalette.infoInk,
                         fontWeight: FontWeight.w900,
                         fontSize: 11,
                         letterSpacing: 0.3,
@@ -1238,8 +1240,8 @@ class _ShiftTile extends StatelessWidget {
                     ),
                     Text(
                       '${shift.planCount} plan${shift.planCount == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                        color: Color(0xFF5D6A7A),
+                      style: TextStyle(
+                        color: DplColors.textSecondary,
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         height: 1.1,
@@ -1270,7 +1272,7 @@ class _ShiftTile extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(color: Colors.black),
+                style: TextStyle(color: DplColors.textPrimary),
                 children: [
                   TextSpan(
                     text: fmt.format(shift.actualQty),
@@ -1282,11 +1284,11 @@ class _ShiftTile extends StatelessWidget {
                   ),
                   TextSpan(
                     text: ' / ${fmt.format(shift.planQty)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'monospace',
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
-                      color: Color(0xFF5D6A7A),
+                      color: DplColors.textSecondary,
                     ),
                   ),
                 ],
@@ -1299,7 +1301,7 @@ class _ShiftTile extends StatelessWidget {
             child: LinearProgressIndicator(
               value: shift.completionPct.clamp(0.0, 1.0),
               minHeight: 4,
-              backgroundColor: const Color(0xFFEEF1F5),
+              backgroundColor: VistarPalette.surface3,
               valueColor: AlwaysStoppedAnimation(achColor),
             ),
           ),

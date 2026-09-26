@@ -117,9 +117,9 @@ class _AdminAccessScreenState extends ConsumerState<AdminAccessScreen> {
                   padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
                   child: Text(
                     roleInfo.description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF6B7280),
+                      color: DplColors.textSecondary,
                     ),
                   ),
                 ),
@@ -436,7 +436,7 @@ class _ControlledDropdown<T> extends StatelessWidget {
         helperText: helperText,
         helperMaxLines: 2,
         suffixText: pendingCount > 0 ? '$pendingCount unsaved' : null,
-        suffixStyle: const TextStyle(
+        suffixStyle: TextStyle(
           color: DplColors.warning,
           fontWeight: FontWeight.w700,
         ),
@@ -521,8 +521,8 @@ class _GroupCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        color: DplColors.cardBg,
+        border: Border.all(color: DplColors.divider),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -532,7 +532,7 @@ class _GroupCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
             child: Text(
               group.label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
                 color: DplColors.primary,
@@ -594,20 +594,20 @@ class _PermissionRow extends StatelessWidget {
           ),
           if (pending != null) ...[
             const SizedBox(width: 6),
-            const _Tag(text: 'unsaved', color: DplColors.warning),
+            _Tag(text: 'unsaved', color: DplColors.warning),
           ] else if (changed) ...[
             const SizedBox(width: 6),
-            const _Tag(text: 'changed', color: DplColors.info),
+            _Tag(text: 'changed', color: DplColors.info),
           ],
           if (cell.locked) ...[
             const SizedBox(width: 6),
-            const Icon(Icons.lock_outline, size: 14, color: DplColors.neutral),
+            Icon(Icons.lock_outline, size: 14, color: DplColors.neutral),
           ],
         ],
       ),
       subtitle: Text(
         permission.description,
-        style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+        style: TextStyle(fontSize: 11.5, color: DplColors.textSecondary),
       ),
     );
   }
@@ -657,9 +657,9 @@ class _SaveBar extends StatelessWidget {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+        decoration: BoxDecoration(
+          color: DplColors.cardBg,
+          border: Border(top: BorderSide(color: DplColors.divider)),
         ),
         child: Row(
           children: [

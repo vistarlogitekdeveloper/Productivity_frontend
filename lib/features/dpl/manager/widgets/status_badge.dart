@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_constants.dart';
 
 /// Colour-coded pill for plan / item status.
@@ -18,38 +19,38 @@ class DplStatusBadge extends StatelessWidget {
   Color _bg() {
     switch (status) {
       case DplPlanStatus.draft:
-        return const Color(0xFFEEF1F5);
+        return VistarPalette.surface3;
       case DplPlanStatus.published:
-        return const Color(0xFFE0EFFF);
+        return VistarPalette.infoBg;
       case DplPlanStatus.inProgress:
-        return const Color(0xFFFEF3C7);
+        return VistarPalette.warnBg;
       case DplPlanStatus.completed:
-        return const Color(0xFFD1FAE5);
+        return VistarPalette.okBg;
       case DplPlanStatus.locked:
-        return const Color(0xFFE5E7EB);
+        return VistarPalette.surface3;
       case 'pending':
-        return const Color(0xFFEEF1F5);
+        return VistarPalette.surface3;
       default:
-        return const Color(0xFFEEF1F5);
+        return VistarPalette.surface3;
     }
   }
 
   Color _fg() {
     switch (status) {
       case DplPlanStatus.draft:
-        return const Color(0xFF4B5563);
+        return VistarPalette.txt2;
       case DplPlanStatus.published:
-        return const Color(0xFF1D4ED8);
+        return VistarPalette.info;
       case DplPlanStatus.inProgress:
-        return const Color(0xFFB45309);
+        return VistarPalette.warn;
       case DplPlanStatus.completed:
-        return const Color(0xFF047857);
+        return VistarPalette.ok;
       case DplPlanStatus.locked:
-        return const Color(0xFF374151);
+        return VistarPalette.txt;
       case 'pending':
-        return const Color(0xFF4B5563);
+        return VistarPalette.txt2;
       default:
-        return const Color(0xFF4B5563);
+        return VistarPalette.txt2;
     }
   }
 

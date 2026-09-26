@@ -79,8 +79,8 @@ class _DplDashboardSwitcherState extends State<DplDashboardSwitcher> {
         height: DplDashboardSwitcher._height,
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: DplColors.cardBg,
           border: Border(
             bottom: BorderSide(color: DplColors.divider, width: 1),
           ),

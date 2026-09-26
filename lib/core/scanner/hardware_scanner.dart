@@ -129,39 +129,27 @@ class HardwareScanScope extends StatefulWidget {
   /// So when nothing is focused, the scan is delivered to the first field in
   /// THIS subtree instead. The caller passes the key of the visible tab, which
   /// is the one piece of knowledge the scope cannot work out for itself.
-  /// Pushed routes need no help — they are not offstage, so their field really
-  /// does hold focus and the focused path wins.
   final GlobalKey? activeArea;
 
-  /// Put focus on the first scannable field inside [context]'s subtree.
+  /// Screens pushed OVER the shell, innermost last.
   ///
-  /// Call this when a tab becomes visible. Hidden children of an IndexedStack
-  /// cannot hold focus, and `autofocus` fires once and only once — so after
-  /// the operator switches tabs, NOTHING has focus and the handheld's trigger
-  /// does nothing at all. That is not specific to the intent path either: a
-  /// keyboard-wedge scanner types into the void in exactly the same situation,
-  /// which is the "the scanner stopped working after I checked the other
-  /// screen" report that has no visible cause.
+  /// A pushed route is not inside [activeArea] — that key points at the tab
+  /// still sitting underneath it — so without this a scan taken on the trolley
+  /// fill screen would be delivered to the Merge tab behind it. Which is worse
+  /// than losing it: the wrong screen acts on a real wheel.
   ///
-  /// Disabled fields are skipped — several screens disable their scan box
-  /// while a request is in flight, and focusing one would silently do nothing.
-  static void focusScanFieldIn(BuildContext? context) {
-    if (context is! Element || !context.mounted) return;
-    EditableText? first;
-    void walk(Element element) {
-      if (first != null) return;
-      final widget = element.widget;
-      if (widget is EditableText && widget.focusNode.canRequestFocus) {
-        first = widget;
-        return;
-      }
-      element.visitChildren(walk);
-    }
+  /// A stack rather than a single value because routes nest: putaway opens
+  /// over the pallet screen, and whichever is on top is the one the operator
+  /// is looking at.
+  static final List<GlobalKey> _pushed = <GlobalKey>[];
 
-    context.visitChildren(walk);
-    final node = first?.focusNode;
-    if (node != null && !node.hasFocus) node.requestFocus();
+  /// Claim scans for a pushed screen. Pair with [releaseArea] in dispose.
+  static void claimArea(GlobalKey key) {
+    _pushed.remove(key);
+    _pushed.add(key);
   }
+
+  static void releaseArea(GlobalKey key) => _pushed.remove(key);
 
   @override
   State<HardwareScanScope> createState() => _HardwareScanScopeState();
@@ -187,20 +175,21 @@ class _HardwareScanScopeState extends State<HardwareScanScope> {
     // trolley fill — really does hold focus, and so does a field they tapped.
     var target = _focusedField();
 
-    // Nothing focused. That is the NORMAL state of a freshly-opened tab, not
-    // an edge case: an IndexedStack builds its children offstage, offstage
-    // subtrees cannot take focus, and autofocus asks exactly once. So fall
-    // back to the first field in the subtree the shell says is visible.
-    if (target == null) {
-      target = _firstFieldIn(widget.activeArea?.currentContext);
-      // Put the cursor there too. The next scan then takes the fast path, a
-      // wedge scanner has somewhere to type, and the operator can see where
-      // their keystrokes are going.
-      final node = target?.focusNode;
-      if (node != null && node.canRequestFocus && !node.hasFocus) {
-        node.requestFocus();
-      }
-    }
+    // Nothing focused. That is the NORMAL and PREFERRED state on a handheld:
+    // the trigger is the input, so no field is focused, no soft keyboard is
+    // raised, and the operator can see the whole screen they navigated to.
+    //
+    // Delivered by position instead — the first field in the subtree the shell
+    // says is visible. Note this does NOT then move focus there: doing so
+    // raised the keyboard over half the screen on the first scan of every
+    // session, which is exactly the obstruction the trigger exists to avoid.
+    // A pushed screen, if one is over the shell, otherwise the visible tab.
+    // Taking the innermost claim first is what stops a scan on the trolley
+    // fill screen landing on the Merge tab behind it.
+    final area = HardwareScanScope._pushed.isNotEmpty
+        ? HardwareScanScope._pushed.last
+        : widget.activeArea;
+    target ??= _firstFieldIn(area?.currentContext);
 
     if (target == null) {
       // Genuinely nowhere to put it — a screen with no scan field at all.

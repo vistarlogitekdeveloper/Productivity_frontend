@@ -249,7 +249,7 @@ class _NoMatchesState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.filter_alt_off_rounded,
               size: 56,
               color: DplColors.textTertiary,
@@ -260,7 +260,7 @@ class _NoMatchesState extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Try a different search, plant, or machine.',
               style: TextStyle(
                 color: DplColors.textSecondary,
@@ -311,7 +311,7 @@ class _SummaryCard extends StatelessWidget {
               const Spacer(),
               Text(
                 DateFormat('EEE, dd MMM').format(DateTime.now()),
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -386,7 +386,7 @@ class _SummaryTile extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w700,
               fontSize: 10,
@@ -406,7 +406,7 @@ class _SummaryTile extends StatelessWidget {
                 if (unit.isNotEmpty)
                   TextSpan(
                     text: '  $unit',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 11,
@@ -440,7 +440,7 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
@@ -486,7 +486,7 @@ class _PlanRowCard extends StatelessWidget {
                 ),
                 child: Text(
                   row.description.isEmpty ? '-' : row.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.primaryDark,
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
@@ -510,7 +510,7 @@ class _PlanRowCard extends StatelessWidget {
                     ),
                     Text(
                       row.customerPn,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'monospace',
                         color: DplColors.textSecondary,
                         fontWeight: FontWeight.w600,
@@ -527,13 +527,13 @@ class _PlanRowCard extends StatelessWidget {
                     children: [
                       TextSpan(
                         text: fmt.format(row.dispatch ?? 0),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.primaryDark,
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
                         ),
                       ),
-                      const TextSpan(
+                      TextSpan(
                         text: '  NOS',
                         style: TextStyle(
                           color: DplColors.textSecondary,
@@ -545,7 +545,7 @@ class _PlanRowCard extends StatelessWidget {
                   ),
                 )
               else
-                const Text(
+                Text(
                   '—',
                   style: TextStyle(
                     color: DplColors.textTertiary,
@@ -607,7 +607,7 @@ class _InputChip extends StatelessWidget {
           children: [
             TextSpan(
               text: '$label  ',
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontWeight: FontWeight.w700,
                 fontSize: 10.5,

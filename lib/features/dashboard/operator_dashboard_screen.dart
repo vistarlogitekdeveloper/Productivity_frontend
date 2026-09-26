@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/theme_mode_provider.dart';
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../../data/models/production_entry_model.dart';
 import '../../features/auth/auth_provider.dart';
@@ -250,11 +251,11 @@ class _OperatorHomeViewState extends ConsumerState<_OperatorHomeView>
               ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF4F8FF), Color(0xFFE8FFF6), Color(0xFFE9F0FF)],
+            colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
           ),
         ),
         child: RefreshIndicator(
@@ -376,14 +377,10 @@ class _HeroStatsBanner extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1546A0), Color(0xFF176CA6), Color(0xFF1A8D78)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: VistarPalette.heroGradient,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F3A8A).withValues(alpha: 0.24),
+            color: VistarPalette.purple.withValues(alpha: 0.24),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -516,7 +513,7 @@ class _OperatorStatsGrid extends StatelessWidget {
                     subtitle:
                         'Weight: ${stats.totalProductionWeight.toStringAsFixed(3)} kg',
                     icon: Icons.inventory_2_outlined,
-                    color: const Color(0xFF185ADB),
+                    color: VistarPalette.primary,
                   ),
                 ),
                 SizedBox(
@@ -527,7 +524,7 @@ class _OperatorStatsGrid extends StatelessWidget {
                     subtitle:
                         'Weight: ${stats.totalRejectionWeight.toStringAsFixed(3)} kg',
                     icon: Icons.rule_folder_outlined,
-                    color: const Color(0xFFD64545),
+                    color: VistarPalette.bad,
                   ),
                 ),
                 SizedBox(
@@ -538,7 +535,7 @@ class _OperatorStatsGrid extends StatelessWidget {
                     subtitle:
                         'Weight rate: ${stats.totalRunningHoursWeight.toStringAsFixed(2)} kg/hr',
                     icon: Icons.timer_outlined,
-                    color: const Color(0xFF0E9F6E),
+                    color: VistarPalette.ok,
                   ),
                 ),
                 SizedBox(
@@ -595,9 +592,9 @@ class _ProductivitySnapshotCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -694,9 +691,9 @@ class _ProductivityMiniCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFF),
+        color: VistarPalette.surface2,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -705,8 +702,8 @@ class _ProductivityMiniCard extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF4C596A),
+            style: TextStyle(
+              color: VistarPalette.txt2,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -731,7 +728,7 @@ class _ProductivityMiniCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF667386),
+              color: VistarPalette.txt2,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -751,7 +748,7 @@ class _ProductivitySnapshotLoadingCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.94),
+          color: VistarPalette.surface,
           borderRadius: BorderRadius.circular(18),
         ),
         child: const Column(
@@ -793,9 +790,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Row(
         children: [
@@ -816,7 +813,7 @@ class _StatCard extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF4C596A),
+                    color: VistarPalette.txt2,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -830,7 +827,7 @@ class _StatCard extends StatelessWidget {
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF687789),
+                    color: VistarPalette.txt2,
                   ),
                 ),
               ],
@@ -857,9 +854,9 @@ class _RejectionReasonCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -872,9 +869,9 @@ class _RejectionReasonCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (rejectionReasons.isEmpty)
-            const Text(
+            Text(
               'No rejection reasons recorded.',
-              style: TextStyle(color: Color(0xFF5F6B7A)),
+              style: TextStyle(color: VistarPalette.txt2),
             )
           else
             Wrap(
@@ -886,10 +883,10 @@ class _RejectionReasonCard extends StatelessWidget {
                       label: Text(
                         '${reason.reason}: ${countFormat.format(reason.count)} (${reason.weight.toStringAsFixed(3)} kg)',
                       ),
-                      backgroundColor: const Color(0xFFFFF1EE),
-                      side: const BorderSide(color: Color(0xFFFFD9D0)),
-                      labelStyle: const TextStyle(
-                        color: Color(0xFF7B2F22),
+                      backgroundColor: VistarPalette.badBg,
+                      side: BorderSide(color: VistarPalette.badLine),
+                      labelStyle: TextStyle(
+                        color: VistarPalette.badInk,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -927,7 +924,7 @@ class _StatsLoadingView extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.94),
+                        color: VistarPalette.surface,
                         borderRadius: BorderRadius.circular(18),
                       ),
                       child: const Row(
@@ -959,7 +956,7 @@ class _StatsLoadingView extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.94),
+              color: VistarPalette.surface,
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Column(
@@ -992,9 +989,9 @@ class _EntriesLoadingView extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.95),
+              color: VistarPalette.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE3EAF5)),
+              border: Border.all(color: VistarPalette.line),
             ),
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1046,9 +1043,9 @@ class _SectionErrorCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3F3),
+        color: VistarPalette.badBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFFD6D6)),
+        border: Border.all(color: VistarPalette.badLine),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1056,12 +1053,12 @@ class _SectionErrorCard extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFFA1312D),
+              color: VistarPalette.bad,
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
-          Text(message, style: const TextStyle(color: Color(0xFF8A2A24))),
+          Text(message, style: TextStyle(color: VistarPalette.badInk)),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: onRetry,
@@ -1086,9 +1083,9 @@ class _SectionEmptyCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1100,7 +1097,7 @@ class _SectionEmptyCard extends StatelessWidget {
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
-          Text(subtitle, style: const TextStyle(color: Color(0xFF5F6B7A))),
+          Text(subtitle, style: TextStyle(color: VistarPalette.txt2)),
         ],
       ),
     );
@@ -1131,9 +1128,9 @@ class _OperatorEntryCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE3EAF5)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1142,12 +1139,12 @@ class _OperatorEntryCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFF185ADB).withValues(alpha: 0.12),
+              color: VistarPalette.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.precision_manufacturing_outlined,
-              color: Color(0xFF185ADB),
+              color: VistarPalette.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -1164,22 +1161,22 @@ class _OperatorEntryCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Date: $date | Shift: ${_safeValue(entry.shift)}',
-                  style: const TextStyle(color: Color(0xFF5D6A7A)),
+                  style: TextStyle(color: VistarPalette.txt2),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   'Actual Qty: ${entry.actualQuantity} | Rejection: ${entry.rejectionQuantity}',
-                  style: const TextStyle(color: Color(0xFF5D6A7A)),
+                  style: TextStyle(color: VistarPalette.txt2),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   'Running Hours: ${entry.runningHours.toStringAsFixed(2)} | Parts/Hr: ${entry.partsPerHour.toStringAsFixed(1)}',
-                  style: const TextStyle(color: Color(0xFF5D6A7A)),
+                  style: TextStyle(color: VistarPalette.txt2),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   'Weight (kg): ${entry.weightInKGs.toStringAsFixed(1)}',
-                  style: const TextStyle(color: Color(0xFF5D6A7A)),
+                  style: TextStyle(color: VistarPalette.txt2),
                 ),
               ],
             ),
@@ -1205,14 +1202,14 @@ class _ApprovalStatusPill extends StatelessWidget {
     Color textColor;
 
     if (normalized == 'APPROVED') {
-      bgColor = const Color(0xFFE7F8EF);
-      textColor = const Color(0xFF127944);
+      bgColor = VistarPalette.okBg;
+      textColor = VistarPalette.ok;
     } else if (normalized == 'REJECTED') {
-      bgColor = const Color(0xFFFFEAEA);
-      textColor = const Color(0xFFB32929);
+      bgColor = VistarPalette.badBg;
+      textColor = VistarPalette.bad;
     } else {
-      bgColor = const Color(0xFFFFF6E2);
-      textColor = const Color(0xFF8D5A00);
+      bgColor = VistarPalette.warnBg;
+      textColor = VistarPalette.warn;
     }
 
     return Container(

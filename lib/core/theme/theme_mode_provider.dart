@@ -19,10 +19,17 @@ class ThemeModeController extends Notifier<ThemeMode> {
   }
 
   void toggleThemeMode() {
-    final nextMode =
-        state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-    state = nextMode;
-    _prefs?.setString(AppConstants.themeModeKey, _modeToString(nextMode));
+    setThemeMode(state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
+  }
+
+  /// Light is the default; only an explicit choice of dark is persisted as
+  /// dark. [ThemeMode.system] is stored (and treated) as light so the app
+  /// never changes appearance behind the user's back.
+  void setThemeMode(ThemeMode mode) {
+    final next = mode == ThemeMode.dark ? ThemeMode.dark : ThemeMode.light;
+    if (next == state) return;
+    state = next;
+    _prefs?.setString(AppConstants.themeModeKey, _modeToString(next));
   }
 
   static ThemeMode _modeFromString(String? value) {

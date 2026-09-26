@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../design/dpl_theme.dart';
 
 enum _DplButtonVariant { primary, secondary, danger, gradient }
@@ -53,7 +54,7 @@ class _DplButtonBase extends StatelessWidget {
   }
 
   Gradient? get _gradient =>
-      variant == _DplButtonVariant.gradient ? DplColors.brandGradient : null;
+      variant == _DplButtonVariant.gradient ? VistarPalette.ribbon : null;
 
   BoxBorder? get _border {
     if (variant != _DplButtonVariant.secondary) return null;
@@ -113,6 +114,16 @@ class _DplButtonBase extends StatelessWidget {
       border: _border,
       boxShadow: disabled || variant == _DplButtonVariant.secondary
           ? null
+          : variant == _DplButtonVariant.gradient
+          // `.btn-grad` bloom: 0 14px 34px -14px rgba(224,33,138,.7)
+          ? const [
+              BoxShadow(
+                color: Color(0xB3E0218A),
+                blurRadius: 34,
+                spreadRadius: -14,
+                offset: Offset(0, 14),
+              ),
+            ]
           : DplShadows.button,
     );
 
@@ -266,7 +277,9 @@ class DplBigActionButton extends StatelessWidget {
   final IconData? icon;
   final VoidCallback? onPressed;
   final bool loading;
-  final Color color;
+  /// Defaults to [DplColors.primary]; pass [DplColors.error] for the
+  /// danger variant.
+  final Color? color;
   final bool useGradient;
 
   const DplBigActionButton({
@@ -275,7 +288,7 @@ class DplBigActionButton extends StatelessWidget {
     this.icon,
     this.onPressed,
     this.loading = false,
-    this.color = DplColors.primary,
+    this.color,
     this.useGradient = false,
   });
 
@@ -291,7 +304,7 @@ class DplBigActionButton extends StatelessWidget {
       );
     }
     return _DplButtonBase(
-      variant: color == DplColors.error
+      variant: (color ?? DplColors.primary) == DplColors.error
           ? _DplButtonVariant.danger
           : _DplButtonVariant.primary,
       label: label,

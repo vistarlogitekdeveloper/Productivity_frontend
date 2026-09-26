@@ -112,7 +112,7 @@ class _QaPalletRegisterScreenState
     final f = ref.watch(palletFilterProvider);
 
     return Container(
-      color: Colors.white,
+      color: DplColors.cardBg,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,10 +461,10 @@ class _QaPalletRegisterScreenState
         page.total <= page.pallets.length
             ? '${page.total} pallet${page.total == 1 ? '' : 's'}'
             : 'Showing $first–$last of ${page.total}',
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF5D6A7A),
+          color: DplColors.textSecondary,
         ),
       ),
     );
@@ -480,7 +480,7 @@ class _QaPalletRegisterScreenState
         Icon(
           f.isFiltered ? Icons.filter_alt_off : Icons.inventory_2_outlined,
           size: 48,
-          color: const Color(0xFFB6BFCC),
+          color: DplColors.textTertiary,
         ),
         const SizedBox(height: 12),
         Center(
@@ -497,7 +497,7 @@ class _QaPalletRegisterScreenState
             f.isFiltered
                 ? 'Clear a filter to widen the search.'
                 : 'They appear here as soon as the pack point closes one.',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
           ),
         ),
         if (f.isFiltered)
@@ -537,7 +537,7 @@ class _QaPalletRegisterScreenState
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
                         color: p.palletNo.isEmpty
-                            ? const Color(0xFF6B7280)
+                            ? DplColors.textSecondary
                             : DplColors.textPrimary,
                       ),
                     ),
@@ -549,9 +549,9 @@ class _QaPalletRegisterScreenState
                               '${p.partDescription.isEmpty ? '' : ' · ${p.partDescription}'}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
-                        color: Color(0xFF5D6A7A),
+                        color: DplColors.textSecondary,
                       ),
                     ),
                   ],
@@ -593,10 +593,10 @@ class _QaPalletRegisterScreenState
                   padding: const EdgeInsets.only(right: 8),
                   child: Text(
                     p.status == 'merged' ? 'Merged away' : 'Dispatched',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF6B7280),
+                      color: DplColors.textSecondary,
                     ),
                   ),
                 ),
@@ -626,7 +626,7 @@ class _QaPalletRegisterScreenState
   Widget _typeBadge(DplPallet p) {
     final open = p.palletNo.isEmpty || p.status == 'open';
     final color = open
-        ? const Color(0xFF6B7280)
+        ? DplColors.textSecondary
         : p.palletType == 'P'
             ? DplColors.success
             : p.palletType == 'PM'
@@ -651,7 +651,7 @@ class _QaPalletRegisterScreenState
   }
 
   Widget _fact(IconData icon, String text, {bool danger = false}) {
-    final color = danger ? DplColors.error : const Color(0xFF6B7280);
+    final color = danger ? DplColors.error : DplColors.textSecondary;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -807,7 +807,9 @@ class _PartFilterDialogState extends ConsumerState<_PartFilterDialog> {
           children: [
             TextField(
               controller: _ctrl,
-              autofocus: true,
+              // NOT autofocused. This is a search box on a register the
+              // operator opens to READ; raising the keyboard over the list
+              // they came to look at helps nobody.
               onChanged: _onChanged,
               decoration: const InputDecoration(
                 isDense: true,
@@ -827,10 +829,10 @@ class _PartFilterDialogState extends ConsumerState<_PartFilterDialog> {
                 data: (res) {
                   final parts = res.data ?? const <DplPart>[];
                   if (parts.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
                         'No item matches that.',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                        style: TextStyle(fontSize: 13, color: DplColors.textSecondary),
                       ),
                     );
                   }

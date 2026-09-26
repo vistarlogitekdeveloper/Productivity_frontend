@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/theme_mode_provider.dart';
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../../data/models/production_entry_model.dart';
 import '../auth/auth_provider.dart';
@@ -194,9 +195,9 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: child,
     );
@@ -228,9 +229,9 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Search by RC number to assign a location and edit logged quantities with audit comments.',
-                style: TextStyle(color: Color(0xFF5D6A7A)),
+                style: TextStyle(color: VistarPalette.txt2),
               ),
               const SizedBox(height: 12),
               LayoutBuilder(
@@ -298,14 +299,14 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3F3),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFFFD6D6)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     brinState.errorMessage!,
-                    style: const TextStyle(
-                      color: Color(0xFF8A2A24),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -328,7 +329,7 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
           _sectionCard(
             Text(
               'No entries found for RC ${brinState.activeRcNumber}.',
-              style: const TextStyle(color: Color(0xFF5D6A7A)),
+              style: TextStyle(color: VistarPalette.txt2),
             ),
           )
         else if (entries.isNotEmpty) ...[
@@ -433,9 +434,9 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Track RC totals by date range and compare actual versus corrected quantities before drilling into individual RC entries.',
-                style: TextStyle(color: Color(0xFF5D6A7A)),
+                style: TextStyle(color: VistarPalette.txt2),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -507,14 +508,14 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3F3),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFFFD6D6)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     brinState.summaryErrorMessage!,
-                    style: const TextStyle(
-                      color: Color(0xFF8A2A24),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -533,13 +534,13 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7FAFF),
+                    color: VistarPalette.surface2,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2EAF6)),
+                    border: Border.all(color: VistarPalette.line),
                   ),
                   child: Text(
                     'No RC summary data available for ${brinState.summaryRange.label.toLowerCase()}.',
-                    style: const TextStyle(color: Color(0xFF5D6A7A)),
+                    style: TextStyle(color: VistarPalette.txt2),
                   ),
                 )
               else
@@ -566,9 +567,9 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
                       width: double.infinity,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF9FBFF),
+                        color: VistarPalette.surface2,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE2EAF6)),
+                        border: Border.all(color: VistarPalette.line),
                       ),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
@@ -576,7 +577,7 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
                           horizontalMargin: 10,
                           columnSpacing: 18,
                           headingRowColor: WidgetStateProperty.all(
-                            const Color(0xFFF1F6FF),
+                            VistarPalette.surface3,
                           ),
                           columns: const [
                             DataColumn(label: Text('RC Number')),
@@ -734,11 +735,11 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFFFFAF1), Color(0xFFF3FBFF), Color(0xFFF6FFF6)],
+            colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
           ),
         ),
         child: RefreshIndicator(
@@ -751,18 +752,10 @@ class _BrinDashboardScreenState extends ConsumerState<BrinDashboardScreen>
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFAA5C00),
-                      Color(0xFFD9822B),
-                      Color(0xFF1A8D78),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: VistarPalette.heroGradient,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF9B570A).withValues(alpha: 0.22),
+                      color: VistarPalette.purple.withValues(alpha: 0.22),
                       blurRadius: 18,
                       offset: const Offset(0, 10),
                     ),
@@ -819,19 +812,19 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFF),
+        color: VistarPalette.surface2,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF5D6A7A)),
+          Icon(icon, size: 16, color: VistarPalette.txt2),
           const SizedBox(width: 6),
           Text(
             '$label: $value',
-            style: const TextStyle(
-              color: Color(0xFF425162),
+            style: TextStyle(
+              color: VistarPalette.txt2,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -857,9 +850,9 @@ class _SummaryMetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFF),
+        color: VistarPalette.surface2,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Row(
         children: [
@@ -867,10 +860,10 @@ class _SummaryMetricCard extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF2FF),
+              color: VistarPalette.infoBg,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: const Color(0xFF355C9A)),
+            child: Icon(icon, color: VistarPalette.info),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -879,8 +872,8 @@ class _SummaryMetricCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Color(0xFF5D6A7A),
+                  style: TextStyle(
+                    color: VistarPalette.txt2,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -889,7 +882,7 @@ class _SummaryMetricCard extends StatelessWidget {
                   value,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF213247),
+                    color: VistarPalette.txt,
                   ),
                 ),
               ],
@@ -918,9 +911,9 @@ class _BrinRcSummaryCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -947,7 +940,7 @@ class _BrinRcSummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Location: ${safeValue(item.location)}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -995,9 +988,9 @@ class _BrinRcEntryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1018,7 +1011,7 @@ class _BrinRcEntryCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       'Date: $date | Shift: ${safeValue(entry.shift)}',
-                      style: const TextStyle(color: Color(0xFF5D6A7A)),
+                      style: TextStyle(color: VistarPalette.txt2),
                     ),
                   ],
                 ),
@@ -1078,15 +1071,15 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalized = status.toUpperCase();
     final bgColor = normalized == 'APPROVED'
-        ? const Color(0xFFE7F8EF)
+        ? VistarPalette.okBg
         : normalized == 'REJECTED'
-        ? const Color(0xFFFFEAEA)
-        : const Color(0xFFFFF6E2);
+        ? VistarPalette.badBg
+        : VistarPalette.warnBg;
     final textColor = normalized == 'APPROVED'
-        ? const Color(0xFF127944)
+        ? VistarPalette.ok
         : normalized == 'REJECTED'
-        ? const Color(0xFFB32929)
-        : const Color(0xFF8D5A00);
+        ? VistarPalette.bad
+        : VistarPalette.warn;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1158,7 +1151,7 @@ class _LocationUpdateDialogState extends State<_LocationUpdateDialog> {
           children: [
             Text(
               'This will update the location for all entries under RC ${widget.rcNumber}.',
-              style: const TextStyle(color: Color(0xFF5D6A7A)),
+              style: TextStyle(color: VistarPalette.txt2),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -1250,16 +1243,16 @@ class _QuantityUpdateDialogState extends State<_QuantityUpdateDialog> {
             children: [
               Text(
                 'RC: ${(widget.entry.rcNumber ?? '').trim().isEmpty ? '-' : widget.entry.rcNumber!}',
-                style: const TextStyle(
-                  color: Color(0xFF5D6A7A),
+                style: TextStyle(
+                  color: VistarPalette.txt2,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Current Quantity: ${widget.entry.actualQuantity}',
-                style: const TextStyle(
-                  color: Color(0xFF5D6A7A),
+                style: TextStyle(
+                  color: VistarPalette.txt2,
                   fontWeight: FontWeight.w600,
                 ),
               ),

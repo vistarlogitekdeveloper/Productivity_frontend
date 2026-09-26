@@ -1,64 +1,85 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
+
 /// Vistar DPL design system.
 ///
 /// Every color, font, spacing, radius, and shadow used in DPL screens
 /// comes from here. Hard-coded hex values in screen files are a code
 /// smell — search the codebase periodically and pull violations back
 /// into this file.
+///
+/// Colors are getters, not constants: they resolve against the active
+/// light / dark [VistarTokens], so a screen that reads `DplColors.cardBg`
+/// follows the theme toggle without knowing it exists. The trade-off is
+/// that they can't appear inside a `const` expression.
 
 class DplColors {
   const DplColors._();
 
-  // Brand — single primary purple anchored by the Vistar swoosh.
-  static const Color primary = Color(0xFF6B1F8C);
-  static const Color primaryLight = Color(0xFF8B3FAC);
-  static const Color primaryDark = Color(0xFF4A1163);
-  static const Color primaryTint = Color(0xFFF3E8F9);
+  static bool get _dark => VistarPalette.isDark;
 
-  // Gradient accent — magenta → orange → yellow ribbon. Use only for
-  // hero CTAs (Submit, START, completion rings, login button), never
-  // as a large surface.
-  static const List<Color> gradientStops = [
-    Color(0xFFA4257A),
-    Color(0xFFE54B2A),
-    Color(0xFFF5A623),
-  ];
-  static const LinearGradient brandGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: gradientStops,
-  );
+  // Brand — single primary purple anchored by the Vistar swoosh.
+  static Color get primary => VistarPalette.primary;
+  static Color get primaryLight =>
+      _dark ? const Color(0xFFC387EE) : const Color(0xFF8B3FAC);
+
+  /// Deep purple for text and icons on [primaryTint]. In dark mode this
+  /// flips to a light violet so it stays readable on the tinted fill.
+  static Color get primaryDark => VistarPalette.primaryInk;
+  static Color get primaryTint => VistarPalette.primaryTint;
+
+  // Gradient accent — the Vistar Premium ribbon (purple → pink → red →
+  // orange → amber → cream). Use only for hero CTAs (Submit, START,
+  // completion rings, login button) and thin accents, never as a large
+  // surface.
+  static const List<Color> gradientStops = VistarPalette.ribbonStops;
+  static const LinearGradient brandGradient = VistarPalette.ribbonFlat;
 
   // Semantic — pairs of foreground + soft tint background.
-  static const Color success = Color(0xFF15803D);
-  static const Color successBg = Color(0xFFE6F4EA);
-  static const Color warning = Color(0xFFD97706);
-  static const Color warningBg = Color(0xFFFEF3C7);
-  static const Color error = Color(0xFFDC2626);
-  static const Color errorBg = Color(0xFFFEE2E2);
-  static const Color info = Color(0xFF2563EB);
-  static const Color infoBg = Color(0xFFDBEAFE);
-  static const Color neutral = Color(0xFF6B7280);
-  static const Color neutralBg = Color(0xFFF3F4F6);
+  //
+  // DPL screens use these both as text colours AND as solid fills behind
+  // white text (START / STOP buttons, downtime banners), so in dark mode
+  // they take the balanced "solid" tones that hold ~4:1 against white and
+  // ~5:1 on the dark page — the pastel `VistarPalette.ok/bad/…` would fail
+  // the white-text case.
+  static Color get success => VistarPalette.okSolid;
+  static Color get successBg => VistarPalette.okBg;
+  static Color get warning =>
+      _dark ? VistarPalette.warnSolid : const Color(0xFFD97706);
+  static Color get warningBg => VistarPalette.warnBg;
+  static Color get error =>
+      _dark ? VistarPalette.badSolid : const Color(0xFFDC2626);
+  static Color get errorBg =>
+      _dark ? VistarPalette.badBg : const Color(0xFFFEE2E2);
+  static Color get info =>
+      _dark ? VistarPalette.infoSolid : const Color(0xFF2563EB);
+  static Color get infoBg =>
+      _dark ? VistarPalette.infoBg : const Color(0xFFDBEAFE);
+  static Color get neutral =>
+      _dark ? const Color(0xFF9A93B5) : const Color(0xFF6B6781);
+  static Color get neutralBg => VistarPalette.surface3;
 
   // Status pills (plan / item status colors).
-  static const Color statusDraft = Color(0xFF6B7280);
-  static const Color statusPublished = Color(0xFF2563EB);
-  static const Color statusInProgress = Color(0xFFD97706);
-  static const Color statusCompleted = Color(0xFF15803D);
-  static const Color statusLocked = Color(0xFF4B5563);
+  static Color get statusDraft => neutral;
+  static Color get statusPublished => info;
+  static Color get statusInProgress => warning;
+  static Color get statusCompleted => success;
+  static Color get statusLocked =>
+      _dark ? const Color(0xFF8C86A6) : const Color(0xFF524C66);
 
   // Surfaces.
-  static const Color pageBg = Color(0xFFF8F7FB);
-  static const Color cardBg = Color(0xFFFFFFFF);
-  static const Color divider = Color(0xFFE5E7EB);
+  static Color get pageBg => VistarPalette.bg;
+  static Color get cardBg => VistarPalette.surface;
+  static Color get divider => VistarPalette.line;
 
   // Text.
-  static const Color textPrimary = Color(0xFF111827);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textTertiary = Color(0xFF9CA3AF);
+  static Color get textPrimary => VistarPalette.txt;
+  static Color get textSecondary => VistarPalette.txt2;
+  static Color get textTertiary => VistarPalette.txt3;
+
+  /// Text on a solid primary / status fill — white in both modes.
   static const Color textInverse = Color(0xFFFFFFFF);
 }
 
@@ -85,73 +106,130 @@ class DplRadius {
 class DplShadows {
   const DplShadows._();
 
-  /// Soft 2-layer card shadow.
-  static const List<BoxShadow> card = [
-    BoxShadow(
-      color: Color(0x0D000000),
-      blurRadius: 4,
-      offset: Offset(0, 1),
-    ),
-    BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 12,
-      offset: Offset(0, 6),
-    ),
-  ];
+  static bool get _dark => VistarPalette.isDark;
+
+  /// Soft 2-layer card shadow. On near-black a shadow can't darken the
+  /// page, so dark mode swaps it for a deeper, wider bloom.
+  static List<BoxShadow> get card => _dark
+      ? const [
+          BoxShadow(
+            color: Color(0x73000000),
+            blurRadius: 30,
+            spreadRadius: -12,
+            offset: Offset(0, 14),
+          ),
+        ]
+      : const [
+          BoxShadow(
+            color: Color(0x0A2A1850),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+          BoxShadow(
+            color: Color(0x122A1850),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ];
 
   /// Stronger shadow for bottom sheets / modals.
-  static const List<BoxShadow> sheet = [
-    BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 8,
-      offset: Offset(0, -2),
-    ),
-    BoxShadow(
-      color: Color(0x1F000000),
-      blurRadius: 24,
-      offset: Offset(0, -8),
-    ),
-  ];
+  static List<BoxShadow> get sheet => _dark
+      ? const [
+          BoxShadow(
+            color: Color(0x99000000),
+            blurRadius: 32,
+            offset: Offset(0, -8),
+          ),
+        ]
+      : const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+          BoxShadow(
+            color: Color(0x1F000000),
+            blurRadius: 24,
+            offset: Offset(0, -8),
+          ),
+        ];
 
   /// Top shadow for the bottom navigation bar.
-  static const List<BoxShadow> bottomNav = [
-    BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 6,
-      offset: Offset(0, -2),
-    ),
-  ];
+  static List<BoxShadow> get bottomNav => _dark
+      ? const [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 12,
+            offset: Offset(0, -4),
+          ),
+        ]
+      : const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 6,
+            offset: Offset(0, -2),
+          ),
+        ];
 
   /// Subtle button drop shadow.
-  static const List<BoxShadow> button = [
-    BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 8,
-      offset: Offset(0, 2),
-    ),
-  ];
+  static List<BoxShadow> get button => _dark
+      ? const [
+          BoxShadow(
+            color: Color(0x59000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ]
+      : const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ];
 }
 
 /// Typography scale. All number styles enable tabular figures so
 /// digits align cleanly in tables and cards.
+///
+/// Vistar Premium pairing: Bricolage Grotesque for display text (titles,
+/// KPI numerals), Manrope for everything else, Roboto Mono for timers.
 class DplText {
   const DplText._();
 
   static const _tabularFigures = FontFeature.tabularFigures();
 
-  // UI font — Inter via google_fonts.
-  static TextStyle _inter({
+  // UI font — Manrope via google_fonts.
+  static TextStyle _body({
     required double size,
     required FontWeight weight,
     double? height,
     Color? color,
     List<FontFeature> features = const [],
   }) =>
-      GoogleFonts.inter(
+      GoogleFonts.manrope(
         fontSize: size,
         fontWeight: weight,
         height: height,
         color: color ?? DplColors.textPrimary,
+        letterSpacing: 0.1,
+        fontFeatures: features,
+      );
+
+  // Display font — Bricolage Grotesque via google_fonts.
+  static TextStyle _display({
+    required double size,
+    required FontWeight weight,
+    double? height,
+    Color? color,
+    List<FontFeature> features = const [],
+  }) =>
+      GoogleFonts.bricolageGrotesque(
+        fontSize: size,
+        fontWeight: weight,
+        height: height,
+        color: color ?? DplColors.textPrimary,
+        letterSpacing: -0.4,
         fontFeatures: features,
       );
 
@@ -169,28 +247,28 @@ class DplText {
         fontFeatures: const [_tabularFigures],
       );
 
-  static TextStyle display() => _inter(size: 32, weight: FontWeight.w800);
-  static TextStyle h1() => _inter(size: 24, weight: FontWeight.w800);
-  static TextStyle h2() => _inter(size: 20, weight: FontWeight.w800);
+  static TextStyle display() => _display(size: 32, weight: FontWeight.w800);
+  static TextStyle h1() => _display(size: 24, weight: FontWeight.w800);
+  static TextStyle h2() => _display(size: 20, weight: FontWeight.w800);
   static TextStyle h3() =>
-      _inter(size: 17, weight: FontWeight.w700, height: 1.3);
-  static TextStyle bodyLg() => _inter(size: 16, weight: FontWeight.w500);
-  static TextStyle body() => _inter(size: 14, weight: FontWeight.w500);
-  static TextStyle bodySm() => _inter(size: 13, weight: FontWeight.w500);
-  static TextStyle caption() => _inter(
+      _body(size: 17, weight: FontWeight.w700, height: 1.3);
+  static TextStyle bodyLg() => _body(size: 16, weight: FontWeight.w500);
+  static TextStyle body() => _body(size: 14, weight: FontWeight.w500);
+  static TextStyle bodySm() => _body(size: 13, weight: FontWeight.w500);
+  static TextStyle caption() => _body(
         size: 12,
         weight: FontWeight.w600,
         color: DplColors.textSecondary,
       );
   static TextStyle button() =>
-      _inter(size: 15, weight: FontWeight.w700, color: DplColors.textInverse);
+      _body(size: 15, weight: FontWeight.w700, color: DplColors.textInverse);
   static TextStyle mono() => _mono(size: 16, weight: FontWeight.w600);
-  static TextStyle numLg() => _inter(
+  static TextStyle numLg() => _display(
         size: 28,
         weight: FontWeight.w800,
         features: const [_tabularFigures],
       );
-  static TextStyle numMd() => _inter(
+  static TextStyle numMd() => _display(
         size: 20,
         weight: FontWeight.w800,
         features: const [_tabularFigures],
@@ -198,10 +276,14 @@ class DplText {
   static TextStyle timer() => _mono(size: 48, weight: FontWeight.w700);
 }
 
-/// Returns a [ThemeData] tuned for DPL surfaces. Apply via `Theme(...)`
-/// at the top of each DPL shell, or push it into MaterialApp directly.
+/// Returns a [ThemeData] tuned for DPL surfaces in the active brightness.
+/// Apply via `Theme(...)` at the top of a DPL shell if it ever needs to
+/// diverge from the app-wide theme.
 ThemeData dplThemeData() {
-  final base = ThemeData.light(useMaterial3: true);
+  final dark = VistarPalette.isDark;
+  final base = dark
+      ? ThemeData.dark(useMaterial3: true)
+      : ThemeData.light(useMaterial3: true);
   return base.copyWith(
     scaffoldBackgroundColor: DplColors.pageBg,
     colorScheme: base.colorScheme.copyWith(
@@ -211,7 +293,7 @@ ThemeData dplThemeData() {
       onSurface: DplColors.textPrimary,
       error: DplColors.error,
     ),
-    textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
+    textTheme: GoogleFonts.manropeTextTheme(base.textTheme).apply(
       bodyColor: DplColors.textPrimary,
       displayColor: DplColors.textPrimary,
     ),

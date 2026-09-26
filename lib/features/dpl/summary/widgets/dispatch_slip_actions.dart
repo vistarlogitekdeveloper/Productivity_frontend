@@ -153,7 +153,7 @@ class _DispatchSlipActionSheetState
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: DplColors.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: DplShadows.sheet,
@@ -186,7 +186,7 @@ class _DispatchSlipActionSheetState
                   const SizedBox(height: 6),
                   Text(
                     '${widget.slip.machineLabel} • ${widget.slip.partLabel}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
@@ -236,7 +236,7 @@ class _DispatchSlipActionSheetState
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.error_outline,
                             size: 18,
                             color: DplColors.error,
@@ -245,7 +245,7 @@ class _DispatchSlipActionSheetState
                           Expanded(
                             child: Text(
                               _serverError!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: DplColors.error,
                                 fontWeight: FontWeight.w600,
                               ),

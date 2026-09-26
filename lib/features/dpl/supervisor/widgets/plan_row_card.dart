@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shift_chip.dart';
 import '../../manager/widgets/status_badge.dart';
 import '../../models/dpl_production_plan_item.dart';
@@ -33,7 +34,7 @@ class PlanRowCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,13 +46,13 @@ class PlanRowCard extends StatelessWidget {
                     height: 44,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF3FB),
+                      color: VistarPalette.infoBg,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '#${item.planNo}',
-                      style: const TextStyle(
-                        color: Color(0xFF1D4ED8),
+                      style: TextStyle(
+                        color: VistarPalette.info,
                         fontWeight: FontWeight.w900,
                         fontSize: 13,
                       ),
@@ -80,8 +81,8 @@ class PlanRowCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 2),
                             child: Text(
                               item.partName,
-                              style: const TextStyle(
-                                color: Color(0xFF5D6A7A),
+                              style: TextStyle(
+                                color: VistarPalette.txt2,
                                 fontSize: 12,
                               ),
                               maxLines: 1,
@@ -112,9 +113,9 @@ class PlanRowCard extends StatelessWidget {
                   const Spacer(),
                   Text(
                     '$pct%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF5D6A7A),
+                      color: VistarPalette.txt2,
                     ),
                   ),
                 ],
@@ -133,13 +134,13 @@ class PlanRowCard extends StatelessWidget {
                       _chip(
                         icon: Icons.play_arrow_outlined,
                         label: 'Started ${timeFmt.format(item.startTime!.toLocal())}',
-                        color: const Color(0xFF047857),
+                        color: VistarPalette.ok,
                       ),
                     if (item.endTime != null)
                       _chip(
                         icon: Icons.flag_outlined,
                         label: 'Ended ${timeFmt.format(item.endTime!.toLocal())}',
-                        color: const Color(0xFF1D4ED8),
+                        color: VistarPalette.info,
                       ),
                   ],
                 ),
@@ -156,8 +157,8 @@ class PlanRowCard extends StatelessWidget {
       children: [
         Text(
           '$label: ',
-          style: const TextStyle(
-            color: Color(0xFF5D6A7A),
+          style: TextStyle(
+            color: VistarPalette.txt2,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -212,7 +213,7 @@ class _PausedChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = Color(0xFFB45309);
+    final color = VistarPalette.warn;
     final timeFmt = DateFormat('HH:mm');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -224,11 +225,11 @@ class _PausedChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.pause_circle_outline, size: 12, color: color),
+          Icon(Icons.pause_circle_outline, size: 12, color: color),
           const SizedBox(width: 4),
           Text(
             'Paused ${timeFmt.format(pausedAt.toLocal())}',
-            style: const TextStyle(
+            style: TextStyle(
               color: color,
               fontWeight: FontWeight.w800,
               fontSize: 11,

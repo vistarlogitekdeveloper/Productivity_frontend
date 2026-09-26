@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/theme_mode_provider.dart';
+import '../../core/widgets/vistar/vistar_ambient.dart';
 import '../auth/auth_provider.dart';
 import 'data/vistar_app_catalog.dart';
 import 'design/workspace_theme.dart';
@@ -101,7 +103,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             ),
             content: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.error_outline_rounded,
                   size: 18,
                   color: VistarPalette.bad,
@@ -139,7 +141,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           backgroundColor: VistarPalette.surface2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VistarPalette.r),
-            side: const BorderSide(color: VistarPalette.line2),
+            side: BorderSide(color: VistarPalette.line2),
           ),
           title: Text(
             'Sign out of Vistar Workspace?',
@@ -230,6 +232,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                               role: AppConstants.roleLabel(user?.role ?? ''),
                               compact: !isWide,
                               onSignOut: _signOut,
+                              isDark:
+                                  ref.watch(themeModeProvider) == ThemeMode.dark,
+                              onToggleTheme: () => ref
+                                  .read(themeModeProvider.notifier)
+                                  .toggleThemeMode(),
                             ),
                           ),
                         ),
@@ -362,63 +369,8 @@ class _AmbientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final vmax = constraints.biggest.longestSide;
-        return DecoratedBox(
-          decoration: const BoxDecoration(color: VistarPalette.bg),
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
-              _glow(
-                alignment: const Alignment(-0.75, -1.15),
-                size: constraints.maxWidth * 1.05,
-                color: VistarPalette.purple.withValues(alpha: 0.22),
-              ),
-              _glow(
-                alignment: const Alignment(1.1, -0.85),
-                size: constraints.maxWidth * 0.95,
-                color: VistarPalette.pink.withValues(alpha: 0.16),
-              ),
-              _glow(
-                alignment: const Alignment(0.6, 1.25),
-                size: constraints.maxWidth * 1.1,
-                color: VistarPalette.orange.withValues(alpha: 0.12),
-              ),
-              Positioned(
-                right: -vmax * 0.14,
-                top: -vmax * 0.08,
-                child: Transform.rotate(
-                  angle: 0.07,
-                  child: VistarSwoosh(size: vmax * 0.78, opacity: 0.05),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _glow({
-    required Alignment alignment,
-    required double size,
-    required Color color,
-  }) {
-    return Align(
-      alignment: alignment,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: <Color>[color, color.withValues(alpha: 0)],
-            stops: const <double>[0.0, 1.0],
-          ),
-        ),
-      ),
-    );
+    // The shared Vistar ambient, which follows the light / dark palette.
+    return const VistarAmbient();
   }
 }
 
@@ -432,6 +384,8 @@ class _TopBar extends StatelessWidget {
   final String role;
   final bool compact;
   final VoidCallback onSignOut;
+  final bool isDark;
+  final VoidCallback onToggleTheme;
 
   const _TopBar({
     required this.displayName,
@@ -439,6 +393,8 @@ class _TopBar extends StatelessWidget {
     required this.role,
     required this.compact,
     required this.onSignOut,
+    required this.isDark,
+    required this.onToggleTheme,
   });
 
   @override
@@ -461,6 +417,25 @@ class _TopBar extends StatelessWidget {
           const SizedBox(width: 10),
         ],
         Tooltip(
+          message: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+          child: IconButton(
+            onPressed: onToggleTheme,
+            icon: Icon(
+              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              size: 20,
+            ),
+            color: VistarPalette.txt2,
+            style: IconButton.styleFrom(
+              backgroundColor: VistarPalette.surface2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(VistarPalette.rSm),
+                side: BorderSide(color: VistarPalette.line),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Tooltip(
           message: 'Sign out',
           child: IconButton(
             onPressed: onSignOut,
@@ -470,7 +445,7 @@ class _TopBar extends StatelessWidget {
               backgroundColor: VistarPalette.surface2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(VistarPalette.rSm),
-                side: const BorderSide(color: VistarPalette.line),
+                side: BorderSide(color: VistarPalette.line),
               ),
             ),
           ),
@@ -753,7 +728,7 @@ class _Filters extends StatelessWidget {
         controller: controller,
         onChanged: onQueryChanged,
         style: VistarType.body(size: 14, color: VistarPalette.txt),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: 'Search apps…',
           prefixIcon: Icon(
             Icons.search_rounded,
@@ -878,10 +853,14 @@ class _AppTileState extends State<_AppTile> {
         curve: Curves.easeOut,
         transform: Matrix4.translationValues(0, lifted ? -2 : 0, 0),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          // The `.card` surface: translucent over the ambient in dark mode, clean
+          // white-to-lavender in daylight.
+          gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: <Color>[Color(0xB316142A), Color(0xB3110F1E)],
+            colors: VistarPalette.isDark
+                ? const <Color>[Color(0xB316142A), Color(0xB3110F1E)]
+                : const <Color>[Color(0xFFFFFFFF), Color(0xFFFBFAFD)],
           ),
           borderRadius: BorderRadius.circular(VistarPalette.r),
           border: Border.all(
@@ -1157,7 +1136,7 @@ class _FooterNote extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(
+        Icon(
           Icons.shield_outlined,
           size: 15,
           color: VistarPalette.txt3,

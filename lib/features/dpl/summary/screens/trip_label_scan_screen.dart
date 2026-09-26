@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
+import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../journey/widgets/scanner_error_view.dart';
@@ -255,9 +257,9 @@ class _ProgressPanel extends StatelessWidget {
     final p = progress;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      decoration: BoxDecoration(
+        color: DplColors.cardBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
       child: SafeArea(
@@ -294,7 +296,7 @@ class _ProgressPanel extends StatelessWidget {
                         : 'Stop scanning',
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: complete ? const Color(0xFF15803D) : null,
+                    backgroundColor: complete ? DplColors.success : null,
                   ),
                 ),
               ),
@@ -337,8 +339,8 @@ class _PlanProgressRow extends StatelessWidget {
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
                 color: plan.isComplete
-                    ? const Color(0xFF15803D)
-                    : const Color(0xFF334155),
+                    ? DplColors.success
+                    : DplColors.textPrimary,
               ),
             ),
             if (plan.serials.isNotEmpty)
@@ -355,9 +357,9 @@ class _PlanProgressRow extends StatelessWidget {
           child: LinearProgressIndicator(
             value: ratio,
             minHeight: 6,
-            backgroundColor: const Color(0xFFEEF1F5),
+            backgroundColor: VistarPalette.surface3,
             valueColor: AlwaysStoppedAnimation(
-              plan.isComplete ? const Color(0xFF15803D) : const Color(0xFF6366F1),
+              plan.isComplete ? DplColors.success : const Color(0xFF6366F1),
             ),
           ),
         ),
@@ -400,10 +402,10 @@ class _ManualSerialSheetState extends State<_ManualSerialSheet> {
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Type the serial printed under the code, for example GA2600000147.',
             style: TextStyle(
-              color: Color(0xFF5D6A7A),
+              color: DplColors.textSecondary,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),

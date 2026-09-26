@@ -30,6 +30,23 @@ class DplErrorMapper {
     final statusCode = error.response?.statusCode;
     final data = error.response?.data;
 
+    // A 500 is shown to the operator as "Something went wrong" on purpose —
+    // a stack trace helps nobody on a shop floor. But it must not be
+    // swallowed on the way past, or a server fault is invisible to everyone
+    // including whoever has to fix it. In a debug build the real body goes to
+    // the console, where `adb logcat -s flutter` can read it off a handheld.
+    assert(() {
+      if (statusCode != null && statusCode >= 500) {
+        // ignore: avoid_print
+        print(
+          'DPL_API_5XX status=$statusCode '
+          'path=${error.requestOptions.method} ${error.requestOptions.path} '
+          'body=$data',
+        );
+      }
+      return true;
+    }());
+
     String? apiMessage;
     String? apiCode;
 

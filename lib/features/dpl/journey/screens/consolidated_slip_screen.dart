@@ -151,7 +151,7 @@ class _ConsolidatedSlipScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: DplColors.error, size: 40),
+            Icon(Icons.error_outline, color: DplColors.error, size: 40),
             const SizedBox(height: 12),
             Text(
               message.replaceFirst('Exception: ', ''),

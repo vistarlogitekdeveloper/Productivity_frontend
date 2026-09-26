@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
+
 class DplEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -40,8 +42,8 @@ class DplEmptyState extends StatelessWidget {
               Text(
                 message!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF5D6A7A),
+                style: TextStyle(
+                  color: VistarPalette.txt2,
                 ),
               ),
             ],

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
+import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_response.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -361,19 +363,19 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFECEA),
+        color: VistarPalette.badBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFFFB4AA)),
+        border: Border.all(color: VistarPalette.badLine),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Color(0xFFB3261E)),
+          Icon(Icons.error_outline, color: VistarPalette.bad),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Color(0xFF8F1D18),
+              style: TextStyle(
+                color: VistarPalette.badInk,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -393,32 +395,32 @@ class _BlockersHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
+        color: VistarPalette.warnBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFFCD34D)),
+        border: Border.all(color: VistarPalette.warnLine),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, color: Color(0xFFB45309)),
+          Icon(Icons.info_outline, color: VistarPalette.warn),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Before submitting:',
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF92400E),
+                    color: VistarPalette.warnInk,
                   ),
                 ),
                 const SizedBox(height: 2),
                 for (final b in blockers)
                   Text(
                     '• $b',
-                    style: const TextStyle(
-                      color: Color(0xFF92400E),
+                    style: TextStyle(
+                      color: VistarPalette.warnInk,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -515,20 +517,20 @@ class _OptionalShiftPlaceholder extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: VistarPalette.surface2,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD9E2EF)),
+        border: Border.all(color: DplColors.divider),
       ),
       child: Row(
         children: [
-          const Icon(Icons.access_time,
-              color: Color(0xFF5D6A7A), size: 18),
+          Icon(Icons.access_time,
+              color: DplColors.textSecondary, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Color(0xFF5D6A7A),
+              style: TextStyle(
+                color: DplColors.textSecondary,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
@@ -629,9 +631,9 @@ class _Skeleton extends StatelessWidget {
       height: 56,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: VistarPalette.surface2,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD9E2EF)),
+        border: Border.all(color: DplColors.divider),
       ),
       child: Row(
         children: [
@@ -643,8 +645,8 @@ class _Skeleton extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF5D6A7A),
+            style: TextStyle(
+              color: DplColors.textSecondary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -672,19 +674,19 @@ class _InlineError extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7F7),
+        color: VistarPalette.badBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFFD2CF)),
+        border: Border.all(color: VistarPalette.badLine),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFFB3261E)),
+          Icon(icon, color: VistarPalette.bad),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Color(0xFF8F1D18),
+              style: TextStyle(
+                color: VistarPalette.badInk,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -800,23 +802,23 @@ class _ExcelSection extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
+                color: VistarPalette.warnBg,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFCD34D)),
+                border: Border.all(color: VistarPalette.warnLine),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.warning_amber_outlined,
-                          color: Color(0xFFB45309)),
+                          color: VistarPalette.warn),
                       SizedBox(width: 8),
                       Text(
                         'Warnings',
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFFB45309),
+                          color: VistarPalette.warn,
                         ),
                       ),
                     ],
@@ -827,8 +829,8 @@ class _ExcelSection extends ConsumerWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         '• ${w.message}${w.row != null ? " (row ${w.row})" : ""}',
-                        style: const TextStyle(
-                            color: Color(0xFF92400E),
+                        style: TextStyle(
+                            color: VistarPalette.warnInk,
                             fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -874,7 +876,7 @@ class _ExcelMachineSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: DplColors.divider),
       ),
       child: ExpansionTile(
         initiallyExpanded: true,
@@ -887,7 +889,7 @@ class _ExcelMachineSection extends StatelessWidget {
         ),
         subtitle: Text(
           'Total plan: ${fmt.format(section.totalPlanQty)}  •  ${section.rows.length} rows',
-          style: const TextStyle(color: Color(0xFF5D6A7A)),
+          style: TextStyle(color: DplColors.textSecondary),
         ),
         children: [
           for (var i = 0; i < section.rows.length; i++)
@@ -953,15 +955,15 @@ class _ExcelRowTileState extends State<_ExcelRowTile> {
             height: 30,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF3FB),
+              color: VistarPalette.surface3,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               '${widget.row.planNo}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
-                color: Color(0xFF1D4ED8),
+                color: VistarPalette.info,
               ),
             ),
           ),
@@ -979,16 +981,16 @@ class _ExcelRowTileState extends State<_ExcelRowTile> {
                 if (widget.row.partDescription.isNotEmpty)
                   Text(
                     widget.row.partDescription,
-                    style: const TextStyle(
-                        color: Color(0xFF5D6A7A), fontSize: 12),
+                    style: TextStyle(
+                        color: DplColors.textSecondary, fontSize: 12),
                   ),
                 if (hasIssue)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       widget.row.warning ?? 'Part not in master.',
-                      style: const TextStyle(
-                        color: Color(0xFFB45309),
+                      style: TextStyle(
+                        color: VistarPalette.warn,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -1086,9 +1088,9 @@ class _ManualSection extends ConsumerWidget {
           alignment: Alignment.centerRight,
           child: Text(
             'Grand total: ${fmt.format(grandTotal)}',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1D4ED8),
+              color: VistarPalette.info,
             ),
           ),
         ),
@@ -1139,7 +1141,7 @@ class _ManualMachineCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: DplColors.divider),
       ),
       child: ExpansionTile(
         initiallyExpanded: true,
@@ -1152,15 +1154,15 @@ class _ManualMachineCard extends StatelessWidget {
         ),
         subtitle: Text(
           '${draft.items.length} items  •  Total: ${fmt.format(draft.totalPlanQty)}',
-          style: const TextStyle(color: Color(0xFF5D6A7A)),
+          style: TextStyle(color: DplColors.textSecondary),
         ),
         children: [
           if (draft.items.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
               child: Text(
                 'No items yet. Tap "Add item" below.',
-                style: TextStyle(color: Color(0xFF5D6A7A)),
+                style: TextStyle(color: DplColors.textSecondary),
               ),
             )
           else
@@ -1216,15 +1218,15 @@ class _ManualItemRow extends StatelessWidget {
                 height: 30,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF3FB),
+                  color: VistarPalette.surface3,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '${item.planNo}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 11,
-                    color: Color(0xFF1D4ED8),
+                    color: VistarPalette.info,
                   ),
                 ),
               ),
@@ -1253,22 +1255,22 @@ class _ManualItemRow extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEFFCEB),
+                              color: VistarPalette.okBg,
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: const Color(0xFF15803D),
+                                color: VistarPalette.ok,
                               ),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(Icons.skip_next_outlined,
-                                    size: 11, color: Color(0xFF15803D)),
+                                    size: 11, color: VistarPalette.ok),
                                 SizedBox(width: 3),
                                 Text(
                                   'Carried',
                                   style: TextStyle(
-                                    color: Color(0xFF15803D),
+                                    color: VistarPalette.ok,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 10,
                                   ),
@@ -1282,8 +1284,8 @@ class _ManualItemRow extends StatelessWidget {
                     if (item.partDescription.isNotEmpty)
                       Text(
                         item.partDescription,
-                        style: const TextStyle(
-                          color: Color(0xFF5D6A7A),
+                        style: TextStyle(
+                          color: DplColors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -1291,8 +1293,8 @@ class _ManualItemRow extends StatelessWidget {
                         item.carriedFromItemId != null)
                       Text(
                         item.remarks!,
-                        style: const TextStyle(
-                          color: Color(0xFF15803D),
+                        style: TextStyle(
+                          color: VistarPalette.ok,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),

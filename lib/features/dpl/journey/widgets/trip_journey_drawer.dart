@@ -77,7 +77,7 @@ class _TripJourneyDrawerState extends ConsumerState<TripJourneyDrawer> {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: DplColors.pageBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -105,7 +105,7 @@ class _TripJourneyDrawerState extends ConsumerState<TripJourneyDrawer> {
                           widget.tripNumber != null
                               ? 'Trip #${widget.tripNumber} · Journey'
                               : 'Trip Journey',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: DplColors.textPrimary,
@@ -122,7 +122,7 @@ class _TripJourneyDrawerState extends ConsumerState<TripJourneyDrawer> {
                                 if ((widget.vehicleNo ?? '').isNotEmpty)
                                   widget.vehicleNo,
                               ].whereType<String>().join(' · '),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: DplColors.textSecondary,
                               ),
@@ -165,13 +165,13 @@ class _TripJourneyDrawerState extends ConsumerState<TripJourneyDrawer> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline,
+                Icon(Icons.error_outline,
                     color: DplColors.error, size: 40),
                 const SizedBox(height: 12),
                 Text(
                   snap.error.toString().replaceFirst('Exception: ', ''),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: DplColors.textSecondary),
+                  style: TextStyle(color: DplColors.textSecondary),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
@@ -223,7 +223,7 @@ class _TripJourneyDrawerState extends ConsumerState<TripJourneyDrawer> {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: done ? DplColors.success : Colors.white,
+                    color: done ? DplColors.success : DplColors.cardBg,
                     border: Border.all(color: dotColor, width: 2),
                     shape: BoxShape.circle,
                   ),
@@ -262,7 +262,7 @@ class _TripJourneyDrawerState extends ConsumerState<TripJourneyDrawer> {
                       const SizedBox(height: 2),
                       Text(
                         _formatTime(event.occurredAt),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: DplColors.textSecondary,
                         ),
@@ -270,14 +270,14 @@ class _TripJourneyDrawerState extends ConsumerState<TripJourneyDrawer> {
                       const SizedBox(height: 2),
                       Text(
                         '${event.actorName} · ${_roleLabel(event.actorRole)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color: DplColors.textSecondary,
                         ),
                       ),
                       ..._payloadBadges(event),
                     ] else
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 2),
                         child: Text(
                           'Pending',

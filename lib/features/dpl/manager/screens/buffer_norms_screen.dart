@@ -66,7 +66,7 @@ class _BufferNormsScreenState extends ConsumerState<BufferNormsScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _PlantPicker(plantCode: plantCode),
-          const Divider(height: 1, color: DplColors.divider),
+          Divider(height: 1, color: DplColors.divider),
           Expanded(
             child: plantCode == null
                 ? const _PickAPlantPrompt()
@@ -198,7 +198,7 @@ class _PlantPicker extends ConsumerWidget {
         loading: () => const _PickerSkeleton(),
         error: (e, _) => Text(
           'Plants error: $e',
-          style: const TextStyle(color: DplColors.error),
+          style: TextStyle(color: DplColors.error),
         ),
         data: (res) {
           final plants = (res.data ?? const <DplPlant>[]).cast<DplPlant>();
@@ -337,7 +337,7 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
@@ -395,7 +395,7 @@ class _NormEditCard extends StatelessWidget {
                 ),
                 child: Text(
                   description.isEmpty ? '-' : description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.primaryDark,
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
@@ -420,7 +420,7 @@ class _NormEditCard extends StatelessWidget {
                     if (partName.isNotEmpty)
                       Text(
                         customerPn,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'monospace',
                           color: DplColors.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -441,7 +441,7 @@ class _NormEditCard extends StatelessWidget {
                   ),
                   child: Text(
                     machineName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 10.5,
@@ -560,7 +560,7 @@ class _SaveBar extends StatelessWidget {
                 ),
                 child: Text(
                   error!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.error,
                     fontWeight: FontWeight.w700,
                   ),

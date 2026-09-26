@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../providers/today_plans_provider.dart';
 import 'live_timer_text.dart';
 
@@ -19,7 +20,7 @@ class DowntimeBanner extends ConsumerWidget {
     final itemId = downtime.planItemId;
 
     return Material(
-      color: const Color(0xFFB3261E),
+      color: VistarPalette.badSolid,
       child: InkWell(
         onTap: planId == null
             ? null

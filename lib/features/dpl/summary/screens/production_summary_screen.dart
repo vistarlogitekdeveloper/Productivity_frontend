@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
 import '../../../auth/auth_provider.dart';
 import '../../core/design/dpl_theme.dart';
@@ -529,15 +530,15 @@ class _SearchBar extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: DplColors.divider),
+            borderSide: BorderSide(color: DplColors.divider),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: DplColors.divider),
+            borderSide: BorderSide(color: DplColors.divider),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
+            borderSide: BorderSide(
               color: DplColors.primary,
               width: 1.5,
             ),
@@ -624,7 +625,7 @@ class _PlantHeaderStrip extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.factory_outlined,
               size: 16,
               color: DplColors.primaryDark,
@@ -633,7 +634,7 @@ class _PlantHeaderStrip extends StatelessWidget {
             Expanded(
               child: Text(
                 plant.name,
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.primaryDark,
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
@@ -647,7 +648,7 @@ class _PlantHeaderStrip extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.7),
+                color: DplColors.cardBg.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
                   color: DplColors.primary.withValues(alpha: 0.18),
@@ -655,7 +656,7 @@ class _PlantHeaderStrip extends StatelessWidget {
               ),
               child: Text(
                 plant.code,
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.primaryDark,
                   fontWeight: FontWeight.w800,
                   fontSize: 10.5,
@@ -780,7 +781,7 @@ class _BannerSurface extends StatelessWidget {
           Container(
             width: 1,
             height: 28,
-            color: const Color(0xFFD8BFE9),
+            color: VistarPalette.primaryLine,
           ),
         );
       }
@@ -788,13 +789,16 @@ class _BannerSurface extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF7ECFC), Color(0xFFEED7F7)],
+          colors: [
+            DplColors.primaryTint,
+            Color.lerp(DplColors.primaryTint, DplColors.primary, 0.08)!,
+          ],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD8BFE9), width: 1.2),
+        border: Border.all(color: VistarPalette.primaryLine, width: 1.2),
       ),
       child: Row(children: children),
     );
@@ -834,7 +838,7 @@ class _Cell extends StatelessWidget {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 10.5,
@@ -904,7 +908,7 @@ class SummaryBucketCard extends ConsumerWidget {
                     color: DplColors.primary.withValues(alpha: 0.15),
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.precision_manufacturing_outlined,
                   size: 18,
                   color: DplColors.primaryDark,
@@ -928,7 +932,7 @@ class SummaryBucketCard extends ConsumerWidget {
                         item.machineCode != item.machineLabel)
                       Text(
                         'Code: ${item.machineCode}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.textSecondary,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
@@ -943,7 +947,7 @@ class SummaryBucketCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 10),
-          const Divider(height: 1, color: DplColors.divider),
+          Divider(height: 1, color: DplColors.divider),
           const SizedBox(height: 10),
 
           // Part block
@@ -968,7 +972,7 @@ class SummaryBucketCard extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               item.description,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -1023,7 +1027,7 @@ class SummaryBucketCard extends ConsumerWidget {
           // Timestamps row
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.update_rounded,
                 size: 13,
                 color: DplColors.textSecondary,
@@ -1034,7 +1038,7 @@ class SummaryBucketCard extends ConsumerWidget {
                   item.lastProducedAt == null
                       ? 'Never produced'
                       : 'Last produced: ${dateFmt.format(item.lastProducedAt!.toLocal())}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.textSecondary,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
@@ -1049,7 +1053,7 @@ class SummaryBucketCard extends ConsumerWidget {
             const SizedBox(height: 2),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.flag_outlined,
                   size: 13,
                   color: DplColors.textSecondary,
@@ -1058,7 +1062,7 @@ class SummaryBucketCard extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'First produced: ${dateFmt.format(item.firstProducedAt!.toLocal())}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
@@ -1111,7 +1115,7 @@ class _KvRow extends StatelessWidget {
             width: 96,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
@@ -1121,7 +1125,7 @@ class _KvRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textPrimary,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -1165,7 +1169,7 @@ class _QtyTile extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 10.5,
@@ -1193,7 +1197,7 @@ class _Pill extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           color: DplColors.success,
           fontWeight: FontWeight.w800,
           fontSize: 11.5,
@@ -1216,7 +1220,7 @@ class _Pagination extends StatelessWidget {
         child: Text(
           'Showing ${page.items.length} of ${page.total}',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 12,
@@ -1270,13 +1274,16 @@ class _AvailableBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF7ECFC), Color(0xFFEED7F7)],
+          colors: [
+            DplColors.primaryTint,
+            Color.lerp(DplColors.primaryTint, DplColors.primary, 0.08)!,
+          ],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD8BFE9)),
+        border: Border.all(color: VistarPalette.primaryLine),
       ),
       child: Row(
         children: [
@@ -1285,11 +1292,11 @@ class _AvailableBanner extends StatelessWidget {
             height: 40,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: DplColors.cardBg,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFD8BFE9)),
+              border: Border.all(color: VistarPalette.primaryLine),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.local_shipping_outlined,
               size: 20,
               color: DplColors.primaryDark,
@@ -1301,7 +1308,7 @@ class _AvailableBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Available for Dispatch',
                   style: TextStyle(
                     color: DplColors.primaryDark,
@@ -1317,7 +1324,7 @@ class _AvailableBanner extends StatelessWidget {
                   children: [
                     Text(
                       fmt.format(qty),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.primaryDark,
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
@@ -1326,7 +1333,7 @@ class _AvailableBanner extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
+                    Text(
                       'NOS',
                       style: TextStyle(
                         color: DplColors.primaryDark,
@@ -1338,7 +1345,7 @@ class _AvailableBanner extends StatelessWidget {
                     Flexible(
                       child: Text(
                         'of ${fmt.format(item.totalActualQty)} actual',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.textSecondary,
                           fontWeight: FontWeight.w600,
                           fontSize: 11,
@@ -1363,7 +1370,7 @@ class _AvailableBanner extends StatelessWidget {
             icon: const Icon(Icons.add_rounded, size: 18),
             label: const Text('Request'),
             style: FilledButton.styleFrom(
-              backgroundColor: DplColors.primaryDark,
+              backgroundColor: DplColors.primary,
               foregroundColor: Colors.white,
               disabledBackgroundColor: DplColors.neutralBg,
               disabledForegroundColor: DplColors.textTertiary,

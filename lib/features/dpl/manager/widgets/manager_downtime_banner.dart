@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../models/dpl_supervisor_today.dart';
 import '../../supervisor/widgets/live_timer_text.dart';
 import '../providers/dpl_manager_active_downtimes_provider.dart';
@@ -30,7 +31,7 @@ class ManagerDowntimeBanner extends ConsumerWidget {
     final subline = _buildSubline(downtime);
 
     return Material(
-      color: const Color(0xFFB3261E),
+      color: VistarPalette.badSolid,
       child: InkWell(
         onTap: () => showManagerActiveDowntimeDetailsSheet(
           context,

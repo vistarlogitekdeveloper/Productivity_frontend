@@ -70,7 +70,7 @@ class DriverShareLocationCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -102,7 +102,7 @@ class DriverShareLocationCard extends ConsumerWidget {
           ),
           if (on) ...[
             const SizedBox(height: 12),
-            const Divider(height: 1, color: DplColors.divider),
+            Divider(height: 1, color: DplColors.divider),
             const SizedBox(height: 10),
             if (blocked || errored)
               _problem(context, tracker, state)
@@ -181,7 +181,7 @@ class DriverShareLocationCard extends ConsumerWidget {
             if (fix != null)
               Text(
                 'Updated ${DplFormat.relative(fix.recordedAt)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: DplColors.textSecondary,
@@ -249,7 +249,7 @@ class DriverShareLocationCard extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.check_circle_rounded,
+            Icon(Icons.check_circle_rounded,
                 size: 20, color: DplColors.success),
             const SizedBox(width: 10),
             Expanded(
@@ -297,12 +297,13 @@ class DriverShareLocationCard extends ConsumerWidget {
   Widget _hint({
     required IconData icon,
     required String text,
-    Color color = DplColors.textSecondary,
-  }) =>
-      Row(
+    Color? color,
+  }) {
+    final c = color ?? DplColors.textSecondary;
+    return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: color),
+          Icon(icon, size: 14, color: c),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -311,10 +312,11 @@ class DriverShareLocationCard extends ConsumerWidget {
                 fontSize: 11.5,
                 height: 1.35,
                 fontWeight: FontWeight.w600,
-                color: color,
+                color: c,
               ),
             ),
           ),
         ],
       );
+  }
 }

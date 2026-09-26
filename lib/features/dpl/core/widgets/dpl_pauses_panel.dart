@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../models/dpl_item_pause.dart';
 
 /// Reusable list of pause records, used by both manager and supervisor
@@ -33,12 +34,12 @@ class DplPausesPanel extends StatelessWidget {
       return _ErrorBox(message: error!, onRetry: onRetry);
     }
     if (pauses.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 18),
         child: Text(
           'No pauses recorded for this plan yet.',
           style: TextStyle(
-            color: Color(0xFF5D6A7A),
+            color: VistarPalette.txt2,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -66,7 +67,7 @@ class _PauseTile extends StatelessWidget {
 
     final isActive = pause.isActive;
     final accent =
-        isActive ? const Color(0xFFB45309) : const Color(0xFF1D4ED8);
+        isActive ? VistarPalette.warn : VistarPalette.info;
     final headlineLeft = pause.planItemNo != null
         ? 'Plan #${pause.planItemNo}'
         : 'Item #${pause.planItemId}';
@@ -77,9 +78,9 @@ class _PauseTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,8 +112,8 @@ class _PauseTile extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? const Color(0xFFFEF3C7)
-                      : const Color(0xFFE0F2FE),
+                      ? VistarPalette.warnBg
+                      : VistarPalette.infoBg,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -121,8 +122,8 @@ class _PauseTile extends StatelessWidget {
                       : '${pause.durationMinutes ?? 0} min',
                   style: TextStyle(
                     color: isActive
-                        ? const Color(0xFF92400E)
-                        : const Color(0xFF075985),
+                        ? VistarPalette.warnInk
+                        : VistarPalette.infoInk,
                     fontWeight: FontWeight.w800,
                     fontSize: 11,
                   ),
@@ -137,8 +138,8 @@ class _PauseTile extends StatelessWidget {
               resumed == null
                   ? 'Paused $paused'
                   : 'Paused $paused → Resumed $resumed',
-              style: const TextStyle(
-                color: Color(0xFF5D6A7A),
+              style: TextStyle(
+                color: VistarPalette.txt2,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -150,14 +151,14 @@ class _PauseTile extends StatelessWidget {
               padding: const EdgeInsets.only(left: 13),
               child: Row(
                 children: [
-                  const Icon(Icons.flag_outlined,
-                      size: 12, color: Color(0xFF5D6A7A)),
+                  Icon(Icons.flag_outlined,
+                      size: 12, color: VistarPalette.txt2),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       reasonName,
-                      style: const TextStyle(
-                        color: Color(0xFF111827),
+                      style: TextStyle(
+                        color: VistarPalette.txt,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -173,8 +174,8 @@ class _PauseTile extends StatelessWidget {
               padding: const EdgeInsets.only(left: 13),
               child: Text(
                 pause.reasonText,
-                style: const TextStyle(
-                  color: Color(0xFF111827),
+                style: TextStyle(
+                  color: VistarPalette.txt,
                   fontSize: 12,
                 ),
               ),
@@ -187,8 +188,8 @@ class _PauseTile extends StatelessWidget {
               child: Text(
                 'By ${pause.pausedByName}'
                 '${pause.shiftId != null ? '  •  Shift ${pause.shiftId}' : ''}',
-                style: const TextStyle(
-                  color: Color(0xFF9CA3AF),
+                style: TextStyle(
+                  color: VistarPalette.txt3,
                   fontSize: 11,
                 ),
               ),
@@ -210,19 +211,19 @@ class _ErrorBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFECEA),
+        color: VistarPalette.badBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFFFB4AA)),
+        border: Border.all(color: VistarPalette.badLine),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: Color(0xFFB3261E)),
+          Icon(Icons.error_outline, color: VistarPalette.bad),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Color(0xFF8F1D18),
+              style: TextStyle(
+                color: VistarPalette.badInk,
                 fontWeight: FontWeight.w600,
               ),
             ),

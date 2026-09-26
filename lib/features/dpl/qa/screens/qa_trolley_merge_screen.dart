@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/design/dpl_theme.dart';
+import '../../../../core/scanner/hardware_scanner.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
 import '../../core/widgets/dpl_card.dart';
@@ -60,14 +61,24 @@ class _QaTrolleyMergeScreenState extends ConsumerState<QaTrolleyMergeScreen> {
   /// the operator needs to see the serials to know what they have picked up.
   final List<DplTrolleyWheel> _picked = [];
 
+  /// Marks this screen's subtree as the one scans belong to while it is open.
+  ///
+  /// A pushed route sits OUTSIDE the shell's activeArea — that key points at
+  /// the Merge tab still underneath — so without claiming, a wheel scanned
+  /// here would be delivered to the screen behind. Losing a scan is annoying;
+  /// the wrong screen acting on a real wheel is not.
+  final _scanArea = GlobalKey();
+
   @override
   void initState() {
     super.initState();
+    HardwareScanScope.claimArea(_scanArea);
     _loadTrolleys();
   }
 
   @override
   void dispose() {
+    HardwareScanScope.releaseArea(_scanArea);
     _scanCtrl.dispose();
     _scanFocus.dispose();
     super.dispose();
@@ -251,7 +262,11 @@ class _QaTrolleyMergeScreenState extends ConsumerState<QaTrolleyMergeScreen> {
     return Scaffold(
       backgroundColor: DplColors.pageBg,
       appBar: AppBar(title: const Text('Fill from a trolley')),
-      body: _loading
+      // Keyed so the claim registered in initState can find this subtree and
+      // deliver scans here rather than to the tab underneath.
+      body: KeyedSubtree(
+        key: _scanArea,
+        child: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
@@ -272,6 +287,7 @@ class _QaTrolleyMergeScreenState extends ConsumerState<QaTrolleyMergeScreen> {
                 ],
               ],
             ),
+      ),
     );
   }
 
@@ -429,7 +445,6 @@ class _QaTrolleyMergeScreenState extends ConsumerState<QaTrolleyMergeScreen> {
               controller: _scanCtrl,
               focusNode: _scanFocus,
               enabled: !_busy && !_wouldOverfill,
-              autofocus: true,
               textInputAction: TextInputAction.done,
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(

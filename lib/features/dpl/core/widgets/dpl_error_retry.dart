@@ -62,7 +62,7 @@ class DplInlineErrorChip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: DplColors.error, size: 18),
+          Icon(Icons.error_outline, color: DplColors.error, size: 18),
           const SizedBox(width: DplSpacing.sm),
           Expanded(
             child: Text(

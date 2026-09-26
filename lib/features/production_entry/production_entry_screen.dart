@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../../data/models/production_entry_model.dart';
 import '../auth/auth_provider.dart';
@@ -396,16 +397,16 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
                         Text(
                           'Total: $total / Actual: $actual',
                           style: TextStyle(
-                            color: invalid ? Colors.red : Colors.green,
+                            color: invalid ? VistarPalette.bad : VistarPalette.ok,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         if (invalid)
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.only(top: 6),
                             child: Text(
                               'Rejection Quantity cannot exceed Actual Quantity.',
-                              style: TextStyle(color: Colors.red),
+                              style: TextStyle(color: VistarPalette.bad),
                             ),
                           ),
                       ],
@@ -561,9 +562,9 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
           const ShimmerCenteredPlaceholder(titleWidth: 220, subtitleWidth: 150),
       error: (e, _) => Center(child: Text(_err(e))),
       data: (d) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFF4F8FF), Color(0xFFE8FFF6), Color(0xFFE9F0FF)],
+            colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -577,7 +578,7 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
                 width: 220,
                 height: 220,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1546A0).withValues(alpha: 0.08),
+                  color: VistarPalette.info.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -589,7 +590,7 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
                 width: 250,
                 height: 250,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A8D78).withValues(alpha: 0.08),
+                  color: VistarPalette.ok.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -602,9 +603,9 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.50),
+                      color: VistarPalette.surface.withValues(alpha: 0.50),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
+                      border: Border.all(color: VistarPalette.surface.withValues(alpha: 0.8)),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFF0F3A8A).withValues(alpha: 0.10),
@@ -730,20 +731,20 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const Padding(
+                                Padding(
                                   padding: EdgeInsets.only(bottom: 8),
                                   child: Text(
                                     'Add one or more operators working this shift.',
-                                    style: TextStyle(color: Color(0xFF5D6A7A)),
+                                    style: TextStyle(color: VistarPalette.txt2),
                                   ),
                                 ),
                                 if (_operatorNameCtrls.isEmpty)
-                                  const Padding(
+                                  Padding(
                                     padding: EdgeInsets.only(bottom: 8),
                                     child: Text(
                                       'No operators added yet.',
                                       style: TextStyle(
-                                        color: Color(0xFF8794A6),
+                                        color: VistarPalette.txt3,
                                         fontStyle: FontStyle.italic,
                                       ),
                                     ),
@@ -776,9 +777,9 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
                                           tooltip: 'Remove operator',
                                           onPressed: () =>
                                               _removeOperatorField(i),
-                                          icon: const Icon(
+                                          icon: Icon(
                                             Icons.remove_circle_outline,
-                                            color: Color(0xFFB3261E),
+                                            color: VistarPalette.bad,
                                           ),
                                         ),
                                       ],
@@ -890,8 +891,8 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
                                       alignment: Alignment.centerLeft,
                                       child: Text(
                                         _timeError()!,
-                                        style: const TextStyle(
-                                          color: Colors.red,
+                                        style: TextStyle(
+                                          color: VistarPalette.bad,
                                         ),
                                       ),
                                     ),
@@ -1067,9 +1068,9 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
                                   height: 52,
                                   child: OutlinedButton(
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.red.shade700,
+                                      foregroundColor: VistarPalette.bad,
                                       side: BorderSide(
-                                        color: Colors.red.shade200,
+                                        color: VistarPalette.badLine,
                                       ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(
@@ -1091,9 +1092,7 @@ class _ProductionEntryScreenState extends ConsumerState<ProductionEntryScreen> {
                                   height: 52,
                                   child: FilledButton.icon(
                                     style: FilledButton.styleFrom(
-                                      backgroundColor: const Color(
-                                        0xFF185ADB,
-                                      ),
+                                      backgroundColor: VistarPalette.primary,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(
@@ -1336,10 +1335,10 @@ class _SearchableOptionsSheetState extends State<_SearchableOptionsSheet> {
               const SizedBox(height: 8),
               Expanded(
                 child: filtered.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'No matching results.',
-                          style: TextStyle(color: Color(0xFF5D6A7A)),
+                          style: TextStyle(color: VistarPalette.txt2),
                         ),
                       )
                     : ListView.separated(
@@ -1353,9 +1352,9 @@ class _SearchableOptionsSheetState extends State<_SearchableOptionsSheet> {
                             dense: true,
                             title: Text(option.label),
                             trailing: isSelected
-                                ? const Icon(
+                                ? Icon(
                                     Icons.check_rounded,
-                                    color: Color(0xFF1B9C7A),
+                                    color: VistarPalette.ok,
                                   )
                                 : null,
                             onTap: () =>
@@ -1381,11 +1380,7 @@ class _HeadCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF153A8A), Color(0xFF1965B2), Color(0xFF1B9C7A)],
-        ),
+        gradient: VistarPalette.heroGradient,
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF153A8A).withValues(alpha: 0.25),
@@ -1446,9 +1441,9 @@ class _Section extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE0E9F7)),
+        border: Border.all(color: VistarPalette.line),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F3A8A).withValues(alpha: 0.06),
@@ -1482,10 +1477,10 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (label) {
-      'Running Hours' => const Color(0xFF1E63D8),
-      'Parts / Hour' => const Color(0xFF0E9F6E),
+      'Running Hours' => VistarPalette.info,
+      'Parts / Hour' => VistarPalette.ok,
       'Weight (KG)' => const Color(0xFF7A4DCC),
-      _ => const Color(0xFFD97706),
+      _ => VistarPalette.warn,
     };
 
     return Container(
@@ -1505,7 +1500,7 @@ class _Chip extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF4C596A)),
+                style: TextStyle(fontSize: 12, color: VistarPalette.txt2),
               ),
               Text(value, style: const TextStyle(fontWeight: FontWeight.w800)),
             ],
@@ -1524,20 +1519,20 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFECEA),
+        color: VistarPalette.badBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFFB4AA)),
+        border: Border.all(color: VistarPalette.badLine),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline, color: Color(0xFFB3261E)),
+          Icon(Icons.error_outline, color: VistarPalette.bad),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Color(0xFF8F1D18),
+              style: TextStyle(
+                color: VistarPalette.badInk,
                 fontWeight: FontWeight.w600,
               ),
             ),

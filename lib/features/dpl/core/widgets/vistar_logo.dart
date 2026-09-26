@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/vistar/vistar_brand.dart';
 import '../design/dpl_theme.dart';
 
 /// Vistar brand mark + wordmark.
 ///
-/// Pass [showWordmark]=true for the full logo (login hero), false for
-/// the small mark used as the leading element on the app bar.
+/// Pass [showWordmark]=true for the full Vistar Pulse wordmark (splash and
+/// login hero only, per the design system), false for the bare "S" mark
+/// used as the glyph in app bars and sidebars.
 ///
 /// Falls back to a typographic placeholder when the asset can't be
 /// found so screens render cleanly during onboarding of new variants.
@@ -22,31 +24,27 @@ class VistarLogo extends StatelessWidget {
     this.fallbackColor,
   });
 
-  // Single brand image used for both the wordmark and the small mark.
-  // The PNG lives at the path below; the typographic fallbacks above
-  // still kick in if the file is ever missing during onboarding.
-  static const _logoAsset = 'assets/images/vistar_logo.png';
-
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      _logoAsset,
-      height: height,
-      fit: BoxFit.contain,
-      errorBuilder: (_, _, _) => _fallback(),
-    );
-  }
-
-  Widget _fallback() {
-    if (showWordmark) {
-      return _WordmarkFallback(
-        height: height,
-        color: fallbackColor ?? DplColors.primary,
+    if (!showWordmark) {
+      return VistarMark(
+        size: height,
+        fallback: _MarkFallback(
+          size: height,
+          color: fallbackColor ?? DplColors.primary,
+        ),
       );
     }
-    return _MarkFallback(
-      size: height,
-      color: fallbackColor ?? DplColors.primary,
+    return Image.asset(
+      VistarAssets.wordmark,
+      height: height,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
+      semanticLabel: 'Vistar Pulse',
+      errorBuilder: (_, _, _) => _WordmarkFallback(
+        height: height,
+        color: fallbackColor ?? DplColors.primary,
+      ),
     );
   }
 }
@@ -108,15 +106,16 @@ class _WordmarkFallback extends StatelessWidget {
   }
 }
 
-/// Preloads the Vistar logo so it never flashes on first render.
-/// Call from `main()` after the binding is ready.
+/// Preloads the Vistar brand rasters so they never flash on first render.
+/// Call after the binding is ready.
 Future<void> precacheVistarLogos(BuildContext context) async {
   if (kIsWeb) return; // precache is no-op on web
   try {
-    await precacheImage(
-      const AssetImage(VistarLogo._logoAsset),
-      context,
-    );
+    await Future.wait([
+      precacheImage(const AssetImage(VistarAssets.wordmark), context),
+      precacheImage(const AssetImage(VistarAssets.mark), context),
+      precacheImage(const AssetImage(VistarAssets.markSmall), context),
+    ]);
   } catch (_) {
     // Asset missing during onboarding — fallbacks handle render.
   }

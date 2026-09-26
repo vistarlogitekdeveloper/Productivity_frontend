@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -509,7 +510,7 @@ class _HeaderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,7 +530,7 @@ class _HeaderCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               item.partName,
-              style: const TextStyle(color: Color(0xFF5D6A7A)),
+              style: TextStyle(color: VistarPalette.txt2),
             ),
           ],
           const SizedBox(height: 12),
@@ -552,8 +553,8 @@ class _HeaderCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF5D6A7A),
+          style: TextStyle(
+            color: VistarPalette.txt2,
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
@@ -563,7 +564,7 @@ class _HeaderCard extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: emphasize ? 24 : 14,
-            color: emphasize ? const Color(0xFF1D4ED8) : null,
+            color: emphasize ? VistarPalette.info : null,
           ),
         ),
       ],
@@ -669,8 +670,8 @@ class _PendingView extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 20),
-        const Icon(Icons.play_circle_outline,
-            size: 88, color: Color(0xFF047857)),
+        Icon(Icons.play_circle_outline,
+            size: 88, color: VistarPalette.ok),
         const SizedBox(height: 8),
         const Text(
           'Ready to start',
@@ -680,7 +681,7 @@ class _PendingView extends StatelessWidget {
         StartStopButton(
           label: 'START PRODUCTION',
           icon: Icons.play_arrow_rounded,
-          color: const Color(0xFF047857),
+          color: VistarPalette.okSolid,
           onPressed: onStart,
           isBusy: isStarting,
         ),
@@ -735,7 +736,7 @@ class _InProgressView extends StatelessWidget {
         Center(
           child: Text(
             'Started at $startedAt',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
         ),
         const SizedBox(height: 18),
@@ -756,9 +757,9 @@ class _InProgressView extends StatelessWidget {
                   icon: const Icon(Icons.report_outlined),
                   label: const Text('Report Downtime'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFB45309),
-                    side: const BorderSide(
-                      color: Color(0xFFB45309),
+                    foregroundColor: VistarPalette.warn,
+                    side: BorderSide(
+                      color: VistarPalette.warn,
                       width: 1.4,
                     ),
                   ),
@@ -770,7 +771,7 @@ class _InProgressView extends StatelessWidget {
               child: StartStopButton(
                 label: 'STOP',
                 icon: Icons.stop_rounded,
-                color: const Color(0xFFB3261E),
+                color: VistarPalette.badSolid,
                 onPressed: onStop,
                 isBusy: isStopping,
                 height: 56,
@@ -810,7 +811,7 @@ class _ItemPausedView extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFB45309),
+            color: VistarPalette.warnSolid,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -849,22 +850,22 @@ class _ItemPausedView extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            border: Border.all(color: const Color(0xFFD9E2EF)),
+            color: VistarPalette.surface2,
+            border: Border.all(color: VistarPalette.line),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
-              const Icon(Icons.pause_circle_outline,
-                  color: Color(0xFF5D6A7A)),
+              Icon(Icons.pause_circle_outline,
+                  color: VistarPalette.txt2),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'You can start a different item on this plan while '
                   'this one is paused — actual: $localActualQty / '
                   '${item.planQty}',
-                  style: const TextStyle(
-                    color: Color(0xFF5D6A7A),
+                  style: TextStyle(
+                    color: VistarPalette.txt2,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -876,7 +877,7 @@ class _ItemPausedView extends StatelessWidget {
         StartStopButton(
           label: 'RESUME PRODUCTION',
           icon: Icons.play_arrow_rounded,
-          color: const Color(0xFF047857),
+          color: VistarPalette.okSolid,
           onPressed: onResume,
           isBusy: isResuming,
         ),
@@ -888,8 +889,8 @@ class _ItemPausedView extends StatelessWidget {
             icon: const Icon(Icons.stop_rounded),
             label: const Text('Complete & Stop'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFB3261E),
-              side: const BorderSide(color: Color(0xFFB3261E), width: 1.4),
+              foregroundColor: VistarPalette.bad,
+              side: BorderSide(color: VistarPalette.bad, width: 1.4),
             ),
           ),
         ),
@@ -919,7 +920,7 @@ class _DowntimeView extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFB3261E),
+            color: VistarPalette.badSolid,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -961,20 +962,20 @@ class _DowntimeView extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            border: Border.all(color: const Color(0xFFD9E2EF)),
+            color: VistarPalette.surface2,
+            border: Border.all(color: VistarPalette.line),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
-              const Icon(Icons.pause_circle_outline,
-                  color: Color(0xFF5D6A7A)),
+              Icon(Icons.pause_circle_outline,
+                  color: VistarPalette.txt2),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Production paused — actual: $localActualQty / ${item.planQty}',
-                  style: const TextStyle(
-                    color: Color(0xFF5D6A7A),
+                  style: TextStyle(
+                    color: VistarPalette.txt2,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -986,15 +987,15 @@ class _DowntimeView extends StatelessWidget {
         StartStopButton(
           label: 'RESUME PRODUCTION',
           icon: Icons.play_arrow_rounded,
-          color: const Color(0xFF047857),
+          color: VistarPalette.okSolid,
           onPressed: onResume,
         ),
         const SizedBox(height: 10),
-        const Text(
+        Text(
           'Resume from downtime before completing the item.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Color(0xFF5D6A7A),
+            color: VistarPalette.txt2,
             fontSize: 12,
           ),
         ),
@@ -1012,10 +1013,10 @@ class _CompletedView extends StatelessWidget {
     final fmtTime = DateFormat('hh:mm a');
     final variance = item.actualQty - item.planQty;
     final varianceColor = variance == 0
-        ? const Color(0xFF5D6A7A)
+        ? VistarPalette.txt2
         : (variance > 0
-            ? const Color(0xFF047857)
-            : const Color(0xFFB3261E));
+            ? VistarPalette.ok
+            : VistarPalette.bad);
 
     Duration? netDuration;
     if (item.startTime != null && item.endTime != null) {
@@ -1027,8 +1028,8 @@ class _CompletedView extends StatelessWidget {
 
     return Column(
       children: [
-        const Icon(Icons.check_circle_outline,
-            size: 88, color: Color(0xFF047857)),
+        Icon(Icons.check_circle_outline,
+            size: 88, color: VistarPalette.ok),
         const SizedBox(height: 8),
         const Text(
           'Completed',
@@ -1040,7 +1041,7 @@ class _CompletedView extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
           ),
           child: Column(
             children: [
@@ -1092,8 +1093,8 @@ class _CompletedView extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF5D6A7A),
+              style: TextStyle(
+                color: VistarPalette.txt2,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1132,16 +1133,16 @@ class _ActualQtyStepper extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Actual Qty',
             style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 13,
-              color: Color(0xFF5D6A7A),
+              color: VistarPalette.txt2,
             ),
           ),
           const SizedBox(height: 6),
@@ -1188,8 +1189,8 @@ class _ActualQtyStepper extends StatelessWidget {
           ),
           Text(
             'Plan: $planQty',
-            style: const TextStyle(
-              color: Color(0xFF5D6A7A),
+            style: TextStyle(
+              color: VistarPalette.txt2,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -1198,8 +1199,8 @@ class _ActualQtyStepper extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               'Actual qty cannot exceed Plan qty ($planQty).',
-              style: const TextStyle(
-                color: Color(0xFFB3261E),
+              style: TextStyle(
+                color: VistarPalette.bad,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
               ),
@@ -1216,7 +1217,7 @@ class _ActualQtyStepper extends StatelessWidget {
     bool disabled = false,
   }) {
     return Material(
-      color: disabled ? const Color(0xFFF1F4F9) : const Color(0xFFEFF3FB),
+      color: disabled ? VistarPalette.surface3 : VistarPalette.infoBg,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -1233,8 +1234,8 @@ class _ActualQtyStepper extends StatelessWidget {
           child: Icon(
             icon,
             color: disabled
-                ? const Color(0xFFB6C0CE)
-                : const Color(0xFF1D4ED8),
+                ? VistarPalette.txt3
+                : VistarPalette.info,
             size: 26,
           ),
         ),

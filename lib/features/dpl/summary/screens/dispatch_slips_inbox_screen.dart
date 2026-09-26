@@ -531,15 +531,15 @@ class _SearchBar extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: DplColors.divider),
+            borderSide: BorderSide(color: DplColors.divider),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: DplColors.divider),
+            borderSide: BorderSide(color: DplColors.divider),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(
+            borderSide: BorderSide(
               color: DplColors.primary,
               width: 1.5,
             ),
@@ -642,7 +642,7 @@ class _TripGroupCard extends StatelessWidget {
                           if (plantLabel.isNotEmpty)
                             Text(
                               plantLabel,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: DplColors.textSecondary,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 11.5,
@@ -660,7 +660,7 @@ class _TripGroupCard extends StatelessWidget {
                         Text(
                           '${group.slips.length} slip'
                           '${group.slips.length == 1 ? "" : "s"}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: DplColors.textPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 11.5,
@@ -668,7 +668,7 @@ class _TripGroupCard extends StatelessWidget {
                         ),
                         Text(
                           '${fmt.format(group.totalQty)} NOS',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: DplColors.textPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
@@ -701,7 +701,7 @@ class _TripGroupCard extends StatelessWidget {
               // the card.
               for (var i = 0; i < group.slips.length; i++) ...[
                 if (i > 0)
-                  const Divider(height: 1, color: DplColors.divider),
+                  Divider(height: 1, color: DplColors.divider),
                 _TripGroupSlipRow(slip: group.slips[i], dateFmt: dateFmt),
               ],
               // Post-dispatch actions — only surface Assign Driver /
@@ -796,7 +796,7 @@ class _TripGroupSlipRow extends StatelessWidget {
                           : '${slip.machineLabel} • '
                               '${slip.items.length} items • '
                               '${fmt.format(slip.totalQty)} NOS',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.textSecondary,
                         fontWeight: FontWeight.w600,
                         fontSize: 11.5,
@@ -972,7 +972,7 @@ class _SlipRowCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 slip.partLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 12.5,
@@ -988,7 +988,7 @@ class _SlipRowCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   slip.customerPartNo,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.textTertiary,
                     fontWeight: FontWeight.w600,
                     fontSize: 11.5,
@@ -1000,7 +1000,7 @@ class _SlipRowCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.person_outline,
                     size: 13,
                     color: DplColors.textSecondary,
@@ -1009,7 +1009,7 @@ class _SlipRowCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       slip.requestedBy?.name ?? '-',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.textSecondary,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
@@ -1022,7 +1022,7 @@ class _SlipRowCard extends StatelessWidget {
                   if (slip.requestedAt != null)
                     Text(
                       dateFmt.format(slip.requestedAt!.toLocal()),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.textSecondary,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
@@ -1111,7 +1111,7 @@ class _Pagination extends StatelessWidget {
         child: Text(
           'Showing ${page.items.length} of ${page.total}',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 12,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_refresh_icon_button.dart';
@@ -113,26 +114,26 @@ class _DashboardBody extends ConsumerWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(isPhone ? 14 : 16),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
           ),
           child: Row(
             children: [
               _BigKv(
                 label: 'Plan',
                 value: fmt.format(totalPlan),
-                color: const Color(0xFF1D4ED8),
+                color: VistarPalette.info,
               ),
               SizedBox(width: isPhone ? 12 : 16),
               _BigKv(
                 label: 'Actual',
                 value: fmt.format(totalActual),
-                color: const Color(0xFF047857),
+                color: VistarPalette.ok,
               ),
               const Spacer(),
               _BigKv(
                 label: 'Completion',
                 value: '$pct%',
-                color: const Color(0xFFB45309),
+                color: VistarPalette.warn,
               ),
             ],
           ),
@@ -172,7 +173,7 @@ class _BigKv extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: const Color(0xFF5D6A7A),
+            color: VistarPalette.txt2,
             fontSize: isPhone ? 10 : 11,
             fontWeight: FontWeight.w600,
           ),

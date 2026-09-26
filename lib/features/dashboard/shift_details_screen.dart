@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../../data/api_services/api_client.dart';
 import '../../data/models/production_entry_model.dart';
@@ -128,11 +129,11 @@ class ShiftDetailsScreenState extends ConsumerState<ShiftDetailsScreen> {
     final isToday = DateUtils.isSameDay(_selectedDate, DateTime.now());
 
     final content = Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF5F9FF), Color(0xFFF0FFF8), Color(0xFFF7F3FF)],
+          colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
         ),
       ),
       child: RefreshIndicator(
@@ -225,9 +226,9 @@ class _DateBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Row(
         children: [
@@ -247,10 +248,10 @@ class _DateBar extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.calendar_today_outlined,
                           size: 16,
-                          color: Color(0xFF1565C0),
+                          color: VistarPalette.info,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -263,12 +264,12 @@ class _DateBar extends StatelessWidget {
                       ],
                     ),
                     if (isToday)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 2),
                         child: Text(
                           'Today',
                           style: TextStyle(
-                            color: Color(0xFF1B9C7A),
+                            color: VistarPalette.ok,
                             fontWeight: FontWeight.w700,
                             fontSize: 11,
                           ),
@@ -313,11 +314,7 @@ class _DaySummary extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF153A8A), Color(0xFF1965B2), Color(0xFF1B9C7A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: VistarPalette.heroGradient,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,9 +404,9 @@ class _ShiftSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -422,13 +419,13 @@ class _ShiftSection extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1565C0).withValues(alpha: 0.12),
+                  color: VistarPalette.info.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   'Shift $shift',
-                  style: const TextStyle(
-                    color: Color(0xFF0F3A8A),
+                  style: TextStyle(
+                    color: VistarPalette.infoInk,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -436,8 +433,8 @@ class _ShiftSection extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 '${entries.length} entr${entries.length == 1 ? 'y' : 'ies'}',
-                style: const TextStyle(
-                  color: Color(0xFF5D6A7A),
+                style: TextStyle(
+                  color: VistarPalette.txt2,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -447,7 +444,7 @@ class _ShiftSection extends StatelessWidget {
           for (int i = 0; i < entries.length; i++) ...[
             _ShiftEntryCard(entry: entries[i]),
             if (i < entries.length - 1)
-              const Divider(height: 18, color: Color(0xFFE7EEF8)),
+              Divider(height: 18, color: VistarPalette.line),
           ],
         ],
       ),
@@ -511,23 +508,23 @@ class _ShiftEntryCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           'Operator: ${_operatorLabel()}',
-          style: const TextStyle(color: Color(0xFF5D6A7A)),
+          style: TextStyle(color: VistarPalette.txt2),
         ),
         const SizedBox(height: 2),
         Text(
           'Time: $start → $end  |  Running Hrs: ${entry.runningHours.toStringAsFixed(2)}',
-          style: const TextStyle(color: Color(0xFF5D6A7A)),
+          style: TextStyle(color: VistarPalette.txt2),
         ),
         const SizedBox(height: 2),
         Text(
           'Actual: ${entry.actualQuantity}  |  Rejection: ${entry.rejectionQuantity}  |  Parts/Hr: ${entry.partsPerHour.toStringAsFixed(1)}',
-          style: const TextStyle(color: Color(0xFF5D6A7A)),
+          style: TextStyle(color: VistarPalette.txt2),
         ),
         if ((entry.rcNumber ?? '').trim().isNotEmpty) ...[
           const SizedBox(height: 2),
           Text(
             'RC: ${entry.rcNumber}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
         ],
       ],
@@ -546,14 +543,14 @@ class _StatusPill extends StatelessWidget {
     Color bg;
     Color fg;
     if (normalized == 'APPROVED') {
-      bg = const Color(0xFFE7F8EF);
-      fg = const Color(0xFF127944);
+      bg = VistarPalette.okBg;
+      fg = VistarPalette.ok;
     } else if (normalized == 'REJECTED') {
-      bg = const Color(0xFFFFEAEA);
-      fg = const Color(0xFFB32929);
+      bg = VistarPalette.badBg;
+      fg = VistarPalette.bad;
     } else {
-      bg = const Color(0xFFFFF6E2);
-      fg = const Color(0xFF8D5A00);
+      bg = VistarPalette.warnBg;
+      fg = VistarPalette.warn;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -587,7 +584,7 @@ class _ShiftDetailsLoading extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.95),
+                color: VistarPalette.surface,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Column(
@@ -619,16 +616,16 @@ class _EmptyCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
-      child: const Column(
+      child: Column(
         children: [
           Icon(
             Icons.event_busy_outlined,
             size: 36,
-            color: Color(0xFF5D6A7A),
+            color: VistarPalette.txt2,
           ),
           SizedBox(height: 8),
           Text(
@@ -639,7 +636,7 @@ class _EmptyCard extends StatelessWidget {
           Text(
             'No production entries found for the selected date.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
         ],
       ),
@@ -659,9 +656,9 @@ class _ErrorCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3F3),
+        color: VistarPalette.badBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFFD6D6)),
+        border: Border.all(color: VistarPalette.badLine),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -669,12 +666,12 @@ class _ErrorCard extends StatelessWidget {
           Text(
             'Could not load shift details',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFFA1312D),
+              color: VistarPalette.bad,
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
-          Text(message, style: const TextStyle(color: Color(0xFF8A2A24))),
+          Text(message, style: TextStyle(color: VistarPalette.badInk)),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: onRetry,

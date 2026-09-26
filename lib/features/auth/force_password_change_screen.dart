@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../dpl/core/dpl_api_service.dart';
 import '../dpl/core/dpl_password_gate_provider.dart';
@@ -101,7 +102,7 @@ class _ForcePasswordChangeScreenState
     final user = ref.watch(authControllerProvider).asData?.value;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F7FB),
+      backgroundColor: VistarPalette.bg,
       // No AppBar back button, and PopScope stops the hardware/system back
       // gesture: there is nowhere to go back TO that this screen is not
       // guarding.
@@ -116,7 +117,7 @@ class _ForcePasswordChangeScreenState
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
-                  side: const BorderSide(color: Color(0xFFE2EAF6)),
+                  side: BorderSide(color: VistarPalette.line),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -126,10 +127,10 @@ class _ForcePasswordChangeScreenState
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.lock_reset_rounded,
                           size: 34,
-                          color: Color(0xFF6B1F8C),
+                          color: VistarPalette.primary,
                         ),
                         const SizedBox(height: 12),
                         const Text(
@@ -148,9 +149,9 @@ class _ForcePasswordChangeScreenState
                               : 'The password you signed in with was set by '
                                   'somebody else, so it is not private to you. '
                                   'Pick your own before you continue.',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF5D6A7A),
+                            color: VistarPalette.txt2,
                             height: 1.45,
                           ),
                         ),
@@ -160,14 +161,14 @@ class _ForcePasswordChangeScreenState
                             width: double.infinity,
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFECEA),
+                              color: VistarPalette.badBg,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFFFB4AA)),
+                              border: Border.all(color: VistarPalette.badLine),
                             ),
                             child: Text(
                               _error!,
-                              style: const TextStyle(
-                                color: Color(0xFF8F1D18),
+                              style: TextStyle(
+                                color: VistarPalette.badInk,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

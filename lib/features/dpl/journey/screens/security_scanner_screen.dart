@@ -424,7 +424,7 @@ class _ConfirmGateOutSheetState extends ConsumerState<_ConfirmGateOutSheet> {
     return SafeArea(
       top: false,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: DplColors.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: DplShadows.sheet,
@@ -455,7 +455,7 @@ class _ConfirmGateOutSheetState extends ConsumerState<_ConfirmGateOutSheet> {
                     color: DplColors.primaryTint,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.local_shipping_rounded,
                     color: DplColors.primaryDark,
                     size: 22,
@@ -502,7 +502,7 @@ class _ConfirmGateOutSheetState extends ConsumerState<_ConfirmGateOutSheet> {
                   border: Border.all(color: DplColors.warning),
                 ),
                 child: Row(
-                  children: const [
+                  children: [
                     Icon(
                       Icons.warning_amber_rounded,
                       color: DplColors.warning,
@@ -597,7 +597,7 @@ class _KvRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontWeight: FontWeight.w700,
                 fontSize: 12.5,
@@ -607,7 +607,7 @@ class _KvRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textPrimary,
                 fontWeight: FontWeight.w800,
                 fontSize: 14,

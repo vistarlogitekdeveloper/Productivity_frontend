@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/theme/vistar_palette.dart';
 import '../../../../../core/widgets/shimmer_skeleton.dart';
+import '../../../core/design/dpl_theme.dart';
 import '../../../core/dpl_api_service.dart';
 import '../../../core/widgets/dpl_app_bar.dart';
 import '../../../core/widgets/dpl_refresh_icon_button.dart';
@@ -156,7 +158,7 @@ class DplMachinesMasterScreen extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB3261E),
+              backgroundColor: VistarPalette.badSolid,
             ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete'),
@@ -202,10 +204,10 @@ class _MachineCard extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 18),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEE2E2),
+          color: VistarPalette.badBg,
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Icon(Icons.delete, color: Color(0xFFB3261E)),
+        child: Icon(Icons.delete, color: VistarPalette.bad),
       ),
       child: InkWell(
         onTap: onEdit,
@@ -214,7 +216,7 @@ class _MachineCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: DplColors.divider),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
@@ -235,7 +237,7 @@ class _MachineCard extends StatelessWidget {
                         child: Text(
                           machine.description,
                           style:
-                              const TextStyle(color: Color(0xFF5D6A7A)),
+                              TextStyle(color: DplColors.textSecondary),
                         ),
                       ),
                   ],
@@ -246,14 +248,14 @@ class _MachineCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEF1F5),
+                    color: VistarPalette.surface3,
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Inactive',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF5D6A7A),
+                      color: DplColors.textSecondary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -332,14 +334,14 @@ class _MachineDialogState extends State<_MachineDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFECEA),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFFFB4AA)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: Color(0xFF8F1D18),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

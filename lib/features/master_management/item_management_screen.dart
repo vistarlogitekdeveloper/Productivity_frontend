@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../../data/models/master_data_models.dart';
 import 'master_management_repository.dart';
@@ -164,7 +165,7 @@ class _ItemManagementScreenState extends ConsumerState<ItemManagementScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB32929)),
+            style: FilledButton.styleFrom(backgroundColor: VistarPalette.badSolid),
             child: const Text('Delete'),
           ),
         ],
@@ -212,11 +213,11 @@ class _ItemManagementScreenState extends ConsumerState<ItemManagementScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF8FBFF), Color(0xFFF2FFF9), Color(0xFFF7F2FF)],
+            colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
           ),
         ),
         child: RefreshIndicator(
@@ -237,14 +238,14 @@ class _ItemManagementScreenState extends ConsumerState<ItemManagementScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF2F1),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFFFD2CF)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: Color(0xFF8A2A24),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -260,13 +261,13 @@ class _ItemManagementScreenState extends ConsumerState<ItemManagementScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: VistarPalette.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2EAF6)),
+                    border: Border.all(color: VistarPalette.line),
                   ),
-                  child: const Text(
+                  child: Text(
                     'No items found.',
-                    style: TextStyle(color: Color(0xFF5D6A7A)),
+                    style: TextStyle(color: VistarPalette.txt2),
                   ),
                 )
               else
@@ -311,9 +312,9 @@ class _ItemCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,7 +328,7 @@ class _ItemCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Finish Weight: ${item.finishWeightG.toStringAsFixed(2)}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -336,13 +337,13 @@ class _ItemCard extends StatelessWidget {
               _ItemActionChip(
                 icon: Icons.edit_outlined,
                 label: 'Edit',
-                color: const Color(0xFF127944),
+                color: VistarPalette.ok,
                 onTap: onEdit,
               ),
               _ItemActionChip(
                 icon: Icons.delete_outline,
                 label: 'Delete',
-                color: const Color(0xFFB32929),
+                color: VistarPalette.bad,
                 onTap: onDelete,
               ),
             ],

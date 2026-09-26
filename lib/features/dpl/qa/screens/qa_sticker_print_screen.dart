@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdf/pdf.dart' show PdfPageFormat;
 import 'package:printing/printing.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -182,12 +183,12 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Customer part reference',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF64748B),
+              color: VistarPalette.txt2,
             ),
           ),
           const SizedBox(height: 2),
@@ -202,8 +203,8 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
                 if (p.description.isNotEmpty) p.description,
                 if (p.name.isNotEmpty) p.name,
               ].join(' · '),
-              style: const TextStyle(
-                color: Color(0xFF5D6A7A),
+              style: TextStyle(
+                color: VistarPalette.txt2,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),
@@ -212,13 +213,13 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
           const Divider(height: 18),
           Row(
             children: [
-              const Icon(Icons.inventory_2_outlined,
-                  size: 15, color: Color(0xFF64748B)),
+              Icon(Icons.inventory_2_outlined,
+                  size: 15, color: VistarPalette.txt2),
               const SizedBox(width: 6),
               Text(
                 'Substrate ${widget.substratePartNo.isEmpty ? (p.substratePartNo.isEmpty ? '—' : p.substratePartNo) : widget.substratePartNo}',
-                style: const TextStyle(
-                  color: Color(0xFF334155),
+                style: TextStyle(
+                  color: VistarPalette.txt,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),
@@ -254,8 +255,8 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
                   label: 'Left',
                   value: '${summary.remainingQty}',
                   valueColor: summary.remainingQty > 0
-                      ? const Color(0xFF15803D)
-                      : const Color(0xFF9CA3AF),
+                      ? VistarPalette.ok
+                      : VistarPalette.txt3,
                 ),
               ),
             ],
@@ -264,7 +265,7 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
             const SizedBox(height: 10),
             _notice(
               icon: Icons.replay_rounded,
-              color: const Color(0xFFB45309),
+              color: VistarPalette.warn,
               text:
                   "This item's recorded quantity was reset to zero because the "
                   'plan was reopened, but ${summary.printedQty} label'
@@ -276,7 +277,7 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
             const SizedBox(height: 10),
             _notice(
               icon: Icons.hourglass_empty_rounded,
-              color: const Color(0xFFB45309),
+              color: VistarPalette.warn,
               text:
                   'No production has been recorded against this item yet, so '
                   'no labels can be printed. The supervisor records the actual '
@@ -286,7 +287,7 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
             const SizedBox(height: 10),
             _notice(
               icon: Icons.check_circle_outline_rounded,
-              color: const Color(0xFF15803D),
+              color: VistarPalette.ok,
               text:
                   'All ${summary.actualQty} labels for this item have already '
                   'been printed.',
@@ -336,8 +337,8 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
                         'for this item — you cannot print more than that.'
                     : 'One label is issued each time you press. '
                         '${summary.remainingQty} left for this item.',
-            style: const TextStyle(
-              color: Color(0xFF5D6A7A),
+            style: TextStyle(
+              color: VistarPalette.txt2,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -404,8 +405,8 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
                         'be printed.'
                     : 'At most $_maxPerBatch per press — that is what will be '
                         'printed. Press again for the rest.',
-                style: const TextStyle(
-                  color: Color(0xFFD97706),
+                style: TextStyle(
+                  color: VistarPalette.warn,
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
                 ),
@@ -452,8 +453,8 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.check_circle_rounded,
-                  color: Color(0xFF15803D), size: 20),
+              Icon(Icons.check_circle_rounded,
+                  color: VistarPalette.ok, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -473,17 +474,17 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
               issued.stickers.length == 1
                   ? 'Serial ${first.serialNo}'
                   : 'Serials ${first.serialNo} → ${last.serialNo}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 12,
-                color: Color(0xFF334155),
+                color: VistarPalette.txt,
               ),
             ),
           ],
           const SizedBox(height: 12),
           _notice(
             icon: Icons.info_outline_rounded,
-            color: const Color(0xFF1D4ED8),
+            color: VistarPalette.info,
             text: issued.stickers.length == 1
                 ? 'This serial is recorded against the item. If the label did '
                     'not come out, void it so the quantity is released.'

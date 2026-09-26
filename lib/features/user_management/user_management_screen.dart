@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import 'user_management_model.dart';
 import 'user_management_provider.dart';
@@ -39,15 +40,15 @@ List<DropdownMenuItem<String>> _buildRoleDropdownItems({
 Color _roleColorFor(String role) {
   switch (AppConstants.normalizeRole(role)) {
     case AppConstants.roleAdmin:
-      return const Color(0xFF1E63D3);
+      return VistarPalette.info;
     case AppConstants.roleSupervisor:
       return const Color(0xFF7A4DCC);
     case AppConstants.roleBrin:
-      return const Color(0xFFCC7A00);
+      return VistarPalette.warn;
     case AppConstants.roleOperator:
-      return const Color(0xFF0E9F6E);
+      return VistarPalette.ok;
     default:
-      return const Color(0xFF5D6A7A);
+      return VistarPalette.txt2;
   }
 }
 
@@ -229,7 +230,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB32929),
+              backgroundColor: VistarPalette.badSolid,
             ),
             child: const Text('Delete'),
           ),
@@ -256,7 +257,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
   Widget _detailLine(String label, String value) {
     return RichText(
       text: TextSpan(
-        style: const TextStyle(color: Color(0xFF2E3641), fontSize: 14),
+        style: TextStyle(color: VistarPalette.txt, fontSize: 14),
         children: [
           TextSpan(
             text: '$label: ',
@@ -291,11 +292,11 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF8FBFF), Color(0xFFF2FFF9), Color(0xFFF7F2FF)],
+            colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
           ),
         ),
         child: RefreshIndicator(
@@ -306,22 +307,22 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: VistarPalette.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2EAF6)),
+                  border: Border.all(color: VistarPalette.line),
                 ),
-                child: const Text(
+                child: Text(
                   'Create and manage admins, supervisors, BRIN users, and operators.',
-                  style: TextStyle(color: Color(0xFF5D6A7A)),
+                  style: TextStyle(color: VistarPalette.txt2),
                 ),
               ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.96),
+                  color: VistarPalette.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2EAF6)),
+                  border: Border.all(color: VistarPalette.line),
                 ),
                 child: Column(
                   children: [
@@ -354,14 +355,14 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF2F1),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFFFD2CF)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     _cleanError(state.errorMessage!),
-                    style: const TextStyle(
-                      color: Color(0xFF8A2A24),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -372,9 +373,9 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 28),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: VistarPalette.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2EAF6)),
+                    border: Border.all(color: VistarPalette.line),
                   ),
                   child: const ShimmerCenteredPlaceholder(
                     verticalPadding: 10,
@@ -386,15 +387,15 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: VistarPalette.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2EAF6)),
+                    border: Border.all(color: VistarPalette.line),
                   ),
                   child: Text(
                     state.users.isEmpty
                         ? 'No users available. Create your first user.'
                         : 'No users found for current filters.',
-                    style: const TextStyle(color: Color(0xFF5D6A7A)),
+                    style: TextStyle(color: VistarPalette.txt2),
                   ),
                 )
               else
@@ -445,9 +446,9 @@ class _UserCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,8 +484,8 @@ class _UserCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '@${user.username}',
-            style: const TextStyle(
-              color: Color(0xFF5D6A7A),
+            style: TextStyle(
+              color: VistarPalette.txt2,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -496,19 +497,19 @@ class _UserCard extends StatelessWidget {
               _ActionChip(
                 icon: Icons.visibility_outlined,
                 label: 'View',
-                color: const Color(0xFF1E63D3),
+                color: VistarPalette.primary,
                 onTap: onView,
               ),
               _ActionChip(
                 icon: Icons.edit_outlined,
                 label: 'Edit',
-                color: const Color(0xFF127944),
+                color: VistarPalette.ok,
                 onTap: onEdit,
               ),
               _ActionChip(
                 icon: Icons.delete_outline,
                 label: 'Delete',
-                color: const Color(0xFFB32929),
+                color: VistarPalette.bad,
                 onTap: onDelete,
               ),
             ],

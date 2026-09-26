@@ -2,19 +2,14 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// The Vistar "S" swoosh, drawn as vector layers rather than loaded from
-/// the raster logo.
+import '../../../core/widgets/vistar/vistar_brand.dart';
+import '../../../core/widgets/vistar/vistar_loaders.dart';
+
+/// The Vistar "S" swoosh.
 ///
-/// The shipped `vistar_logo.png` is the full *Vistar Pulse* wordmark, and
-/// the launcher needs the bare mark at wildly different opacities — a 5%
-/// page watermark, a card-corner accent, a breathing loader. Painting it
-/// keeps every one of those crisp, tint-able and free of a background
-/// plate, which a bitmap could not give us.
-///
-/// Construction: one spine curve, stroked eight times with shrinking
-/// widths and progressive offsets along the ribbon normal, so the bands
-/// stack from magenta on the outer edge down to cream in the core —
-/// matching the printed mark.
+/// Renders the real mark (`assets/images/vistar_mark*.png`, cut from the
+/// master `logo.png`). The vector painter below is kept as the fallback for
+/// bundles where the raster is missing, so the launcher never shows a hole.
 class VistarSwoosh extends StatelessWidget {
   final double size;
   final double opacity;
@@ -32,12 +27,17 @@ class VistarSwoosh extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
+    return VistarMark(
+      size: size,
       opacity: opacity,
-      child: SizedBox(
-        width: size,
-        height: size,
-        child: CustomPaint(painter: _VistarSwooshPainter(tint: tint)),
+      tint: tint,
+      fallback: Opacity(
+        opacity: opacity,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: CustomPaint(painter: _VistarSwooshPainter(tint: tint)),
+        ),
       ),
     );
   }
@@ -186,134 +186,14 @@ class _VistarSwooshPainter extends CustomPainter {
 
 /// The splash / route-change loader from the Vistar design system: the
 /// mark breathing between 0.92× and 1.04× inside two counter-spinning
-/// rings.
-class VistarBreathingMark extends StatefulWidget {
+/// rings. Delegates to the shared [VistarOrbitLoader].
+class VistarBreathingMark extends StatelessWidget {
   final double size;
   final bool showRings;
 
   const VistarBreathingMark({super.key, this.size = 96, this.showRings = true});
 
   @override
-  State<VistarBreathingMark> createState() => _VistarBreathingMarkState();
-}
-
-class _VistarBreathingMarkState extends State<VistarBreathingMark>
-    with TickerProviderStateMixin {
-  late final AnimationController _breathe;
-  late final AnimationController _spin;
-
-  @override
-  void initState() {
-    super.initState();
-    _breathe = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
-    )..repeat(reverse: true);
-    _spin = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1600),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _breathe.dispose();
-    _spin.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ringBox = widget.size * 2.05;
-
-    return SizedBox(
-      width: widget.showRings ? ringBox : widget.size,
-      height: widget.showRings ? ringBox : widget.size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (widget.showRings) ...[
-            _ring(
-              diameter: ringBox,
-              controller: _spin,
-              reverse: false,
-              top: const Color(0xA6E0218A),
-              side: const Color(0x66F06000),
-            ),
-            _ring(
-              diameter: ringBox - 44,
-              controller: _spin,
-              reverse: true,
-              top: const Color(0xA69B30C9),
-              side: const Color(0x73F0C000),
-            ),
-          ],
-          AnimatedBuilder(
-            animation: _breathe,
-            builder: (context, child) {
-              final t = Curves.easeInOut.transform(_breathe.value);
-              return Transform.translate(
-                offset: Offset(0, 2 - 4 * t),
-                child: Transform.scale(scale: 0.92 + 0.12 * t, child: child),
-              );
-            },
-            child: VistarSwoosh(size: widget.size),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _ring({
-    required double diameter,
-    required AnimationController controller,
-    required bool reverse,
-    required Color top,
-    required Color side,
-  }) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, child) => Transform.rotate(
-        angle:
-            controller.value *
-            2 *
-            math.pi *
-            (reverse ? -1 : 1) *
-            (reverse ? 0.73 : 1),
-        child: child,
-      ),
-      child: SizedBox(
-        width: diameter,
-        height: diameter,
-        child: CustomPaint(painter: _ArcRingPainter(top: top, side: side)),
-      ),
-    );
-  }
-}
-
-/// Two quarter-arcs of a circle — the design system's orbit ring. Painted
-/// rather than built from a [Border] because Flutter only allows uniform
-/// borders on circular decorations.
-class _ArcRingPainter extends CustomPainter {
-  final Color top;
-  final Color side;
-
-  const _ArcRingPainter({required this.top, required this.side});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = (Offset.zero & size).deflate(0.75);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round
-      ..isAntiAlias = true;
-
-    canvas.drawArc(rect, -3 * math.pi / 4, math.pi / 2, false, paint..color = top);
-    canvas.drawArc(rect, -math.pi / 4, math.pi / 2, false, paint..color = side);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ArcRingPainter oldDelegate) =>
-      oldDelegate.top != top || oldDelegate.side != side;
+  Widget build(BuildContext context) =>
+      VistarOrbitLoader(size: size, showRings: showRings);
 }

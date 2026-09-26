@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
+
 /// Compact "Shift A" / "Shifts A, B" pill used on plan headers + item
 /// rows so the supervisor / manager can see which shift owns the work.
 class DplShiftChip extends StatelessWidget {
@@ -17,7 +19,10 @@ class DplShiftChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = Color(0xFF7C3AED);
+    // Violet shift hue; lifted on dark surfaces so the label stays legible.
+    final color = VistarPalette.isDark
+        ? const Color(0xFFB794F6)
+        : const Color(0xFF7C3AED);
     return Container(
       padding: padding,
       decoration: BoxDecoration(

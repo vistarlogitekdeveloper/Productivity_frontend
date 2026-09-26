@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
 import '../../../reports/report_download_stub.dart'
     if (dart.library.html) '../../../reports/report_download_web.dart'
     if (dart.library.io) '../../../reports/report_download_io.dart';
+import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_constants.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -34,14 +36,24 @@ import '../../summary/widgets/buffer_plan_download_sheet.dart';
 // Tokens
 // =============================================================================
 
-const _kPrimary = Color(0xFF1D4ED8);
-const _kGood = Color(0xFF047857);
-const _kWarn = Color(0xFFB45309);
-const _kBad = Color(0xFFB3261E);
-const _kNeutral = Color(0xFF5D6A7A);
-const _kBorder = Color(0xFFE2EAF6);
-const _kSurfaceAlt = Color(0xFFF8FAFC);
+Color get _kPrimary => VistarPalette.info;
+Color get _kGood => VistarPalette.ok;
+Color get _kWarn => VistarPalette.warn;
+Color get _kBad => VistarPalette.bad;
+Color get _kNeutral => DplColors.textSecondary;
+Color get _kBorder => DplColors.divider;
+Color get _kSurfaceAlt => VistarPalette.surface2;
 const _kMobileBreakpoint = 600.0;
+
+// The Monthly Chart grid mirrors the Excel export 1:1 (DplChartTokens'
+// pastel bands, which are fixed), so it stays a light "sheet" in both
+// modes and keeps its own light-mode ink.
+const _kSheetInk = Colors.black87;
+const _kSheetMuted = Color(0xFF5D6A7A);
+const _kSheetBorder = Color(0xFFE2EAF6);
+const _kSheetPlan = Color(0xFF1D4ED8);
+const _kSheetActual = Color(0xFF047857);
+const _kSheetDowntime = Color(0xFFB45309);
 
 Color _achievementColor(double pct) {
   if (pct >= 1.0) return _kPrimary;
@@ -390,7 +402,7 @@ class _DplReportsScreenState extends ConsumerState<DplReportsScreen>
     );
 
     final scaffold = Scaffold(
-      backgroundColor: _kSurfaceAlt,
+      backgroundColor: DplColors.pageBg,
       appBar: DplAppBar(
         title: 'Reports',
         actions: [
@@ -403,12 +415,12 @@ class _DplReportsScreenState extends ConsumerState<DplReportsScreen>
             tooltip: 'Download',
             enabled: !_isDownloading,
             icon: _isDownloading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: DplColors.primary,
                     ),
                   )
                 : const Icon(Icons.download_outlined),
@@ -496,8 +508,8 @@ class _StickyTabBar extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: DplColors.cardBg,
         border: Border(bottom: BorderSide(color: _kBorder)),
       ),
       child: child,
@@ -568,7 +580,7 @@ class _RangeBar extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-      color: _kSurfaceAlt,
+      color: DplColors.pageBg,
       child: Row(
         children: [
           Expanded(
@@ -583,13 +595,13 @@ class _RangeBar extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: DplColors.cardBg,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _kBorder),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.date_range, size: 18, color: _kPrimary),
+                    Icon(Icons.date_range, size: 18, color: _kPrimary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -601,7 +613,7 @@ class _RangeBar extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Icon(Icons.expand_more,
+                    Icon(Icons.expand_more,
                         size: 18, color: _kNeutral),
                   ],
                 ),
@@ -618,7 +630,7 @@ class _RangeBar extends ConsumerWidget {
             const SizedBox(width: 6),
             IconButton(
               tooltip: 'Clear range',
-              icon: const Icon(Icons.clear, size: 18, color: _kNeutral),
+              icon: Icon(Icons.clear, size: 18, color: _kNeutral),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               onPressed: () => ref
@@ -638,13 +650,13 @@ class _RangeBar extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: DplColors.cardBg,
           border: Border.all(color: _kBorder),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w800,
             fontSize: 12,
             color: _kNeutral,
@@ -675,7 +687,7 @@ class _MachineFilterBar extends ConsumerWidget {
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-          color: _kSurfaceAlt,
+          color: DplColors.pageBg,
           child: SizedBox(
             height: 36,
             child: ListView(
@@ -720,7 +732,7 @@ class _MachineFilterBar extends ConsumerWidget {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: selected ? _kPrimary : Colors.white,
+      color: selected ? VistarPalette.infoSolid : DplColors.cardBg,
       borderRadius: BorderRadius.circular(999),
       child: InkWell(
         borderRadius: BorderRadius.circular(999),
@@ -729,7 +741,7 @@ class _MachineFilterBar extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             border: Border.all(
-              color: selected ? _kPrimary : _kBorder,
+              color: selected ? VistarPalette.infoSolid : _kBorder,
             ),
             borderRadius: BorderRadius.circular(999),
           ),
@@ -796,7 +808,7 @@ class _AtAGlanceStrip extends ConsumerWidget {
 
     final mobile = _isMobile(context);
     return Container(
-      color: _kSurfaceAlt,
+      color: DplColors.pageBg,
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
       child: mobile
           ? SizedBox(
@@ -839,7 +851,7 @@ class _KpiCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -862,7 +874,7 @@ class _KpiCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: _kNeutral,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -944,7 +956,7 @@ class _AchievementRing extends StatelessWidget {
             child: CircularProgressIndicator(
               value: pct.clamp(0.0, 1.0),
               strokeWidth: 5,
-              backgroundColor: const Color(0xFFEEF1F5),
+              backgroundColor: VistarPalette.surface3,
               valueColor: AlwaysStoppedAnimation(color),
             ),
           ),
@@ -975,7 +987,7 @@ class _MiniKv extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: _kNeutral,
             fontSize: 11,
             fontWeight: FontWeight.w700,
@@ -1242,7 +1254,7 @@ class _MachineOverviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -1291,7 +1303,7 @@ class _MachineOverviewCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: rollup.completionPct,
                     minHeight: 5,
-                    backgroundColor: const Color(0xFFEEF1F5),
+                    backgroundColor: VistarPalette.surface3,
                     valueColor: AlwaysStoppedAnimation(color),
                   ),
                 ),
@@ -1314,11 +1326,11 @@ class _TopDowntimeReasons extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: DplColors.cardBg,
           border: Border.all(color: _kBorder),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Row(
+        child: Row(
           children: [
             Icon(Icons.check_circle_outline, color: _kGood),
             SizedBox(width: 10),
@@ -1341,7 +1353,7 @@ class _TopDowntimeReasons extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -1414,7 +1426,7 @@ class _DowntimeReasonRow extends StatelessWidget {
           child: LinearProgressIndicator(
             value: ratio.clamp(0.0, 1.0),
             minHeight: 4,
-            backgroundColor: const Color(0xFFEEF1F5),
+            backgroundColor: VistarPalette.surface3,
             valueColor: AlwaysStoppedAnimation(color),
           ),
         ),
@@ -1422,7 +1434,7 @@ class _DowntimeReasonRow extends StatelessWidget {
         Text(
           '${row.occurrences} event${row.occurrences == 1 ? "" : "s"}'
           '${row.avgMinutes > 0 ? "  •  avg ${row.avgMinutes.toStringAsFixed(1)} min" : ""}',
-          style: const TextStyle(color: _kNeutral, fontSize: 11),
+          style: TextStyle(color: _kNeutral, fontSize: 11),
         ),
       ],
     );
@@ -1445,7 +1457,7 @@ class _TopPerformers extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -1513,7 +1525,7 @@ class _PerformerSection extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 title.toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   color: _kNeutral,
                   letterSpacing: 0.6,
@@ -1526,7 +1538,7 @@ class _PerformerSection extends StatelessWidget {
           if (isEmpty)
             Text(
               isEmptyMessage,
-              style: const TextStyle(color: _kNeutral),
+              style: TextStyle(color: _kNeutral),
             )
           else
             child,
@@ -1565,7 +1577,7 @@ class _SupervisorRow extends StatelessWidget {
               Text(
                 '${fmt.format(row.totalActual)} / ${fmt.format(row.totalPlan)}'
                 ' • ${row.plansHandled} plans',
-                style: const TextStyle(color: _kNeutral, fontSize: 12),
+                style: TextStyle(color: _kNeutral, fontSize: 12),
               ),
             ],
           ),
@@ -1607,7 +1619,7 @@ class _MachinePerformerRow extends StatelessWidget {
               ),
               Text(
                 '${fmt.format(rollup.actualQty)} / ${fmt.format(rollup.planQty)}',
-                style: const TextStyle(color: _kNeutral, fontSize: 12),
+                style: TextStyle(color: _kNeutral, fontSize: 12),
               ),
             ],
           ),
@@ -1743,7 +1755,7 @@ class _ChartCumulativeCard extends ConsumerWidget {
           child: Text(
             '${dateFmt.format(chart.from)} → ${dateFmt.format(chart.to)}'
             '  •  ${chart.days.length}d',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 13,
               color: _kNeutral,
@@ -1794,7 +1806,7 @@ class _ChartCumulativeCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -1856,7 +1868,7 @@ class _CumKv extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: _kNeutral,
             fontSize: 11,
             fontWeight: FontWeight.w700,
@@ -1899,7 +1911,7 @@ class _ChartToolbar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -1911,10 +1923,10 @@ class _ChartToolbar extends StatelessWidget {
               child: DropdownButton<int?>(
                 value: focusMachineId,
                 isExpanded: true,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
-                  color: Colors.black,
+                  color: DplColors.textPrimary,
                 ),
                 items: [
                   if (!mobile)
@@ -2070,7 +2082,7 @@ class _ChartGridState extends State<_ChartGrid> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: _kBorder),
+        border: Border.all(color: _kSheetBorder),
         borderRadius: BorderRadius.circular(12),
       ),
       clipBehavior: Clip.hardEdge,
@@ -2088,8 +2100,8 @@ class _ChartGridState extends State<_ChartGrid> {
                     decoration: BoxDecoration(
                       color: DplChartTokens.dateBand,
                       border: const Border(
-                        right: BorderSide(color: _kBorder),
-                        bottom: BorderSide(color: _kBorder),
+                        right: BorderSide(color: _kSheetBorder),
+                        bottom: BorderSide(color: _kSheetBorder),
                       ),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -2099,7 +2111,7 @@ class _ChartGridState extends State<_ChartGrid> {
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 11,
-                        color: Colors.black87,
+                        color: _kSheetInk,
                       ),
                     ),
                   ),
@@ -2129,7 +2141,7 @@ class _ChartGridState extends State<_ChartGrid> {
                         decoration: BoxDecoration(
                           color: DplChartTokens.dateBand,
                           border: const Border(
-                              bottom: BorderSide(color: _kBorder)),
+                              bottom: BorderSide(color: _kSheetBorder)),
                         ),
                         child: Row(
                           children: [
@@ -2142,7 +2154,7 @@ class _ChartGridState extends State<_ChartGrid> {
                               decoration: BoxDecoration(
                                 color: DplChartTokens.totalBand,
                                 border: const Border(
-                                  left: BorderSide(color: _kBorder),
+                                  left: BorderSide(color: _kSheetBorder),
                                 ),
                               ),
                               child: const Text(
@@ -2150,7 +2162,7 @@ class _ChartGridState extends State<_ChartGrid> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w900,
                                   fontSize: 11,
-                                  color: Colors.black87,
+                                  color: _kSheetInk,
                                 ),
                               ),
                             ),
@@ -2221,11 +2233,11 @@ class _RowDef {
   Color get kindAccent {
     switch (kind) {
       case _RowKind.plan:
-        return _kPrimary;
+        return _kSheetPlan;
       case _RowKind.actual:
-        return _kGood;
+        return _kSheetActual;
       case _RowKind.downtime:
-        return _kWarn;
+        return _kSheetDowntime;
     }
   }
 }
@@ -2240,14 +2252,14 @@ class _LeftCell extends StatelessWidget {
     // Actual without using red; Downtime uses the warn color.
     final labelColor = def.kind == _RowKind.plan
         ? DplChartTokens.emphasisLabel
-        : (def.kind == _RowKind.downtime ? _kWarn : Colors.black87);
+        : (def.kind == _RowKind.downtime ? _kSheetDowntime : _kSheetInk);
 
     return Container(
       decoration: BoxDecoration(
         color: def.bandColor,
         border: const Border(
-          right: BorderSide(color: _kBorder),
-          bottom: BorderSide(color: _kBorder),
+          right: BorderSide(color: _kSheetBorder),
+          bottom: BorderSide(color: _kSheetBorder),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -2275,7 +2287,7 @@ class _LeftCell extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 10,
                       height: 1.0,
-                      color: _kNeutral,
+                      color: _kSheetMuted,
                       fontWeight: FontWeight.w700,
                     ),
                     maxLines: 1,
@@ -2321,8 +2333,8 @@ class _DayHeader extends StatelessWidget {
             ? DplChartTokens.weekendBand
             : DplChartTokens.dateBand,
         border: const Border(
-          right: BorderSide(color: _kBorder),
-          bottom: BorderSide(color: _kBorder),
+          right: BorderSide(color: _kSheetBorder),
+          bottom: BorderSide(color: _kSheetBorder),
         ),
       ),
       child: Column(
@@ -2333,13 +2345,14 @@ class _DayHeader extends StatelessWidget {
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 11,
+              color: _kSheetInk,
             ),
           ),
           Text(
             DateFormat('EEE').format(date),
             style: const TextStyle(
               fontSize: 9,
-              color: _kNeutral,
+              color: _kSheetMuted,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -2408,8 +2421,8 @@ class _DataRowStrip extends StatelessWidget {
           decoration: BoxDecoration(
             color: DplChartTokens.totalBand,
             border: const Border(
-              left: BorderSide(color: _kBorder),
-              bottom: BorderSide(color: _kBorder),
+              left: BorderSide(color: _kSheetBorder),
+              bottom: BorderSide(color: _kSheetBorder),
             ),
           ),
           child: Text(
@@ -2442,8 +2455,8 @@ class _DataRowStrip extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         border: const Border(
-          right: BorderSide(color: _kBorder),
-          bottom: BorderSide(color: _kBorder),
+          right: BorderSide(color: _kSheetBorder),
+          bottom: BorderSide(color: _kSheetBorder),
         ),
       ),
       child: Text(
@@ -2452,7 +2465,7 @@ class _DataRowStrip extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w800,
           fontFamily: 'monospace',
-          color: v == 0 ? _kNeutral : Colors.black87,
+          color: v == 0 ? _kSheetMuted : _kSheetInk,
         ),
       ),
     );
@@ -2526,7 +2539,7 @@ class _MachinesTab extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: DplColors.cardBg,
                     border: Border.all(color: _kBorder),
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -2734,7 +2747,7 @@ class _DowntimeSummaryView extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: DplColors.cardBg,
                   border: Border.all(color: _kBorder),
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -2917,7 +2930,7 @@ class _DowntimeMatrixContent extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: DplColors.cardBg,
             border: Border.all(color: _kBorder),
             borderRadius: BorderRadius.circular(14),
           ),
@@ -2948,7 +2961,7 @@ class _DowntimeMatrixContent extends StatelessWidget {
                 enabled: !isDownloading,
                 tooltip: 'Download reason matrix',
                 icon: isDownloading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
@@ -2956,7 +2969,7 @@ class _DowntimeMatrixContent extends StatelessWidget {
                           color: _kPrimary,
                         ),
                       )
-                    : const Icon(
+                    : Icon(
                         Icons.download_outlined,
                         color: _kPrimary,
                       ),
@@ -3027,7 +3040,7 @@ class _DowntimeMatrixTable extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: bg ?? _kSurfaceAlt,
-            border: const Border(
+            border: Border(
               right: BorderSide(color: _kBorder),
               bottom: BorderSide(color: _kBorder),
             ),
@@ -3037,7 +3050,7 @@ class _DowntimeMatrixTable extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 11,
               color: _kNeutral,
@@ -3064,7 +3077,7 @@ class _DowntimeMatrixTable extends StatelessWidget {
                   : Alignment.centerLeft),
           decoration: BoxDecoration(
             color: bg,
-            border: const Border(
+            border: Border(
               right: BorderSide(color: _kBorder),
               bottom: BorderSide(color: _kBorder),
             ),
@@ -3076,7 +3089,7 @@ class _DowntimeMatrixTable extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11.5,
-              color: muted ? _kNeutral : Colors.black87,
+              color: muted ? _kNeutral : DplColors.textPrimary,
               fontWeight: bold ? FontWeight.w900 : FontWeight.w600,
             ),
           ),
@@ -3091,7 +3104,7 @@ class _DowntimeMatrixTable extends StatelessWidget {
         headerCell(
           'Grand Total',
           width: _grandColWidth,
-          bg: const Color(0xFFFFF4F4),
+          bg: VistarPalette.badBg,
         ),
       ],
     );
@@ -3121,7 +3134,7 @@ class _DowntimeMatrixTable extends StatelessWidget {
               matrix.rows[i].rowTotal.toString(),
               width: _grandColWidth,
               bold: true,
-              bg: const Color(0xFFFFF4F4),
+              bg: VistarPalette.badBg,
             ),
           ],
         ),
@@ -3148,7 +3161,7 @@ class _DowntimeMatrixTable extends StatelessWidget {
           matrix.grandTotal.toString(),
           width: _grandColWidth,
           bold: true,
-          bg: const Color(0xFFFFEAEA),
+          bg: VistarPalette.badBg,
         ),
       ],
     );
@@ -3169,7 +3182,7 @@ class _DowntimeMatrixTable extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -3217,7 +3230,7 @@ class _DowntimeDayCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -3237,7 +3250,7 @@ class _DowntimeDayCard extends StatelessWidget {
               ),
               Text(
                 _formatHrsMin(totalMin),
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   color: _kBad,
                   fontSize: 16,
@@ -3251,8 +3264,8 @@ class _DowntimeDayCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: fraction.clamp(0.0, 1.0),
               minHeight: 8,
-              backgroundColor: const Color(0xFFFCE3E3),
-              valueColor: const AlwaysStoppedAnimation(_kBad),
+              backgroundColor: VistarPalette.badBg,
+              valueColor: AlwaysStoppedAnimation(_kBad),
             ),
           ),
           const SizedBox(height: 8),
@@ -3262,12 +3275,12 @@ class _DowntimeDayCard extends StatelessWidget {
             children: [
               Text(
                 '${fmt.format(bucket.totalEvents)} event${bucket.totalEvents == 1 ? "" : "s"}',
-                style: const TextStyle(color: _kNeutral, fontSize: 12),
+                style: TextStyle(color: _kNeutral, fontSize: 12),
               ),
               if (bucket.plannedMinutes > 0)
                 Text(
                   'Planned: ${_formatHrsMin(bucket.plannedMinutes)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: _kPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
@@ -3276,7 +3289,7 @@ class _DowntimeDayCard extends StatelessWidget {
               if (bucket.unplannedMinutes > 0)
                 Text(
                   'Unplanned: ${_formatHrsMin(bucket.unplannedMinutes)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: _kWarn,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
@@ -3284,13 +3297,13 @@ class _DowntimeDayCard extends StatelessWidget {
                 ),
               Text(
                 '${(share * 100).toStringAsFixed(1)}% of total',
-                style: const TextStyle(color: _kNeutral, fontSize: 12),
+                style: TextStyle(color: _kNeutral, fontSize: 12),
               ),
             ],
           ),
           if (bucket.reasons.isNotEmpty) ...[
             const SizedBox(height: 10),
-            const Divider(height: 1, color: _kBorder),
+            Divider(height: 1, color: _kBorder),
             const SizedBox(height: 8),
             for (final r in bucket.reasons) ...[
               _DowntimeReasonChip(
@@ -3369,14 +3382,14 @@ class _DowntimeReasonChip extends StatelessWidget {
                     ),
                     Text(
                       '${fmt.format(row.events)} event${row.events == 1 ? "" : "s"}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: _kNeutral,
                         fontSize: 11,
                       ),
                     ),
                     Text(
                       '${(share * 100).toStringAsFixed(1)}% of day',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: _kNeutral,
                         fontSize: 11,
                       ),
@@ -3452,7 +3465,7 @@ class _SupervisorsTab extends ConsumerWidget {
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: DplColors.cardBg,
                       border: Border.all(color: _kBorder),
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -3478,7 +3491,7 @@ class _SupervisorsTab extends ConsumerWidget {
                                 'Plan ${fmt.format(row.totalPlan)} • '
                                 'Actual ${fmt.format(row.totalActual)} • '
                                 '${row.plansHandled} plans',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: _kNeutral,
                                   fontSize: 11,
                                 ),
@@ -3489,7 +3502,7 @@ class _SupervisorsTab extends ConsumerWidget {
                                 child: LinearProgressIndicator(
                                   value: row.completionPct,
                                   minHeight: 5,
-                                  backgroundColor: const Color(0xFFEEF1F5),
+                                  backgroundColor: VistarPalette.surface3,
                                   valueColor: AlwaysStoppedAnimation(color),
                                 ),
                               ),
@@ -3651,7 +3664,7 @@ class _PartsTabState extends ConsumerState<_PartsTab> {
                               return Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: DplColors.cardBg,
                                   border: Border.all(color: _kBorder),
                                   borderRadius:
                                       BorderRadius.circular(14),
@@ -3681,7 +3694,7 @@ class _PartsTabState extends ConsumerState<_PartsTab> {
                                                   const EdgeInsets.only(top: 2),
                                               child: Text(
                                                 r.partNumber,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   color: _kNeutral,
                                                   fontSize: 11,
                                                 ),
@@ -3879,7 +3892,7 @@ class _DailyLogSummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -3933,7 +3946,7 @@ class _DailyLogDateSection extends StatelessWidget {
     final totals = group.totals;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         border: Border.all(color: _kBorder),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -3964,7 +3977,7 @@ class _DailyLogDateSection extends StatelessWidget {
                 ),
                 Text(
                   '${intFmt.format(totals.actualQty)} / ${intFmt.format(totals.planQty)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     color: _kNeutral,
                   ),
@@ -3992,7 +4005,7 @@ class _DailyLogDateSection extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: _kBorder),
+          Divider(height: 1, color: _kBorder),
           for (var i = 0; i < group.rows.length; i++) ...[
             _DailyLogRowTile(
               row: group.rows[i],
@@ -4000,7 +4013,7 @@ class _DailyLogDateSection extends StatelessWidget {
               timeFmt: timeFmt,
             ),
             if (i != group.rows.length - 1)
-              const Divider(
+              Divider(
                 height: 1,
                 color: _kBorder,
                 indent: 12,
@@ -4065,7 +4078,7 @@ class _DailyLogRowTile extends StatelessWidget {
                 ),
                 child: Text(
                   'Plan $planLabel',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: _kPrimary,
                     fontWeight: FontWeight.w700,
                     fontSize: 11,
@@ -4077,7 +4090,7 @@ class _DailyLogRowTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             row.partLabel,
-            style: const TextStyle(color: _kNeutral, fontSize: 12),
+            style: TextStyle(color: _kNeutral, fontSize: 12),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -4125,12 +4138,12 @@ class _DailyLogRowTile extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.notes_outlined, size: 16, color: _kNeutral),
+                  Icon(Icons.notes_outlined, size: 16, color: _kNeutral),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       row.reasonOrRemarks,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: _kNeutral,
                         fontSize: 12,
                       ),

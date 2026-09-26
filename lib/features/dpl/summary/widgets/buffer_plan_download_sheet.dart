@@ -144,7 +144,7 @@ class _BufferPlanDownloadSheetState
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: DplColors.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -174,7 +174,7 @@ class _BufferPlanDownloadSheetState
                     color: DplColors.primaryTint,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: const Icon(Icons.table_view_outlined,
+                  child: Icon(Icons.table_view_outlined,
                       size: 18, color: DplColors.primaryDark),
                 ),
                 const SizedBox(width: 10),
@@ -184,7 +184,7 @@ class _BufferPlanDownloadSheetState
                     children: [
                       Text('Buffer Creation Plan', style: DplText.h3()),
                       const SizedBox(height: 1),
-                      const Text(
+                      Text(
                         'All plants · one sheet each · Excel',
                         style: TextStyle(
                           color: DplColors.textSecondary,
@@ -207,7 +207,7 @@ class _BufferPlanDownloadSheetState
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   'Could not load plants: $e',
-                  style: const TextStyle(color: DplColors.error),
+                  style: TextStyle(color: DplColors.error),
                 ),
               ),
               data: (res) {
@@ -234,14 +234,14 @@ class _BufferPlanDownloadSheetState
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        const Icon(Icons.factory_outlined,
+                        Icon(Icons.factory_outlined,
                             size: 14, color: DplColors.textSecondary),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             'Covers all ${plants.length} plants: '
                             '${plants.map((p) => p.name.isEmpty ? p.code : p.name).join(", ")}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: DplColors.textSecondary,
                               fontWeight: FontWeight.w600,
                               fontSize: 11.5,
@@ -261,7 +261,7 @@ class _BufferPlanDownloadSheetState
                       Text(
                         'Building report… ($_progress/$_total)',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.textSecondary,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
@@ -301,7 +301,7 @@ class _BufferPlanDownloadSheetState
 
   Widget _label(String text) => Text(
         text.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           color: DplColors.textSecondary,
           fontWeight: FontWeight.w800,
           fontSize: 11,

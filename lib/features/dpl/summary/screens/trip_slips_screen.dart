@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../auth/auth_provider.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_response.dart';
@@ -270,7 +271,7 @@ class _TripSlipsScreenState extends ConsumerState<TripSlipsScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.receipt_long_outlined,
+              Icon(Icons.receipt_long_outlined,
                   size: 18, color: DplColors.primaryDark),
               const SizedBox(width: 8),
               Expanded(
@@ -300,7 +301,7 @@ class _TripSlipsScreenState extends ConsumerState<TripSlipsScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Enter an invoice no for each slip below, then send. Each slip '
             'keeps its own invoice; slips left blank stay in the DEO queue '
             'for a later batch.',
@@ -655,11 +656,7 @@ class _TripSummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [DplColors.primary, DplColors.primaryDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: VistarPalette.heroGradient,
         borderRadius: BorderRadius.circular(14),
         boxShadow: DplShadows.card,
       ),
@@ -786,7 +783,7 @@ class _SlipDetailTile extends StatelessWidget {
                     ),
                     child: Text(
                       '$index of $total',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.primaryDark,
                         fontWeight: FontWeight.w800,
                         fontSize: 10.5,
@@ -834,7 +831,7 @@ class _SlipDetailTile extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 slip.partLabel,
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
@@ -846,12 +843,12 @@ class _SlipDetailTile extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.local_shipping_outlined,
+                    Icon(Icons.local_shipping_outlined,
                         size: 13, color: DplColors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       slip.vehicleNo,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.textSecondary,
                         fontWeight: FontWeight.w700,
                         fontSize: 11.5,
@@ -889,12 +886,12 @@ class _SlipDetailTile extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.receipt_long_outlined,
+                    Icon(Icons.receipt_long_outlined,
                         size: 13, color: DplColors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       'Invoice ${slip.invoiceNo.trim()}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.textSecondary,
                         fontWeight: FontWeight.w700,
                         fontSize: 11.5,
@@ -909,13 +906,13 @@ class _SlipDetailTile extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.person_outline,
+                  Icon(Icons.person_outline,
                       size: 13, color: DplColors.textSecondary),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       slip.requestedBy?.name ?? '-',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.textSecondary,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
@@ -928,7 +925,7 @@ class _SlipDetailTile extends StatelessWidget {
                   if (slip.requestedAt != null)
                     Text(
                       dateFmt.format(slip.requestedAt!.toLocal()),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.textSecondary,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,

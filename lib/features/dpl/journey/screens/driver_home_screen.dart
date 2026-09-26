@@ -62,7 +62,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
-                children: const [
+                children: [
                   SizedBox(height: 120),
                   Icon(Icons.local_shipping_outlined,
                       size: 64, color: DplColors.textSecondary),
@@ -108,7 +108,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: DplColors.error, size: 40),
+            Icon(Icons.error_outline, color: DplColors.error, size: 40),
             const SizedBox(height: 12),
             Text(msg, textAlign: TextAlign.center),
             const SizedBox(height: 12),
@@ -136,7 +136,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: DplColors.cardBg,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: DplColors.divider),
             boxShadow: DplShadows.card,
@@ -166,7 +166,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                     ),
                     child: Text(
                       trip.status,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: DplColors.primary,
@@ -181,13 +181,13 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   if (trip.plantName.isNotEmpty) trip.plantName,
                   if ((trip.vehicleNo ?? '').isNotEmpty) trip.vehicleNo!,
                 ].join(' · '),
-                style: const TextStyle(color: DplColors.textSecondary),
+                style: TextStyle(color: DplColors.textSecondary),
               ),
               if (assignedAt != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   'Assigned $assignedAt IST',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: DplColors.textSecondary,
                   ),

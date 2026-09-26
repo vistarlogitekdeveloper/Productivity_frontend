@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_refresh_icon_button.dart';
@@ -81,7 +82,7 @@ class _IntroCard extends StatelessWidget {
                   color: DplColors.primaryTint,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.calculate_outlined,
+                child: Icon(Icons.calculate_outlined,
                     color: DplColors.primaryDark),
               ),
               const SizedBox(width: 10),
@@ -98,7 +99,7 @@ class _IntroCard extends StatelessWidget {
               color: DplColors.neutralBg,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Text(
+            child: Text(
               '(Stocking Norm  +  Customer\'s Today\'s Plan)  −  '
               'Customer Opening Stock  =  Daily Dispatch',
               style: TextStyle(
@@ -110,7 +111,7 @@ class _IntroCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Update today\'s plan below — stocking norms and opening '
             'stocks live under Settings since they change rarely. Once '
             'all 3 are set for a part, today\'s dispatch quantity is '
@@ -172,7 +173,7 @@ class _MasterFieldCard extends ConsumerWidget {
                   const SizedBox(height: 2),
                   Text(
                     kind.cadence,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 11.5,
@@ -180,7 +181,7 @@ class _MasterFieldCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   asyncPage.when(
-                    loading: () => const Text(
+                    loading: () => Text(
                       'Loading…',
                       style: TextStyle(
                         color: DplColors.textTertiary,
@@ -190,7 +191,7 @@ class _MasterFieldCard extends ConsumerWidget {
                     ),
                     error: (e, _) => Text(
                       'Error: $e',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.error,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -202,7 +203,7 @@ class _MasterFieldCard extends ConsumerWidget {
                       if (res.isError) {
                         return Text(
                           res.error ?? 'Failed to load.',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: DplColors.error,
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
@@ -216,7 +217,7 @@ class _MasterFieldCard extends ConsumerWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: DplColors.textTertiary),
+            Icon(Icons.chevron_right, color: DplColors.textTertiary),
           ],
         ),
       ),
@@ -361,7 +362,7 @@ class _ViewPlanCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
-          color: DplColors.primaryDark,
+          gradient: VistarPalette.heroGradient,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -465,7 +466,7 @@ class _PlanTripCard extends StatelessWidget {
                 color: DplColors.primaryTint,
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.local_shipping_rounded,
                 color: DplColors.primaryDark,
                 size: 22,
@@ -479,7 +480,7 @@ class _PlanTripCard extends StatelessWidget {
                 children: [
                   Text('Plan Trip', style: DplText.h3()),
                   const SizedBox(height: 2),
-                  const Text(
+                  Text(
                     'Allocate the day\'s dispatch qty across truck trips '
                     '— up to 6 parts per trip.',
                     style: TextStyle(
@@ -491,7 +492,7 @@ class _PlanTripCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: DplColors.textTertiary),
+            Icon(Icons.chevron_right, color: DplColors.textTertiary),
           ],
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shift_chip.dart';
 import '../../models/dpl_production_plan_item.dart';
 import '../../supervisor/widgets/live_timer_text.dart';
@@ -61,7 +62,7 @@ class DplPlanItemTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,15 +74,15 @@ class DplPlanItemTile extends StatelessWidget {
                     height: 36,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF3FB),
+                      color: VistarPalette.surface3,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '#${item.planNo}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 11,
-                        color: Color(0xFF1D4ED8),
+                        color: VistarPalette.info,
                       ),
                     ),
                   ),
@@ -106,8 +107,8 @@ class DplPlanItemTile extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 2),
                             child: Text(
                               item.partDescription,
-                              style: const TextStyle(
-                                color: Color(0xFF5D6A7A),
+                              style: TextStyle(
+                                color: VistarPalette.txt2,
                                 fontSize: 12,
                               ),
                               maxLines: 2,
@@ -133,9 +134,9 @@ class DplPlanItemTile extends StatelessWidget {
                       onDelete != null)
                     PopupMenuButton<_ItemMenuAction>(
                       tooltip: 'More',
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.more_vert,
-                        color: Color(0xFF5D6A7A),
+                        color: VistarPalette.txt2,
                       ),
                       onSelected: (a) {
                         switch (a) {
@@ -194,17 +195,17 @@ class DplPlanItemTile extends StatelessWidget {
                             ),
                           ),
                         if (onDelete != null)
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: _ItemMenuAction.delete,
                             child: ListTile(
                               dense: true,
                               leading: Icon(
                                 Icons.delete_outline,
-                                color: Color(0xFFB3261E),
+                                color: VistarPalette.bad,
                               ),
                               title: Text(
                                 'Delete',
-                                style: TextStyle(color: Color(0xFFB3261E)),
+                                style: TextStyle(color: VistarPalette.bad),
                               ),
                             ),
                           ),
@@ -221,9 +222,9 @@ class DplPlanItemTile extends StatelessWidget {
                   const Spacer(),
                   Text(
                     '${(item.completionPct * 100).round()}%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF5D6A7A),
+                      color: VistarPalette.txt2,
                     ),
                   ),
                 ],
@@ -281,11 +282,11 @@ class DplPlanItemTile extends StatelessWidget {
                       heroTag: 'trolley-${item.id}',
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Trolley photo captured at stop. Tap to view.',
                         style: TextStyle(
-                          color: Color(0xFF5D6A7A),
+                          color: VistarPalette.txt2,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -307,8 +308,8 @@ class DplPlanItemTile extends StatelessWidget {
       children: [
         Text(
           '$label: ',
-          style: const TextStyle(
-            color: Color(0xFF5D6A7A),
+          style: TextStyle(
+            color: VistarPalette.txt2,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -363,8 +364,8 @@ class _LiveStatusStrip extends StatelessWidget {
           : null;
       return _strip(
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF15803D),
-        bg: const Color(0xFFE6F4EA),
+        color: VistarPalette.ok,
+        bg: VistarPalette.okBg,
         text: end == null
             ? 'Completed'
             : (dur == null
@@ -382,8 +383,8 @@ class _LiveStatusStrip extends StatelessWidget {
     if (start == null) {
       return _strip(
         icon: Icons.play_circle_outline,
-        color: const Color(0xFF1D4ED8),
-        bg: const Color(0xFFDBEAFE),
+        color: VistarPalette.info,
+        bg: VistarPalette.infoBg,
         text: 'In progress',
       );
     }
@@ -442,18 +443,18 @@ class _DowntimeAccumulatedChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = Color(0xFFB3261E);
+    final color = VistarPalette.bad;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFECEA),
+        color: VistarPalette.badBg,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.timer_off_outlined,
             size: 14,
             color: color,
@@ -461,7 +462,7 @@ class _DowntimeAccumulatedChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'Downtime so far: ${_format(minutes)}',
-            style: const TextStyle(
+            style: TextStyle(
               color: color,
               fontWeight: FontWeight.w800,
               fontSize: 12,
@@ -493,18 +494,18 @@ class _PausedAccumulatedChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = Color(0xFFB45309);
+    final color = VistarPalette.warn;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF4E5),
+        color: VistarPalette.warnBg,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.pause_circle_outline,
             size: 14,
             color: color,
@@ -512,7 +513,7 @@ class _PausedAccumulatedChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'Paused so far: ${_format(minutes)}',
-            style: const TextStyle(
+            style: TextStyle(
               color: color,
               fontWeight: FontWeight.w800,
               fontSize: 12,
@@ -535,21 +536,21 @@ class _PausedStripWithLiveTimer extends StatelessWidget {
     final localPaused = pausedAt.toLocal();
     final hm = '${localPaused.hour.toString().padLeft(2, '0')}:'
         '${localPaused.minute.toString().padLeft(2, '0')}';
-    const color = Color(0xFFB45309);
+    final color = VistarPalette.warn;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
+        color: VistarPalette.warnBg,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.pause_circle_outline, size: 14, color: color),
+          Icon(Icons.pause_circle_outline, size: 14, color: color),
           const SizedBox(width: 6),
           Text(
             'Paused since $hm  -  Paused for ',
-            style: const TextStyle(
+            style: TextStyle(
               color: color,
               fontWeight: FontWeight.w700,
               fontSize: 12,
@@ -557,7 +558,7 @@ class _PausedStripWithLiveTimer extends StatelessWidget {
           ),
           LiveTimerText(
             startTime: pausedAt,
-            style: const TextStyle(
+            style: TextStyle(
               color: color,
               fontWeight: FontWeight.w800,
               fontSize: 12,
@@ -578,21 +579,21 @@ class _StripWithLiveTimer extends StatelessWidget {
     final localStart = start.toLocal();
     final hm = '${localStart.hour.toString().padLeft(2, '0')}:'
         '${localStart.minute.toString().padLeft(2, '0')}';
-    const color = Color(0xFF15803D);
+    final color = VistarPalette.ok;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFE6F4EA),
+        color: VistarPalette.okBg,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.play_circle_outline, size: 14, color: color),
+          Icon(Icons.play_circle_outline, size: 14, color: color),
           const SizedBox(width: 6),
           Text(
             'Started $hm  -  Running ',
-            style: const TextStyle(
+            style: TextStyle(
               color: color,
               fontWeight: FontWeight.w700,
               fontSize: 12,
@@ -600,7 +601,7 @@ class _StripWithLiveTimer extends StatelessWidget {
           ),
           LiveTimerText(
             startTime: start,
-            style: const TextStyle(
+            style: TextStyle(
               color: color,
               fontWeight: FontWeight.w800,
               fontSize: 12,

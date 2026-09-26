@@ -24,11 +24,16 @@ class PlantCardPalette {
   final Color surface;
   final Color edge;
 
+  /// Solid fill that carries white text (the Send button). Defaults to
+  /// [accentDark]; pass a solid tone since dark-mode ink is light.
+  final Color? fill;
+
   const PlantCardPalette({
     required this.accent,
     required this.accentDark,
     required this.surface,
     required this.edge,
+    this.fill,
   });
 }
 
@@ -413,7 +418,7 @@ class _PlantCardState extends ConsumerState<PlantCard> {
                       palette: widget.palette,
                     ),
                     const SizedBox(height: 14),
-                    const Divider(
+                    Divider(
                       height: 1,
                       color: DplColors.divider,
                     ),
@@ -714,7 +719,7 @@ class _StatTile extends StatelessWidget {
           ),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w600,
               fontSize: 10.5,
@@ -954,7 +959,7 @@ class _MachineMultiPickerSheetState extends State<_MachineMultiPickerSheet> {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxSheetHeight),
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: DplColors.cardBg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: DplShadows.sheet,
@@ -981,7 +986,7 @@ class _MachineMultiPickerSheetState extends State<_MachineMultiPickerSheet> {
                       const EdgeInsets.fromLTRB(20, 4, 12, 4),
                   child: Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Select machines',
                           style: TextStyle(
@@ -998,13 +1003,13 @@ class _MachineMultiPickerSheetState extends State<_MachineMultiPickerSheet> {
                     ],
                   ),
                 ),
-                const Divider(height: 1, color: DplColors.divider),
+                Divider(height: 1, color: DplColors.divider),
                 Flexible(
                   child: ListView.separated(
                     shrinkWrap: true,
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     itemCount: widget.entries.length,
-                    separatorBuilder: (_, _) => const Divider(
+                    separatorBuilder: (_, _) => Divider(
                       height: 1,
                       indent: 16,
                       endIndent: 16,
@@ -1041,7 +1046,7 @@ class _MachineMultiPickerSheetState extends State<_MachineMultiPickerSheet> {
                     },
                   ),
                 ),
-                const Divider(height: 1, color: DplColors.divider),
+                Divider(height: 1, color: DplColors.divider),
                 Padding(
                   padding:
                       const EdgeInsets.fromLTRB(16, 10, 16, 12),
@@ -1053,7 +1058,7 @@ class _MachineMultiPickerSheetState extends State<_MachineMultiPickerSheet> {
                             : _checked.length == 1
                                 ? '1 machine selected'
                                 : '${_checked.length} machines selected',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.textSecondary,
                           fontWeight: FontWeight.w700,
                           fontSize: 12.5,
@@ -1152,7 +1157,7 @@ class _MachineDropdownEntry extends StatelessWidget {
                 ? 'No production yet'
                 : '${fmt.format(s.actualQty)} actual'
                     '  ·  ${fmt.format(s.inPipelineQty)} in pipeline',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w600,
               fontSize: 10.5,
@@ -1191,7 +1196,7 @@ class _MachineRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '· $code',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w600,
               fontSize: 11.5,
@@ -1423,7 +1428,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxSheetHeight),
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: DplColors.cardBg,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: DplShadows.sheet,
@@ -1449,7 +1454,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                   padding: const EdgeInsets.fromLTRB(20, 4, 12, 6),
                   child: Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Add description',
                           style: TextStyle(
@@ -1467,7 +1472,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                     ],
                   ),
                 ),
-                const Divider(height: 1, color: DplColors.divider),
+                Divider(height: 1, color: DplColors.divider),
                 if (_selected == null) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
@@ -1496,7 +1501,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                                         'selected machines.'
                                     : 'No parts match "${_query.trim()}".',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: DplColors.textSecondary,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
@@ -1508,7 +1513,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                             padding:
                                 const EdgeInsets.symmetric(vertical: 6),
                             itemCount: _visible.length,
-                            separatorBuilder: (_, _) => const Divider(
+                            separatorBuilder: (_, _) => Divider(
                               height: 1,
                               indent: 16,
                               endIndent: 16,
@@ -1533,7 +1538,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                                         b.partName.isEmpty
                                             ? b.description
                                             : b.partName,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 13.5,
                                           color: DplColors.textPrimary,
@@ -1548,7 +1553,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                                                 ? '-'
                                                 : b.materialCode)
                                             : b.customerPartNo,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: DplColors.textSecondary,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 11.5,
@@ -1598,7 +1603,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                                   _selected!.partName.isEmpty
                                       ? _selected!.description
                                       : _selected!.partName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w800,
                                     fontSize: 13.5,
                                     color: DplColors.textPrimary,
@@ -1613,7 +1618,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                                           ? '-'
                                           : _selected!.materialCode)
                                       : _selected!.customerPartNo,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: DplColors.textSecondary,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 11.5,
@@ -1624,7 +1629,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                                 Text(
                                   '${fmt.format(_availableFor(_selected!))} '
                                   'NOS available',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: DplColors.primaryDark,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 12,
@@ -1665,7 +1670,7 @@ class _AddPartSheetState extends State<_AddPartSheet> {
                     ),
                   ),
                 ],
-                const Divider(height: 1, color: DplColors.divider),
+                Divider(height: 1, color: DplColors.divider),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
                   child: Row(
@@ -1807,7 +1812,7 @@ class _CartRow extends StatelessWidget {
               children: [
                 Text(
                   bucket.partLabel,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.textPrimary,
                     fontWeight: FontWeight.w800,
                     fontSize: 12.5,
@@ -1820,7 +1825,7 @@ class _CartRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     bucket.customerPartNo,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 11,
@@ -1919,7 +1924,7 @@ class _Actions extends StatelessWidget {
                 : const Icon(Icons.send_rounded),
             label: Text(label),
             style: FilledButton.styleFrom(
-              backgroundColor: palette.accentDark,
+              backgroundColor: palette.fill ?? palette.accentDark,
               foregroundColor: Colors.white,
               disabledBackgroundColor: DplColors.neutralBg,
               disabledForegroundColor: DplColors.textTertiary,
@@ -2001,13 +2006,13 @@ class _ErrorBox extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline,
+          Icon(Icons.error_outline,
               size: 18, color: DplColors.error),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.error,
                 fontWeight: FontWeight.w600,
                 fontSize: 12.5,
@@ -2065,7 +2070,7 @@ class _TripFlowPointer extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
+                Text(
                   'Pick a trip from the Open Trips list above, tick the '
                   'parts you want to ship, then tap Send for PDI on the '
                   'trip card.',
@@ -2109,7 +2114,7 @@ class _NoMachinesAssignedState extends StatelessWidget {
                 height: 34,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: DplColors.cardBg,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: palette.edge),
                 ),

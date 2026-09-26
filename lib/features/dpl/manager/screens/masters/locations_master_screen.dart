@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/theme/vistar_palette.dart';
+import '../../../core/design/dpl_theme.dart';
 import '../../../core/dpl_api_response.dart';
 import '../../../core/dpl_api_service.dart';
 import '../../../core/widgets/dpl_app_bar.dart';
@@ -224,7 +226,7 @@ class _LocationTile extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: const Color(0xFFE2EAF6)),
+          border: Border.all(color: DplColors.divider),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
@@ -242,14 +244,14 @@ class _LocationTile extends StatelessWidget {
                   ),
                 ),
                 if (!location.isActive)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(right: 8),
                     child: Text(
                       'Retired',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF94A3B8),
+                        color: DplColors.textTertiary,
                       ),
                     ),
                   ),
@@ -266,7 +268,7 @@ class _LocationTile extends StatelessWidget {
                   if (location.name.isNotEmpty) location.name,
                   if (location.zone.isNotEmpty) 'Zone ${location.zone}',
                 ].join(' · '),
-                style: const TextStyle(color: Color(0xFF5D6A7A), fontSize: 12),
+                style: TextStyle(color: DplColors.textSecondary, fontSize: 12),
               ),
             const SizedBox(height: 8),
             ClipRRect(
@@ -274,9 +276,9 @@ class _LocationTile extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: location.fillRatio,
                 minHeight: 6,
-                backgroundColor: const Color(0xFFEEF1F5),
+                backgroundColor: VistarPalette.surface3,
                 valueColor: AlwaysStoppedAnimation(
-                  full ? const Color(0xFFB91C1C) : const Color(0xFF16A34A),
+                  full ? VistarPalette.bad : VistarPalette.ok,
                 ),
               ),
             ),
@@ -287,7 +289,7 @@ class _LocationTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: full ? const Color(0xFFB91C1C) : const Color(0xFF475569),
+                color: full ? VistarPalette.bad : DplColors.textSecondary,
               ),
             ),
           ],
@@ -372,14 +374,14 @@ class _LocationDialogState extends State<_LocationDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFECEA),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFFFB4AA)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: Color(0xFF8F1D18),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

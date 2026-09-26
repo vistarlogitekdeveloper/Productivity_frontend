@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
+
 /// Result returned by [StopConfirmDialog].
 class StopConfirmResult {
   final int actualQty;
@@ -59,10 +61,10 @@ class _StopConfirmDialogState extends State<StopConfirmDialog> {
   Widget build(BuildContext context) {
     final variance = _actualQty - widget.planQty;
     final varianceColor = variance == 0
-        ? const Color(0xFF5D6A7A)
+        ? VistarPalette.txt2
         : (variance > 0
-            ? const Color(0xFF047857)
-            : const Color(0xFFB3261E));
+            ? VistarPalette.ok
+            : VistarPalette.bad);
     final varianceLabel =
         variance > 0 ? '+$variance' : variance.toString();
 
@@ -103,16 +105,16 @@ class _StopConfirmDialogState extends State<StopConfirmDialog> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: VistarPalette.surface2,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFD9E2EF)),
+                border: Border.all(color: VistarPalette.line),
               ),
               child: Row(
                 children: [
                   Text(
                     'Plan: ${widget.planQty}',
-                    style: const TextStyle(
-                      color: Color(0xFF5D6A7A),
+                    style: TextStyle(
+                      color: VistarPalette.txt2,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -139,16 +141,16 @@ class _StopConfirmDialogState extends State<StopConfirmDialog> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: VistarPalette.warnBg,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFCD34D)),
+                  border: Border.all(color: VistarPalette.warnLine),
                 ),
-                child: const Row(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
                       Icons.info_outline,
-                      color: Color(0xFF92400E),
+                      color: VistarPalette.warnInk,
                       size: 18,
                     ),
                     SizedBox(width: 8),
@@ -159,7 +161,7 @@ class _StopConfirmDialogState extends State<StopConfirmDialog> {
                         'your manager to carry this item forward to the '
                         'next shift.',
                         style: TextStyle(
-                          color: Color(0xFF92400E),
+                          color: VistarPalette.warnInk,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -174,16 +176,16 @@ class _StopConfirmDialogState extends State<StopConfirmDialog> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
+                  color: VistarPalette.badBg,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                  border: Border.all(color: VistarPalette.badLine),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline,
-                      color: Color(0xFFB3261E),
+                      color: VistarPalette.bad,
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -192,8 +194,8 @@ class _StopConfirmDialogState extends State<StopConfirmDialog> {
                         'Actual qty ($_actualQty) cannot exceed Plan qty '
                         '(${widget.planQty}). Please enter a value less than '
                         'or equal to the planned quantity.',
-                        style: const TextStyle(
-                          color: Color(0xFFB3261E),
+                        style: TextStyle(
+                          color: VistarPalette.bad,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -232,7 +234,7 @@ class _StopConfirmDialogState extends State<StopConfirmDialog> {
                     ),
                   ),
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFB3261E),
+            backgroundColor: VistarPalette.badSolid,
           ),
           child: const Text('Stop & Complete'),
         ),

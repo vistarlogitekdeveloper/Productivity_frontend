@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_api_service.dart';
 
 /// Pulls the numeric photo id out of the backend's
@@ -126,9 +127,9 @@ class _TrolleyPhotoThumbnailState extends ConsumerState<TrolleyPhotoThumbnail> {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: VistarPalette.surface3,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFD9E2EF)),
+              border: Border.all(color: VistarPalette.line),
             ),
             clipBehavior: Clip.hardEdge,
             child: _buildContent(size),
@@ -151,10 +152,10 @@ class _TrolleyPhotoThumbnailState extends ConsumerState<TrolleyPhotoThumbnail> {
     if (_error != null) {
       return Center(
         child: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.refresh,
             size: 18,
-            color: Color(0xFFB3261E),
+            color: VistarPalette.bad,
           ),
           tooltip: 'Reload',
           onPressed: _load,
@@ -168,11 +169,11 @@ class _TrolleyPhotoThumbnailState extends ConsumerState<TrolleyPhotoThumbnail> {
         child: Image.memory(bytes, fit: BoxFit.cover),
       );
     }
-    return const Center(
+    return Center(
       child: Icon(
         Icons.local_shipping_outlined,
         size: 22,
-        color: Color(0xFF5D6A7A),
+        color: VistarPalette.txt2,
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_api_service.dart';
 import '../../manager/widgets/error_retry.dart';
 import '../../models/dpl_trolley_photo.dart';
@@ -183,16 +184,16 @@ class _TrolleyPhotoModalState extends ConsumerState<TrolleyPhotoModal> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD9E2EF),
+                    color: VistarPalette.line2,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.local_shipping_outlined,
-                    color: Color(0xFFB45309),
+                    color: VistarPalette.warn,
                   ),
                   const SizedBox(width: 8),
                   const Expanded(
@@ -223,17 +224,17 @@ class _TrolleyPhotoModalState extends ConsumerState<TrolleyPhotoModal> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
+                          color: VistarPalette.warnBg,
                           borderRadius: BorderRadius.circular(10),
                           border:
-                              Border.all(color: const Color(0xFFFCD34D)),
+                              Border.all(color: VistarPalette.warnLine),
                         ),
-                        child: const Row(
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
                               Icons.info_outline,
-                              color: Color(0xFFB45309),
+                              color: VistarPalette.warn,
                               size: 18,
                             ),
                             SizedBox(width: 8),
@@ -243,7 +244,7 @@ class _TrolleyPhotoModalState extends ConsumerState<TrolleyPhotoModal> {
                                 'This will be saved to the audit log and must be '
                                 'taken before the item can be stopped.',
                                 style: TextStyle(
-                                  color: Color(0xFF92400E),
+                                  color: VistarPalette.warnInk,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
                                 ),
@@ -256,10 +257,10 @@ class _TrolleyPhotoModalState extends ConsumerState<TrolleyPhotoModal> {
                       Container(
                         height: previewHeight,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEEF1F5),
+                          color: VistarPalette.surface3,
                           borderRadius: BorderRadius.circular(14),
                           border:
-                              Border.all(color: const Color(0xFFD9E2EF)),
+                              Border.all(color: VistarPalette.line),
                         ),
                         clipBehavior: Clip.hardEdge,
                         child: hasShot
@@ -269,18 +270,18 @@ class _TrolleyPhotoModalState extends ConsumerState<TrolleyPhotoModal> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.center,
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.local_shipping_outlined,
                                       size: 56,
-                                      color: Color(0xFF5D6A7A),
+                                      color: VistarPalette.txt2,
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
                                       _isCapturing
                                           ? 'Opening camera…'
                                           : 'Tap below to capture the trolley',
-                                      style: const TextStyle(
-                                        color: Color(0xFF5D6A7A),
+                                      style: TextStyle(
+                                        color: VistarPalette.txt2,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -293,16 +294,16 @@ class _TrolleyPhotoModalState extends ConsumerState<TrolleyPhotoModal> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFECEA),
+                            color: VistarPalette.badBg,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: const Color(0xFFFFB4AA),
+                              color: VistarPalette.badLine,
                             ),
                           ),
                           child: Text(
                             _error!,
-                            style: const TextStyle(
-                              color: Color(0xFF8F1D18),
+                            style: TextStyle(
+                              color: VistarPalette.badInk,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

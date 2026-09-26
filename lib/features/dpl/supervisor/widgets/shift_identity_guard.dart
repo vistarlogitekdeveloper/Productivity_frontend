@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_constants.dart';
 import '../../models/dpl_identity.dart';
 import '../providers/dpl_identity_provider.dart';
@@ -104,7 +105,7 @@ class _ShiftLockScreen extends StatelessWidget {
     final shiftName = (s?.name ?? '').isEmpty ? 'this shift' : s!.name;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: VistarPalette.bg,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -118,14 +119,14 @@ class _ShiftLockScreen extends StatelessWidget {
                     width: 84,
                     height: 84,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: VistarPalette.warnBg,
                       borderRadius: BorderRadius.circular(42),
-                      border: Border.all(color: const Color(0xFFFCD34D)),
+                      border: Border.all(color: VistarPalette.warnLine),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.shield_outlined,
                       size: 44,
-                      color: Color(0xFFB45309),
+                      color: VistarPalette.warn,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -139,8 +140,8 @@ class _ShiftLockScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text.rich(
                     TextSpan(
-                      style: const TextStyle(
-                        color: Color(0xFF5D6A7A),
+                      style: TextStyle(
+                        color: VistarPalette.txt2,
                         fontSize: 14,
                         height: 1.4,
                       ),
@@ -150,8 +151,8 @@ class _ShiftLockScreen extends StatelessWidget {
                         ),
                         TextSpan(
                           text: shiftName,
-                          style: const TextStyle(
-                            color: Color(0xFF1D4ED8),
+                          style: TextStyle(
+                            color: VistarPalette.info,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -178,12 +179,12 @@ class _ShiftLockScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     'One verification per shift is required for '
                     'compliance.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Color(0xFF8A95A5),
+                      color: VistarPalette.txt3,
                       fontSize: 12,
                     ),
                   ),

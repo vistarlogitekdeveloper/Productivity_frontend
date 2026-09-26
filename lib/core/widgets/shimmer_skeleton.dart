@@ -1,5 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../theme/vistar_palette.dart';
+
+/// Skeleton base + the design system's rainbow sweep (`.skel::after`:
+/// transparent → pink 16% → orange 12% → transparent over `--surface2`).
+abstract final class VistarSkeleton {
+  static Color get base =>
+      VistarPalette.isDark ? VistarPalette.surface2 : VistarPalette.surface3;
+  static Color get pink =>
+      Color.alphaBlend(VistarPalette.pink.withValues(alpha: 0.16), base);
+  static Color get orange =>
+      Color.alphaBlend(VistarPalette.orange.withValues(alpha: 0.12), base);
+}
+
 class AppShimmer extends StatefulWidget {
   final Widget child;
   final Duration duration;
@@ -9,7 +22,7 @@ class AppShimmer extends StatefulWidget {
   const AppShimmer({
     super.key,
     required this.child,
-    this.duration = const Duration(milliseconds: 1100),
+    this.duration = const Duration(milliseconds: 1300),
     this.baseColor,
     this.highlightColor,
   });
@@ -37,30 +50,43 @@ class _AppShimmerState extends State<AppShimmer>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor =
-        widget.baseColor ??
-        (isDark ? const Color(0xFF2A3442) : const Color(0xFFE3EBF7));
-    final highlightColor =
-        widget.highlightColor ??
-        (isDark ? const Color(0xFF3A4656) : const Color(0xFFF6FAFF));
+    final custom = widget.highlightColor != null;
+    final baseColor = widget.baseColor ?? VistarSkeleton.base;
 
     return AnimatedBuilder(
       animation: _controller,
       child: widget.child,
       builder: (context, child) {
+        final v = _controller.value;
         return ShaderMask(
           blendMode: BlendMode.srcATop,
           shaderCallback: (bounds) {
+            if (custom) {
+              // Caller-tinted sweep (e.g. white dots on a filled button).
+              final highlight = widget.highlightColor!;
+              return LinearGradient(
+                begin: Alignment(-1.0 + (2 * v), 0),
+                end: Alignment(0.0 + (2 * v), 0),
+                colors: <Color>[
+                  baseColor.withValues(alpha: 0.95),
+                  highlight.withValues(alpha: 0.98),
+                  baseColor.withValues(alpha: 0.95),
+                ],
+                stops: const <double>[0.25, 0.5, 0.75],
+              ).createShader(bounds);
+            }
+            // Rainbow sweep: a box-wide band travelling from fully off the
+            // left edge (translateX(-100%)) to fully off the right.
             return LinearGradient(
-              begin: Alignment(-1.0 + (2 * _controller.value), 0),
-              end: Alignment(0.0 + (2 * _controller.value), 0),
+              begin: Alignment(-3.0 + 4 * v, 0),
+              end: Alignment(-1.0 + 4 * v, 0),
               colors: <Color>[
-                baseColor.withValues(alpha: 0.95),
-                highlightColor.withValues(alpha: 0.98),
-                baseColor.withValues(alpha: 0.95),
+                baseColor,
+                widget.baseColor == null ? VistarSkeleton.pink : baseColor,
+                widget.baseColor == null ? VistarSkeleton.orange : baseColor,
+                baseColor,
               ],
-              stops: const <double>[0.25, 0.5, 0.75],
+              stops: const <double>[0.0, 0.36, 0.64, 1.0],
             ).createShader(bounds);
           },
           child: child,
@@ -86,8 +112,7 @@ class SkeletonBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = isDark ? const Color(0xFF2A3442) : const Color(0xFFE3EBF7);
+    final color = VistarSkeleton.base;
 
     return Container(
       width: width,
@@ -185,7 +210,7 @@ class ShimmerLinearBar extends StatelessWidget {
       child: Container(
         height: height,
         decoration: BoxDecoration(
-          color: const Color(0xFFE3EBF7),
+          color: VistarSkeleton.base,
           borderRadius: borderRadius,
         ),
       ),

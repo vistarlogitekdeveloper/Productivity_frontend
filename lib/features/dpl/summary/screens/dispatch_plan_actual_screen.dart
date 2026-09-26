@@ -255,7 +255,7 @@ class _PeriodCard extends StatelessWidget {
         children: [
           Text(
             period.label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
@@ -276,7 +276,7 @@ class _PeriodCard extends StatelessWidget {
           const SizedBox(height: 1),
           Text(
             'of ${fmt.format(plan)} planned',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: DplColors.textSecondary,
@@ -334,10 +334,10 @@ class _SortBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 2, 14, 6),
       child: Row(
         children: [
-          const Icon(Icons.sort_rounded,
+          Icon(Icons.sort_rounded,
               size: 16, color: DplColors.textSecondary),
           const SizedBox(width: 6),
-          const Text(
+          Text(
             'Sort',
             style: TextStyle(
               fontSize: 11,
@@ -432,7 +432,7 @@ class _BreakdownRowCard extends StatelessWidget {
                   ),
                   child: Text(
                     row.description.trim(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.primaryDark,
                       fontWeight: FontWeight.w800,
                       fontSize: 12,
@@ -458,7 +458,7 @@ class _BreakdownRowCard extends StatelessWidget {
                       const SizedBox(height: 1),
                       Text(
                         subtitleBits.join(' • '),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.textSecondary,
                           fontWeight: FontWeight.w600,
                           fontSize: 11,
@@ -513,7 +513,7 @@ class _PeriodCell extends StatelessWidget {
       children: [
         Text(
           period.label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 9.5,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.6,
@@ -533,7 +533,7 @@ class _PeriodCell extends StatelessWidget {
               TextSpan(text: fmt.format(actual)),
               TextSpan(
                 text: ' / ${fmt.format(plan)}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 11.5,
@@ -543,7 +543,7 @@ class _PeriodCell extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 1),
-        const Text(
+        Text(
           'act / plan',
           style: TextStyle(
             fontSize: 8.5,

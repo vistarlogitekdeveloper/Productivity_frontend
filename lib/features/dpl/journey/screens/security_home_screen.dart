@@ -95,7 +95,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: DplColors.cardBg,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: DplColors.divider),
             boxShadow: DplShadows.card,
@@ -105,7 +105,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.local_shipping_rounded,
+                  Icon(Icons.local_shipping_rounded,
                       size: 18, color: DplColors.warning),
                   const SizedBox(width: 8),
                   const Expanded(
@@ -127,7 +127,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
                       ),
                       child: Text(
                         '${trips.length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: DplColors.warning,
@@ -147,14 +147,14 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     snap.error.toString().replaceFirst('Exception: ', ''),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.error,
                       fontSize: 12,
                     ),
                   ),
                 )
               else if (trips.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     'No trips waiting. Scan a truck when it arrives.',
@@ -173,7 +173,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           '+ ${trips.length - 6} more…',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: DplColors.textSecondary,
                             fontStyle: FontStyle.italic,
@@ -203,7 +203,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
             ),
             child: Text(
               '#${t.tripNumber}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: DplColors.primary,
@@ -228,7 +228,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
                 if ((t.driverName ?? '').isNotEmpty)
                   Text(
                     'Driver: ${t.driverName}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: DplColors.textSecondary,
                     ),
@@ -245,14 +245,14 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DplColors.divider),
         boxShadow: DplShadows.card,
       ),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 22,
             backgroundColor: DplColors.primaryTint,
             child: Icon(Icons.security_rounded,
@@ -278,7 +278,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
                     color: DplColors.primary.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'SECURITY · GATE OUT',
                     style: TextStyle(
                       fontSize: 10,
@@ -327,7 +327,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DplColors.divider),
         boxShadow: DplShadows.card,
@@ -342,7 +342,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: DplColors.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -355,7 +355,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
               color: DplColors.textPrimary,
@@ -399,7 +399,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(left: 4, bottom: 6),
           child: Text(
             'Recent releases (this session)',
@@ -415,12 +415,12 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: DplColors.cardBg,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: DplColors.divider),
               boxShadow: DplShadows.card,
             ),
-            child: const Center(
+            child: Center(
               child: Column(
                 children: [
                   Icon(Icons.local_shipping_outlined,
@@ -445,7 +445,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
         else
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: DplColors.cardBg,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: DplColors.divider),
               boxShadow: DplShadows.card,
@@ -455,7 +455,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
                 for (var i = 0; i < recent.length; i++) ...[
                   _recentTile(recent[i]),
                   if (i != recent.length - 1)
-                    const Divider(height: 1, color: DplColors.divider),
+                    Divider(height: 1, color: DplColors.divider),
                 ],
               ],
             ),
@@ -478,7 +478,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
               color: DplColors.successBg,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.check_rounded,
+            child: Icon(Icons.check_rounded,
                 size: 16, color: DplColors.success),
           ),
           const SizedBox(width: 10),
@@ -499,7 +499,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
                       if ((a.plant ?? '').isNotEmpty) a.plant,
                       if ((a.vehicleNo ?? '').isNotEmpty) a.vehicleNo,
                     ].whereType<String>().join(' · '),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: DplColors.textSecondary,
                     ),
@@ -509,7 +509,7 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
           ),
           Text(
             time,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w600,

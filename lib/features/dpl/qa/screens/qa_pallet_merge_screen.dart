@@ -205,7 +205,9 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
             controller: _scanCtrl,
             focusNode: _scanFocus,
             enabled: !_busy && !done,
-            autofocus: true,
+            // NOT autofocused: the handheld delivers here by position, and a
+            // soft keyboard on entry hides the suggestion list this screen
+            // opens on.
             textInputAction: TextInputAction.done,
             textCapitalization: TextCapitalization.characters,
             decoration: InputDecoration(

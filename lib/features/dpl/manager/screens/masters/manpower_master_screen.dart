@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/theme/vistar_palette.dart';
 import '../../../../../core/widgets/shimmer_skeleton.dart';
+import '../../../core/design/dpl_theme.dart';
 import '../../../core/dpl_api_service.dart';
 import '../../../core/widgets/dpl_app_bar.dart';
 import '../../../core/widgets/dpl_refresh_icon_button.dart';
@@ -401,7 +403,7 @@ class DplManpowerMasterScreen extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB3261E),
+              backgroundColor: VistarPalette.badSolid,
             ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete'),
@@ -455,7 +457,7 @@ class _ManpowerCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: const Color(0xFFE2EAF6)),
+          border: Border.all(color: DplColors.divider),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -465,13 +467,13 @@ class _ManpowerCard extends StatelessWidget {
               height: 48,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF3FB),
+                color: VistarPalette.surface3,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 '${entry.headcount}',
-                style: const TextStyle(
-                  color: Color(0xFF1D4ED8),
+                style: TextStyle(
+                  color: VistarPalette.info,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
                 ),
@@ -489,8 +491,8 @@ class _ManpowerCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '$shiftLabel  •  $machineLabel',
-                    style: const TextStyle(
-                      color: Color(0xFF5D6A7A),
+                    style: TextStyle(
+                      color: DplColors.textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -499,7 +501,7 @@ class _ManpowerCard extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 20),
-              color: const Color(0xFFB3261E),
+              color: VistarPalette.bad,
               onPressed: onDelete,
             ),
           ],
@@ -588,14 +590,14 @@ class _ManpowerDialogState extends ConsumerState<_ManpowerDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFECEA),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFFFB4AA)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: Color(0xFF8F1D18),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -618,7 +620,7 @@ class _ManpowerDialogState extends ConsumerState<_ManpowerDialog> {
                     if (res.isError) {
                       return Text(
                         res.error ?? 'Failed to load shifts',
-                        style: const TextStyle(color: Color(0xFFB3261E)),
+                        style: TextStyle(color: VistarPalette.bad),
                       );
                     }
                     final shifts = res.data ?? const <DplShift>[];

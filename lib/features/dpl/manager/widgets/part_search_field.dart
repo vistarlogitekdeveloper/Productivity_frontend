@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_api_service.dart';
 import '../../models/dpl_part.dart';
 
@@ -122,7 +123,7 @@ class _DplPartSearchFieldState extends ConsumerState<DplPartSearchField> {
             margin: const EdgeInsets.only(top: 4),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              border: Border.all(color: const Color(0xFFE2EAF6)),
+              border: Border.all(color: VistarPalette.line),
               borderRadius: BorderRadius.circular(12),
             ),
             constraints: const BoxConstraints(maxHeight: 220),
@@ -175,8 +176,8 @@ class _DplPartSearchFieldState extends ConsumerState<DplPartSearchField> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               'Selected: ${_selected!.displayLabel}',
-              style: const TextStyle(
-                color: Color(0xFF1D4ED8),
+              style: TextStyle(
+                color: VistarPalette.info,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),

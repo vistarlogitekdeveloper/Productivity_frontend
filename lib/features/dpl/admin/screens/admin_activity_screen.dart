@@ -76,8 +76,8 @@ class _AuditTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        color: DplColors.cardBg,
+        border: Border.all(color: DplColors.divider),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -100,9 +100,9 @@ class _AuditTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     entry.targetEmail,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF5D6A7A),
+                      color: DplColors.textSecondary,
                     ),
                   ),
                 ],
@@ -110,9 +110,9 @@ class _AuditTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     summary,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11.5,
-                      color: Color(0xFF6B7280),
+                      color: DplColors.textSecondary,
                     ),
                   ),
                 ],
@@ -123,9 +123,9 @@ class _AuditTile extends StatelessWidget {
                     if (when != null)
                       DateFormat('d MMM yyyy, HH:mm').format(when.toLocal()),
                   ].join(' · '),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF94A3B8),
+                    color: DplColors.textTertiary,
                   ),
                 ),
               ],

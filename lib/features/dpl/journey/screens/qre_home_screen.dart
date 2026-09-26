@@ -91,7 +91,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: DplColors.cardBg,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: DplColors.divider),
             boxShadow: DplShadows.card,
@@ -101,7 +101,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.warehouse_rounded,
+                  Icon(Icons.warehouse_rounded,
                       size: 18, color: DplColors.warning),
                   const SizedBox(width: 8),
                   const Expanded(
@@ -123,7 +123,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
                       ),
                       child: Text(
                         '${trips.length}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: DplColors.warning,
@@ -143,14 +143,14 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     snap.error.toString().replaceFirst('Exception: ', ''),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.error,
                       fontSize: 12,
                     ),
                   ),
                 )
               else if (trips.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Text(
                     'No trucks at the dock yet.',
@@ -169,7 +169,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           '+ ${trips.length - 6} more…',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: DplColors.textSecondary,
                             fontStyle: FontStyle.italic,
@@ -199,7 +199,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
             ),
             child: Text(
               '#${t.tripNumber}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: DplColors.primary,
@@ -224,7 +224,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
                 if ((t.driverName ?? '').isNotEmpty)
                   Text(
                     'Driver: ${t.driverName}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: DplColors.textSecondary,
                     ),
@@ -241,14 +241,14 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DplColors.divider),
         boxShadow: DplShadows.card,
       ),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 22,
             backgroundColor: DplColors.primaryTint,
             child: Icon(Icons.warehouse_rounded,
@@ -274,7 +274,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
                     color: DplColors.primary.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
+                  child: Text(
                     'QRE · TATA DOCK',
                     style: TextStyle(
                       fontSize: 10,
@@ -325,7 +325,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DplColors.divider),
         boxShadow: DplShadows.card,
@@ -340,7 +340,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: DplColors.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -353,7 +353,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
               color: DplColors.textPrimary,
@@ -397,7 +397,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(left: 4, bottom: 6),
           child: Text(
             'Recent dock activity (this session)',
@@ -413,12 +413,12 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: DplColors.cardBg,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: DplColors.divider),
               boxShadow: DplShadows.card,
             ),
-            child: const Center(
+            child: Center(
               child: Column(
                 children: [
                   Icon(Icons.local_shipping_outlined,
@@ -443,7 +443,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
         else
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: DplColors.cardBg,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: DplColors.divider),
               boxShadow: DplShadows.card,
@@ -453,7 +453,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
                 for (var i = 0; i < recent.length; i++) ...[
                   _recentTile(recent[i]),
                   if (i != recent.length - 1)
-                    const Divider(height: 1, color: DplColors.divider),
+                    Divider(height: 1, color: DplColors.divider),
                 ],
               ],
             ),
@@ -509,7 +509,7 @@ class _QreHomeScreenState extends ConsumerState<QreHomeScreen> {
           ),
           Text(
             time,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w600,

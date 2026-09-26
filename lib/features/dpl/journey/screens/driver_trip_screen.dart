@@ -163,7 +163,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline,
+              Icon(Icons.error_outline,
                   color: DplColors.error, size: 40),
               const SizedBox(height: 12),
               Text(msg, textAlign: TextAlign.center),
@@ -202,7 +202,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DplColors.divider),
         boxShadow: DplShadows.card,
@@ -231,7 +231,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
                 if (trip.plantName.isNotEmpty) trip.plantName,
                 if ((trip.vehicleNo ?? '').isNotEmpty) trip.vehicleNo!,
               ].join(' · '),
-              style: const TextStyle(color: DplColors.textSecondary),
+              style: TextStyle(color: DplColors.textSecondary),
             ),
           ],
         ],
@@ -346,7 +346,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DplColors.divider),
         boxShadow: DplShadows.card,
@@ -372,7 +372,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
           Text(
             caption,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               color: DplColors.textSecondary,
             ),
@@ -386,7 +386,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DplColors.divider),
         boxShadow: DplShadows.card,
@@ -394,7 +394,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'You have exited the origin gate. When you arrive at TATA, collect the LECI paper and scan the barcode on it.',
             style: TextStyle(color: DplColors.textSecondary),
           ),
@@ -422,7 +422,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DplColors.divider),
         boxShadow: DplShadows.card,
@@ -430,7 +430,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'QRE has completed Dock Out. Confirm your final gate exit from TATA.',
             style: TextStyle(color: DplColors.textSecondary),
           ),
@@ -455,7 +455,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DplColors.divider),
         boxShadow: DplShadows.card,
@@ -476,7 +476,7 @@ class _DriverTripScreenState extends ConsumerState<DriverTripScreen> {
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               color: DplColors.textSecondary,
             ),
@@ -812,9 +812,9 @@ class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: DplColors.cardBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
           top: false,
@@ -840,7 +840,7 @@ class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   "Barcode won't scan? Snap a clear photo of the LECI paper "
                   'and enter the truck number from it.',
                   style: TextStyle(
@@ -864,7 +864,7 @@ class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
                         : Center(
                             child: _capturing
                                 ? const CircularProgressIndicator()
-                                : const Column(
+                                : Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.image_outlined,
@@ -907,7 +907,7 @@ class _LeciPhotoSheetState extends State<_LeciPhotoSheet> {
                   const SizedBox(height: 8),
                   Text(
                     _error!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.error,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

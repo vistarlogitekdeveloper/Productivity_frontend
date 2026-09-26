@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../../core/widgets/shimmer_skeleton.dart' show VistarSkeleton;
 import '../design/dpl_theme.dart';
 
 /// Loading skeleton block. Used as a building block for card-shaped
@@ -20,14 +21,28 @@ class DplShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: const Color(0xFFE5E7EB),
-      highlightColor: const Color(0xFFF3F4F6),
+    final base = VistarSkeleton.base;
+    // Vistar rainbow sweep: pink 16% → orange 12% passing over the base.
+    return Shimmer(
+      period: const Duration(milliseconds: 1300),
+      gradient: LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: <Color>[
+          base,
+          base,
+          VistarSkeleton.pink,
+          VistarSkeleton.orange,
+          base,
+          base,
+        ],
+        stops: const <double>[0.0, 0.3, 0.45, 0.58, 0.72, 1.0],
+      ),
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: const Color(0xFFE5E7EB),
+          color: base,
           borderRadius: BorderRadius.circular(radius),
         ),
       ),

@@ -290,7 +290,7 @@ class _QreDockOutFormScreenState extends ConsumerState<_QreDockOutFormScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.check_circle_rounded,
                         color: DplColors.success,
                       ),

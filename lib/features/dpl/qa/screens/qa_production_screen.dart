@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_card.dart';
 import '../../core/widgets/dpl_empty_state.dart';
@@ -262,12 +263,12 @@ class _Chip extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFEEF2FF) : Colors.white,
+            color: selected ? VistarPalette.infoBg : VistarPalette.surface,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: selected
-                  ? const Color(0xFF6366F1)
-                  : const Color(0xFFE2EAF6),
+                  ? VistarPalette.info
+                  : VistarPalette.line,
               width: selected ? 1.4 : 1,
             ),
           ),
@@ -278,8 +279,8 @@ class _Chip extends StatelessWidget {
                 Container(
                   width: 7,
                   height: 7,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF16A34A),
+                  decoration: BoxDecoration(
+                    color: VistarPalette.ok,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -291,8 +292,8 @@ class _Chip extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
                   color: selected
-                      ? const Color(0xFF3730A3)
-                      : const Color(0xFF334155),
+                      ? VistarPalette.infoInk
+                      : VistarPalette.txt,
                 ),
               ),
             ],
@@ -325,10 +326,10 @@ class _ShiftSubtitle extends ConsumerWidget {
 
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF6B7280),
+        color: VistarPalette.txt2,
       ),
     );
   }

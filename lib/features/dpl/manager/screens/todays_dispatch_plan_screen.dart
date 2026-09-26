@@ -73,7 +73,7 @@ class _TodaysDispatchPlanScreenState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _FilterBar(plantCode: plantCode, date: date),
-          const Divider(height: 1, color: DplColors.divider),
+          Divider(height: 1, color: DplColors.divider),
           Expanded(
             child: plantCode == null
                 ? const _PickAPlantPrompt()
@@ -200,7 +200,7 @@ class _FilterBar extends ConsumerWidget {
               loading: () => const _FilterSkeleton(label: 'Plant'),
               error: (e, _) => Text(
                 'Plants error: $e',
-                style: const TextStyle(color: DplColors.error),
+                style: TextStyle(color: DplColors.error),
               ),
               data: (res) {
                 final plants =
@@ -364,7 +364,7 @@ class _SummaryCard extends StatelessWidget {
               const Spacer(),
               Text(
                 DateFormat('EEE, dd MMM').format(batch.planDate),
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -451,7 +451,7 @@ class _SummaryTile extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w700,
               fontSize: 10,
@@ -471,7 +471,7 @@ class _SummaryTile extends StatelessWidget {
                 if (unit.isNotEmpty)
                   TextSpan(
                     text: '  $unit',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: DplColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 11,
@@ -503,7 +503,7 @@ class _BlockedPartsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
+            children: [
               Icon(Icons.warning_amber_rounded, color: DplColors.warning),
               SizedBox(width: 8),
               Text(
@@ -522,7 +522,7 @@ class _BlockedPartsCard extends StatelessWidget {
               child: Text(
                 '${row.description} · ${row.partName}  '
                 '— ${row.warnings.map(DplDispatchPlanWarning.labelFor).join(", ")}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: DplColors.textPrimary,
@@ -570,7 +570,7 @@ class _PartRow extends StatelessWidget {
                 ),
                 child: Text(
                   part.description.isEmpty ? '-' : part.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.primaryDark,
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
@@ -601,7 +601,7 @@ class _PartRow extends StatelessWidget {
                         fontSize: 22,
                       ),
                     ),
-                    const TextSpan(
+                    TextSpan(
                       text: '  NOS',
                       style: TextStyle(
                         color: DplColors.textSecondary,
@@ -617,7 +617,7 @@ class _PartRow extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             input.customerPn,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'monospace',
               color: DplColors.textSecondary,
               fontSize: 11.5,
@@ -665,7 +665,7 @@ class _PartRow extends StatelessWidget {
           // Trip split row.
           if (part.totalTrolleys > 0) ...[
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Trip split',
               style: TextStyle(
                 color: DplColors.textSecondary,
@@ -722,7 +722,7 @@ class _MetricChip extends StatelessWidget {
           children: [
             TextSpan(
               text: '$label  ',
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontWeight: FontWeight.w700,
                 fontSize: 10.5,
@@ -786,7 +786,7 @@ class _TripCell extends StatelessWidget {
           const SizedBox(height: 1),
           Text(
             empty ? '—' : '$trolleys trolley${trolleys == 1 ? "" : "s"}',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w600,
               fontSize: 9.5,
@@ -852,7 +852,7 @@ class _CreateSlipsBar extends StatelessWidget {
                       child: Text(
                         'Shortage: ${fmt.format(batch.totalShortageQty)} NOS '
                         'across ${batch.shortageCount} parts',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.error,
                           fontWeight: FontWeight.w700,
                           fontSize: 11.5,

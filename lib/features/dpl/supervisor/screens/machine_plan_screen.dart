@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -107,9 +108,9 @@ class MachinePlanScreen extends ConsumerWidget {
                     icon: const Icon(Icons.report_outlined),
                     label: const Text('Report Downtime'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFB45309),
-                      side: const BorderSide(
-                        color: Color(0xFFB45309),
+                      foregroundColor: VistarPalette.warn,
+                      side: BorderSide(
+                        color: VistarPalette.warn,
                         width: 1.4,
                       ),
                     ),
@@ -166,7 +167,7 @@ class _PlanBody extends ConsumerWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +211,7 @@ class _PlanBody extends ConsumerWidget {
                 child: LinearProgressIndicator(
                   value: plan.completionPct,
                   minHeight: 8,
-                  backgroundColor: const Color(0xFFEEF1F5),
+                  backgroundColor: VistarPalette.surface3,
                 ),
               ),
             ],
@@ -271,8 +272,8 @@ class _PlanBody extends ConsumerWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF5D6A7A),
+          style: TextStyle(
+            color: VistarPalette.txt2,
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
@@ -303,12 +304,12 @@ class _DowntimeHistoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: ExpansionTile(
         initiallyExpanded: false,
         shape: const RoundedRectangleBorder(side: BorderSide.none),
-        leading: const Icon(Icons.history, color: Color(0xFF5D6A7A)),
+        leading: Icon(Icons.history, color: VistarPalette.txt2),
         title: const Text(
           'Downtime history',
           style: TextStyle(fontWeight: FontWeight.w800),
@@ -316,7 +317,7 @@ class _DowntimeHistoryCard extends StatelessWidget {
         subtitle: Text(
           '${history.length} event${history.length == 1 ? "" : "s"}'
           '  •  $totalMinutes min total',
-          style: const TextStyle(color: Color(0xFF5D6A7A)),
+          style: TextStyle(color: VistarPalette.txt2),
         ),
         children: [
           for (final e in history)
@@ -330,10 +331,10 @@ class _DowntimeHistoryCard extends StatelessWidget {
                     height: 36,
                     decoration: BoxDecoration(
                       color: e.isActive
-                          ? const Color(0xFFB3261E)
+                          ? VistarPalette.bad
                           : (e.category == 'planned'
-                              ? const Color(0xFF1D4ED8)
-                              : const Color(0xFFB45309)),
+                              ? VistarPalette.info
+                              : VistarPalette.warn),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -352,8 +353,8 @@ class _DowntimeHistoryCard extends StatelessWidget {
                         Text(
                           '${timeFmt.format(e.startTime.toLocal())}'
                           '${e.endTime == null ? " — ongoing" : " → ${timeFmt.format(e.endTime!.toLocal())}"}',
-                          style: const TextStyle(
-                            color: Color(0xFF5D6A7A),
+                          style: TextStyle(
+                            color: VistarPalette.txt2,
                             fontSize: 12,
                           ),
                         ),
@@ -362,8 +363,8 @@ class _DowntimeHistoryCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 2),
                             child: Text(
                               e.remarks!,
-                              style: const TextStyle(
-                                color: Color(0xFF5D6A7A),
+                              style: TextStyle(
+                                color: VistarPalette.txt2,
                                 fontSize: 12,
                                 fontStyle: FontStyle.italic,
                               ),
@@ -375,9 +376,9 @@ class _DowntimeHistoryCard extends StatelessWidget {
                   if (e.durationMinutes != null)
                     Text(
                       '${e.durationMinutes} min',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF5D6A7A),
+                        color: VistarPalette.txt2,
                       ),
                     ),
                 ],
@@ -436,7 +437,7 @@ class _ActiveDowntimeCardState extends ConsumerState<_ActiveDowntimeCard> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFB3261E),
+        color: VistarPalette.badSolid,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -482,19 +483,19 @@ class _ActiveDowntimeCardState extends ConsumerState<_ActiveDowntimeCard> {
           FilledButton.icon(
             onPressed: _isResuming ? null : _resume,
             icon: _isResuming
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFFB3261E),
+                      color: VistarPalette.bad,
                     ),
                   )
                 : const Icon(Icons.play_arrow),
             label: const Text('Resume'),
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFB3261E),
+              backgroundColor: VistarPalette.surface,
+              foregroundColor: VistarPalette.bad,
             ),
           ),
         ],

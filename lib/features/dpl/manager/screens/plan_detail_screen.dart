@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
+import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_constants.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -78,17 +80,17 @@ class DplPlanDetailScreen extends ConsumerWidget {
                     // in progress or completed, the manager has to use
                     // Change status / Carry forward instead.
                     if (res.data!.isDeletable)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: _PlanMenu.delete,
                         child: ListTile(
                           dense: true,
                           leading: Icon(
                             Icons.delete_outline,
-                            color: Color(0xFFB3261E),
+                            color: VistarPalette.bad,
                           ),
                           title: Text(
                             'Delete plan',
-                            style: TextStyle(color: Color(0xFFB3261E)),
+                            style: TextStyle(color: VistarPalette.bad),
                           ),
                         ),
                       ),
@@ -211,7 +213,7 @@ class DplPlanDetailScreen extends ConsumerWidget {
           ),
           FilledButton(
             style:
-                FilledButton.styleFrom(backgroundColor: const Color(0xFFB3261E)),
+                FilledButton.styleFrom(backgroundColor: VistarPalette.badSolid),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete'),
           ),
@@ -334,7 +336,7 @@ class _PlanBody extends ConsumerWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: DplColors.divider),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,7 +360,7 @@ class _PlanBody extends ConsumerWidget {
               const SizedBox(height: 6),
               Text(
                 dateFmt.format(plan.planDate),
-                style: const TextStyle(color: Color(0xFF5D6A7A)),
+                style: TextStyle(color: DplColors.textSecondary),
               ),
               if (plan.shiftLabel.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -389,7 +391,7 @@ class _PlanBody extends ConsumerWidget {
                 child: LinearProgressIndicator(
                   value: plan.completionPct,
                   minHeight: 6,
-                  backgroundColor: const Color(0xFFEEF1F5),
+                  backgroundColor: VistarPalette.surface3,
                 ),
               ),
             ],
@@ -476,8 +478,8 @@ class _PlanBody extends ConsumerWidget {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF5D6A7A),
+              style: TextStyle(
+                color: DplColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -499,8 +501,8 @@ class _PlanBody extends ConsumerWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF5D6A7A),
+          style: TextStyle(
+            color: DplColors.textSecondary,
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
@@ -715,7 +717,7 @@ class _PlanBody extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB3261E),
+              backgroundColor: VistarPalette.badSolid,
             ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete'),
@@ -850,14 +852,14 @@ class _PlanItemDialogState extends ConsumerState<_PlanItemDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFECEA),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFFFB4AA)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: Color(0xFF8F1D18),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1039,7 +1041,7 @@ class _ChangeStatusSheetState extends State<_ChangeStatusSheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFD9E2EF),
+                color: DplColors.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1052,21 +1054,21 @@ class _ChangeStatusSheetState extends State<_ChangeStatusSheet> {
           Text(
             'Currently ${DplPlanStatus.label(widget.currentStatus)}. '
             'Any status transition is allowed; both fields are required.',
-            style: const TextStyle(color: Color(0xFF5D6A7A), fontSize: 12),
+            style: TextStyle(color: DplColors.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 14),
           if (_error != null) ...[
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFECEA),
+                color: VistarPalette.badBg,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFFB4AA)),
+                border: Border.all(color: VistarPalette.badLine),
               ),
               child: Text(
                 _error!,
-                style: const TextStyle(
-                  color: Color(0xFF8F1D18),
+                style: TextStyle(
+                  color: VistarPalette.badInk,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1278,7 +1280,7 @@ class _ChangeItemStatusSheetState extends State<_ChangeItemStatusSheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFD9E2EF),
+                color: DplColors.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1291,27 +1293,27 @@ class _ChangeItemStatusSheetState extends State<_ChangeItemStatusSheet> {
           Text(
             'Plan #${item.planNo} '
             '${item.partDescription.isEmpty ? '' : '— ${item.partDescription}'}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: DplColors.textSecondary),
           ),
           const SizedBox(height: 4),
           Text(
             'Currently ${_humanItemStatus(item.status)}. '
             'Both fields are required.',
-            style: const TextStyle(color: Color(0xFF5D6A7A), fontSize: 12),
+            style: TextStyle(color: DplColors.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 14),
           if (_error != null) ...[
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFECEA),
+                color: VistarPalette.badBg,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFFB4AA)),
+                border: Border.all(color: VistarPalette.badLine),
               ),
               child: Text(
                 _error!,
-                style: const TextStyle(
-                  color: Color(0xFF8F1D18),
+                style: TextStyle(
+                  color: VistarPalette.badInk,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1508,7 +1510,7 @@ class _CarryForwardSheetState extends ConsumerState<_CarryForwardSheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFD9E2EF),
+                color: DplColors.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1521,27 +1523,27 @@ class _CarryForwardSheetState extends ConsumerState<_CarryForwardSheet> {
           Text(
             'Plan #${item.planNo}'
             '${item.partDescription.isEmpty ? "" : " - ${item.partDescription}"}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: DplColors.textSecondary),
           ),
           const SizedBox(height: 4),
           Text(
             'Source: plan ${item.planQty} actual ${item.actualQty} '
             'leftover $_leftover',
-            style: const TextStyle(color: Color(0xFF5D6A7A), fontSize: 12),
+            style: TextStyle(color: DplColors.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 14),
           if (_error != null) ...[
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFECEA),
+                color: VistarPalette.badBg,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFFB4AA)),
+                border: Border.all(color: VistarPalette.badLine),
               ),
               child: Text(
                 _error!,
-                style: const TextStyle(
-                  color: Color(0xFF8F1D18),
+                style: TextStyle(
+                  color: VistarPalette.badInk,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1588,12 +1590,12 @@ class _CarryForwardSheetState extends ConsumerState<_CarryForwardSheet> {
           // so the manager understands the existing item is the one
           // that's moving.
           if (isPureMove)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 4),
               child: Text(
                 'Nothing produced yet, so this item will be moved to the '
                 'target shift. No duplicate will be created.',
-                style: TextStyle(fontSize: 11, color: Color(0xFF5D6A7A)),
+                style: TextStyle(fontSize: 11, color: DplColors.textSecondary),
               ),
             )
           else
@@ -1608,11 +1610,11 @@ class _CarryForwardSheetState extends ConsumerState<_CarryForwardSheet> {
                 'Also close this item as completed',
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
               ),
-              subtitle: const Text(
+              subtitle: Text(
                 'By default the leftover is just shifted to the next plan and '
                 'this item stays open at its current actual quantity. Tick this '
                 'to additionally mark the current item as completed.',
-                style: TextStyle(fontSize: 11, color: Color(0xFF5D6A7A)),
+                style: TextStyle(fontSize: 11, color: DplColors.textSecondary),
               ),
             ),
           const SizedBox(height: 6),
@@ -1661,17 +1663,17 @@ class _PlanActiveDowntimeCard extends StatelessWidget {
     final reason = downtime.reasonName.trim().isEmpty
         ? 'Downtime'
         : downtime.reasonName.trim();
-    const color = Color(0xFFB3261E);
+    final color = VistarPalette.bad;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFECEA),
+        color: VistarPalette.badBg,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.warning_amber_rounded,
             size: 14,
             color: color,
@@ -1680,7 +1682,7 @@ class _PlanActiveDowntimeCard extends StatelessWidget {
           Expanded(
             child: Text(
               'Downtime: $reason  -  ',
-              style: const TextStyle(
+              style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
@@ -1691,7 +1693,7 @@ class _PlanActiveDowntimeCard extends StatelessWidget {
           ),
           LiveTimerText(
             startTime: downtime.startTime,
-            style: const TextStyle(
+            style: TextStyle(
               color: color,
               fontWeight: FontWeight.w800,
               fontSize: 12,

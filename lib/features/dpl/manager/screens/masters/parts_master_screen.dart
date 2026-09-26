@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/theme/vistar_palette.dart';
 import '../../../../../core/widgets/shimmer_skeleton.dart';
+import '../../../core/design/dpl_theme.dart';
 import '../../../core/dpl_api_service.dart';
 import '../../../core/widgets/dpl_app_bar.dart';
 import '../../../models/dpl_part.dart';
@@ -228,7 +230,7 @@ class _DplPartsMasterScreenState extends ConsumerState<DplPartsMasterScreen> {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB3261E),
+              backgroundColor: VistarPalette.badSolid,
             ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete'),
@@ -340,7 +342,7 @@ class _PartCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: const Color(0xFFE2EAF6)),
+          border: Border.all(color: DplColors.divider),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -358,7 +360,7 @@ class _PartCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         part.description,
-                        style: const TextStyle(color: Color(0xFF5D6A7A)),
+                        style: TextStyle(color: DplColors.textSecondary),
                       ),
                     ),
                   // Surfaced on the row because it is the key QA scans on. A
@@ -368,10 +370,10 @@ class _PartCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.inventory_2_outlined,
                           size: 13,
-                          color: Color(0xFF94A3B8),
+                          color: DplColors.textTertiary,
                         ),
                         const SizedBox(width: 4),
                         Flexible(
@@ -383,8 +385,8 @@ class _PartCard extends StatelessWidget {
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: part.substratePartNo.isEmpty
-                                  ? const Color(0xFFB45309)
-                                  : const Color(0xFF475569),
+                                  ? VistarPalette.warn
+                                  : DplColors.textSecondary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -397,12 +399,12 @@ class _PartCard extends StatelessWidget {
               ),
             ),
             if (!part.isActive)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
                 child: Text(
                   'Inactive',
                   style: TextStyle(
-                    color: Color(0xFF5D6A7A),
+                    color: DplColors.textSecondary,
                     fontWeight: FontWeight.w700,
                     fontSize: 11,
                   ),
@@ -411,7 +413,7 @@ class _PartCard extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 20),
               onPressed: onDelete,
-              color: const Color(0xFFB3261E),
+              color: VistarPalette.bad,
             ),
           ],
         ),
@@ -517,14 +519,14 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFECEA),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFFFB4AA)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: Color(0xFF8F1D18),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

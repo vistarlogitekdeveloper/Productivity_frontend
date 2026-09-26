@@ -51,6 +51,10 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
   static const String _tileUrl =
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
+  /// Stale-trail grey. Pinned rather than themed: the OSM tiles stay light
+  /// in dark mode, where the text greys turn pale and vanish on the map.
+  static const Color _mapIdle = Color(0xFF625D78);
+
   final MapController _map = MapController();
 
   DplTripTrack? _track;
@@ -280,7 +284,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: DplColors.error, size: 40),
+              Icon(Icons.error_outline, color: DplColors.error, size: 40),
               const SizedBox(height: 12),
               Text(msg, textAlign: TextAlign.center),
               const SizedBox(height: 12),
@@ -378,7 +382,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
           Polyline(
             points: pts,
             strokeWidth: 4.5,
-            color: live ? DplColors.primary : DplColors.textSecondary,
+            color: live ? DplColors.primary : _mapIdle,
           ),
         ],
       ),
@@ -414,7 +418,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
       );
 
   Widget _truckMarker(DplTripLocation fix, {required bool live}) {
-    final color = live ? DplColors.primary : DplColors.textSecondary;
+    final color = live ? DplColors.primary : _mapIdle;
     final heading = fix.headingDeg;
 
     return Stack(
@@ -527,7 +531,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
                   color: DplColors.textSecondary,
@@ -574,14 +578,14 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.schedule_rounded,
+              Icon(Icons.schedule_rounded,
                   size: 13, color: DplColors.textSecondary),
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
                   'Last fix ${DplFormat.dateTime(last.recordedAt)} IST'
                   '${last.accuracyM != null ? " · ±${last.accuracyM!.round()}m" : ""}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: DplColors.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -590,7 +594,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
               ),
               Text(
                 '${track.points.length} pts',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   color: DplColors.textTertiary,
                   fontWeight: FontWeight.w700,
@@ -610,7 +614,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: DplColors.textPrimary,
@@ -619,7 +623,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
             const SizedBox(height: 1),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: DplColors.textSecondary,
@@ -651,7 +655,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_rounded,
+            Icon(Icons.cloud_off_rounded,
                 size: 34, color: DplColors.textSecondary),
             const SizedBox(height: 10),
             const Text(
@@ -659,7 +663,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'This server doesn\'t have the trip-location service running '
               'yet. Everything else on the trip works as normal — the map '
               'starts filling in as soon as it goes live.',
@@ -694,7 +698,7 @@ class _TripTrackMapScreenState extends ConsumerState<TripTrackMapScreen> {
           border: Border.all(color: DplColors.divider),
           boxShadow: DplShadows.card,
         ),
-        child: const Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.satellite_alt_outlined,

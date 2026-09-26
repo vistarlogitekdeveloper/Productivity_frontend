@@ -116,10 +116,10 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Scan a pallet, pick the wheels that are leaving, and each one is '
             'labelled as its own pack.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF5D6A7A)),
+            style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
           ),
           const SizedBox(height: 10),
           TextField(
@@ -269,13 +269,13 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
               Text(
                 '${p.customerPartNo}'
                 '${p.partDescription.isEmpty ? '' : ' · ${p.partDescription}'}',
-                style: const TextStyle(fontSize: 12.5, color: Color(0xFF5D6A7A)),
+                style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
               ),
               if (p.locationCode.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
                   'On ${p.locationCode}',
-                  style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                  style: TextStyle(fontSize: 11.5, color: DplColors.textSecondary),
                 ),
               ],
             ],
@@ -564,12 +564,12 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
               }
               final page = res.data ?? const DplSpdPage();
               if (page.packs.isEmpty) {
-                return const Padding(
+                return Padding(
                   padding: EdgeInsets.symmetric(vertical: 10),
                   child: Text(
                     'None yet. Scan a pallet above to take wheels for a '
                     'spare-parts order.',
-                    style: TextStyle(fontSize: 12.5, color: Color(0xFF5D6A7A)),
+                    style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
                   ),
                 );
               }
@@ -582,10 +582,10 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                       page.total <= page.packs.length
                           ? '${page.total} pack${page.total == 1 ? '' : 's'}'
                           : 'Showing ${page.packs.length} of ${page.total}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF5D6A7A),
+                        color: DplColors.textSecondary,
                       ),
                     ),
                   ),

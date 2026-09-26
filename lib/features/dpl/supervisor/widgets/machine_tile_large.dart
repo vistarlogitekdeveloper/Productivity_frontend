@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../manager/widgets/status_badge.dart';
 import '../../models/dpl_supervisor_today.dart';
 import 'live_timer_text.dart';
@@ -34,7 +35,7 @@ class MachineTileLarge extends StatelessWidget {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(isPhone ? 14 : 18),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,7 +70,7 @@ class MachineTileLarge extends StatelessWidget {
                           child: _kv(
                             label: 'Plan',
                             value: fmt.format(plan.totalPlanQty),
-                            color: const Color(0xFF1D4ED8),
+                            color: VistarPalette.info,
                             isPhone: isPhone,
                           ),
                         ),
@@ -77,7 +78,7 @@ class MachineTileLarge extends StatelessWidget {
                           child: _kv(
                             label: 'Actual',
                             value: fmt.format(plan.totalActualQty),
-                            color: const Color(0xFF047857),
+                            color: VistarPalette.ok,
                             isPhone: isPhone,
                           ),
                         ),
@@ -85,7 +86,7 @@ class MachineTileLarge extends StatelessWidget {
                           child: _kv(
                             label: 'Completion',
                             value: '$pct%',
-                            color: const Color(0xFFB45309),
+                            color: VistarPalette.warn,
                             isPhone: isPhone,
                           ),
                         ),
@@ -97,7 +98,7 @@ class MachineTileLarge extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: plan.completionPct,
                         minHeight: isPhone ? 5 : 8,
-                        backgroundColor: const Color(0xFFEEF1F5),
+                        backgroundColor: VistarPalette.surface3,
                       ),
                     ),
                     SizedBox(height: isPhone ? 6 : 10),
@@ -106,7 +107,7 @@ class MachineTileLarge extends StatelessWidget {
                       '${plan.itemsInProgress} running · '
                       '${plan.itemsPending} pending',
                       style: TextStyle(
-                        color: const Color(0xFF5D6A7A),
+                        color: VistarPalette.txt2,
                         fontWeight: FontWeight.w600,
                         fontSize: isPhone ? 11 : 12,
                       ),
@@ -121,8 +122,8 @@ class MachineTileLarge extends StatelessWidget {
                     horizontal: 16,
                     vertical: 10,
                   ),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFB3261E),
+                  decoration: BoxDecoration(
+                    color: VistarPalette.badSolid,
                     borderRadius: BorderRadius.vertical(
                       bottom: Radius.circular(17),
                     ),
@@ -175,7 +176,7 @@ class MachineTileLarge extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: isPhone ? 10 : 11,
-            color: const Color(0xFF5D6A7A),
+            color: VistarPalette.txt2,
             fontWeight: FontWeight.w600,
             height: 1.1,
           ),

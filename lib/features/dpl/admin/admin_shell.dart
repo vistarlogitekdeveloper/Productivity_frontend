@@ -99,7 +99,7 @@ class _DplAdminShellState extends ConsumerState<DplAdminShell> {
       // Reachable only if an administrator strips every admin permission from
       // a role that still lands here. The lockout guard prevents this for
       // dpl_admin itself, so this is the delegated-permission case.
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: DplColors.pageBg,
         appBar: DplAppBar(title: 'Administration'),
         body: Center(
@@ -109,7 +109,7 @@ class _DplAdminShellState extends ConsumerState<DplAdminShell> {
               'Your role no longer has access to any part of the '
               'Administration panel. Ask an administrator to restore it.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF6B7280)),
+              style: TextStyle(color: DplColors.textSecondary),
             ),
           ),
         ),

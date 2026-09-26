@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../../data/models/production_entry_model.dart';
 import 'report_export_service.dart';
@@ -303,11 +304,11 @@ class _ReviewActionsScreenState extends ConsumerState<ReviewActionsScreen> {
     ];
 
     final content = Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF8FBFF), Color(0xFFF2FFF9), Color(0xFFF7F2FF)],
+          colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
         ),
       ),
       child: RefreshIndicator(
@@ -336,22 +337,22 @@ class _ReviewActionsScreenState extends ConsumerState<ReviewActionsScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.95),
+                color: VistarPalette.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2EAF6)),
+                border: Border.all(color: VistarPalette.line),
               ),
-              child: const Text(
+              child: Text(
                 'Review and update entry approval status with direct actions.',
-                style: TextStyle(color: Color(0xFF5D6A7A)),
+                style: TextStyle(color: VistarPalette.txt2),
               ),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.96),
+                color: VistarPalette.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2EAF6)),
+                border: Border.all(color: VistarPalette.line),
               ),
               child: Column(
                 children: [
@@ -394,9 +395,9 @@ class _ReviewActionsScreenState extends ConsumerState<ReviewActionsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 30),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: VistarPalette.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2EAF6)),
+                  border: Border.all(color: VistarPalette.line),
                 ),
                 child: const ShimmerCenteredPlaceholder(
                   verticalPadding: 8,
@@ -408,13 +409,13 @@ class _ReviewActionsScreenState extends ConsumerState<ReviewActionsScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: VistarPalette.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2EAF6)),
+                  border: Border.all(color: VistarPalette.line),
                 ),
-                child: const Text(
+                child: Text(
                   'No entries found for selected filters.',
-                  style: TextStyle(color: Color(0xFF5D6A7A)),
+                  style: TextStyle(color: VistarPalette.txt2),
                 ),
               )
             else if (isCompactScreen)
@@ -448,9 +449,9 @@ class _ReviewActionsScreenState extends ConsumerState<ReviewActionsScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.96),
+                  color: VistarPalette.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2EAF6)),
+                  border: Border.all(color: VistarPalette.line),
                 ),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -460,7 +461,7 @@ class _ReviewActionsScreenState extends ConsumerState<ReviewActionsScreen> {
                     horizontalMargin: 10,
                     columnSpacing: 14,
                     headingRowColor: WidgetStateProperty.all(
-                      const Color(0xFFF3F8FF),
+                      VistarPalette.surface2,
                     ),
                     columns: const [
                       DataColumn(label: Text('Date')),
@@ -559,9 +560,9 @@ class _ReviewActionsScreenState extends ConsumerState<ReviewActionsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.95),
+                color: VistarPalette.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2EAF6)),
+                border: Border.all(color: VistarPalette.line),
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -577,9 +578,9 @@ class _ReviewActionsScreenState extends ConsumerState<ReviewActionsScreen> {
                         const Spacer(),
                         Text(
                           'Page ${state.currentPage + 1} / $totalPages | ${state.totalCount} records',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF4C596A),
+                            color: VistarPalette.txt2,
                           ),
                         ),
                         const Spacer(),
@@ -598,9 +599,9 @@ class _ReviewActionsScreenState extends ConsumerState<ReviewActionsScreen> {
                       Text(
                         'Page ${state.currentPage + 1} / $totalPages | ${state.totalCount} records',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF4C596A),
+                          color: VistarPalette.txt2,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -661,14 +662,14 @@ class _ReviewStatusChip extends StatelessWidget {
     Color textColor;
 
     if (status == 'APPROVED') {
-      bgColor = const Color(0xFFE7F8EF);
-      textColor = const Color(0xFF127944);
+      bgColor = VistarPalette.okBg;
+      textColor = VistarPalette.ok;
     } else if (status == 'REJECTED') {
-      bgColor = const Color(0xFFFFEAEA);
-      textColor = const Color(0xFFB32929);
+      bgColor = VistarPalette.badBg;
+      textColor = VistarPalette.bad;
     } else {
-      bgColor = const Color(0xFFFFF6E2);
-      textColor = const Color(0xFF8D5A00);
+      bgColor = VistarPalette.warnBg;
+      textColor = VistarPalette.warn;
     }
 
     return Container(
@@ -722,9 +723,9 @@ class _ReviewEntryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,17 +748,17 @@ class _ReviewEntryCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Date: ${_formatDate(entry.entryDate)} | Shift: ${_safeText(entry.shift)}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
           const SizedBox(height: 3),
           Text(
             'Operator: ${_safeText(entry.operatorName ?? entry.operatorId)} | RC: ${_safeText(entry.rcNumber)}',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
           const SizedBox(height: 3),
           Text(
             'Actual: ${entry.actualQuantity} | Reject: ${entry.rejectionQuantity} | Weight: ${entry.weightInKGs.toStringAsFixed(2)} KG',
-            style: const TextStyle(color: Color(0xFF5D6A7A)),
+            style: TextStyle(color: VistarPalette.txt2),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -767,19 +768,19 @@ class _ReviewEntryCard extends StatelessWidget {
               _MiniAction(
                 icon: Icons.edit_outlined,
                 label: 'Edit',
-                color: const Color(0xFF185ADB),
+                color: VistarPalette.primary,
                 onTap: onEdit,
               ),
               _MiniAction(
                 icon: Icons.check_circle_outline,
                 label: 'Approve',
-                color: const Color(0xFF127944),
+                color: VistarPalette.ok,
                 onTap: onApprove,
               ),
               _MiniAction(
                 icon: Icons.cancel_outlined,
                 label: 'Reject',
-                color: const Color(0xFFB32929),
+                color: VistarPalette.bad,
                 onTap: onReject,
               ),
             ],
@@ -859,21 +860,21 @@ class _ReviewActionCell extends StatelessWidget {
               _MiniAction(
                 icon: Icons.edit_outlined,
                 label: 'Edit',
-                color: const Color(0xFF185ADB),
+                color: VistarPalette.primary,
                 onTap: onEdit,
               ),
               const SizedBox(width: 6),
               _MiniAction(
                 icon: Icons.check_circle_outline,
                 label: 'Approve',
-                color: const Color(0xFF127944),
+                color: VistarPalette.ok,
                 onTap: onApprove,
               ),
               const SizedBox(width: 6),
               _MiniAction(
                 icon: Icons.cancel_outlined,
                 label: 'Reject',
-                color: const Color(0xFFB32929),
+                color: VistarPalette.bad,
                 onTap: onReject,
               ),
             ],
@@ -1096,14 +1097,14 @@ class _ReviewEntryEditDialogState extends State<_ReviewEntryEditDialog> {
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFECEA),
+                      color: VistarPalette.badBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFFFB4AA)),
+                      border: Border.all(color: VistarPalette.badLine),
                     ),
                     child: Text(
                       _dialogError!,
-                      style: const TextStyle(
-                        color: Color(0xFF8F1D18),
+                      style: TextStyle(
+                        color: VistarPalette.badInk,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../auth/auth_provider.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -167,7 +168,7 @@ class _BucketHeader extends StatelessWidget {
                   color: DplColors.primaryTint,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.precision_manufacturing_outlined,
                   size: 22,
                   color: DplColors.primaryDark,
@@ -191,7 +192,7 @@ class _BucketHeader extends StatelessWidget {
                         bucket.machineCode != bucket.machineLabel)
                       Text(
                         'Code: ${bucket.machineCode}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.textSecondary,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
@@ -204,7 +205,7 @@ class _BucketHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: DplColors.divider),
+          Divider(height: 1, color: DplColors.divider),
           const SizedBox(height: 12),
           Text(
             bucket.partLabel,
@@ -246,7 +247,7 @@ class _CompletionPill extends StatelessWidget {
       ),
       child: Text(
         '$pct%',
-        style: const TextStyle(
+        style: TextStyle(
           color: DplColors.success,
           fontWeight: FontWeight.w800,
           fontSize: 12,
@@ -272,7 +273,7 @@ class _MetaRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
@@ -282,7 +283,7 @@ class _MetaRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textPrimary,
                 fontWeight: FontWeight.w700,
                 fontSize: 12.5,
@@ -313,7 +314,7 @@ class _ProductionStatsRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'PRODUCTION',
             style: TextStyle(
               color: DplColors.textSecondary,
@@ -391,7 +392,7 @@ class _StatTile extends StatelessWidget {
         const SizedBox(height: 3),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 11,
@@ -415,13 +416,16 @@ class _AvailableBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF7ECFC), Color(0xFFEED7F7)],
+          colors: [
+            DplColors.primaryTint,
+            Color.lerp(DplColors.primaryTint, DplColors.primary, 0.08)!,
+          ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD8BFE9), width: 1.2),
+        border: Border.all(color: VistarPalette.primaryLine, width: 1.2),
       ),
       child: Row(
         children: [
@@ -430,11 +434,11 @@ class _AvailableBanner extends StatelessWidget {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: DplColors.cardBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFD8BFE9)),
+              border: Border.all(color: VistarPalette.primaryLine),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.local_shipping_outlined,
               size: 22,
               color: DplColors.primaryDark,
@@ -445,7 +449,7 @@ class _AvailableBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Available for Dispatch',
                   style: TextStyle(
                     color: DplColors.primaryDark,
@@ -461,7 +465,7 @@ class _AvailableBanner extends StatelessWidget {
                   children: [
                     Text(
                       fmt.format(qty),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.primaryDark,
                         fontWeight: FontWeight.w800,
                         fontSize: 24,
@@ -470,7 +474,7 @@ class _AvailableBanner extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
+                    Text(
                       'NOS',
                       style: TextStyle(
                         color: DplColors.primaryDark,
@@ -482,7 +486,7 @@ class _AvailableBanner extends StatelessWidget {
                     Flexible(
                       child: Text(
                         'of ${fmt.format(bucket.totalActualQty)} actual',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.textSecondary,
                           fontWeight: FontWeight.w600,
                           fontSize: 11,
@@ -507,7 +511,7 @@ class _AvailableBanner extends StatelessWidget {
             icon: const Icon(Icons.add_rounded, size: 18),
             label: const Text('Request'),
             style: FilledButton.styleFrom(
-              backgroundColor: DplColors.primaryDark,
+              backgroundColor: DplColors.primary,
               foregroundColor: Colors.white,
               disabledBackgroundColor: DplColors.neutralBg,
               disabledForegroundColor: DplColors.textTertiary,
@@ -537,7 +541,7 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4),
       child: Text(
         text.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
           color: DplColors.textSecondary,
           fontWeight: FontWeight.w800,
           fontSize: 11,
@@ -656,7 +660,7 @@ class _BucketSlipTile extends StatelessWidget {
                       ),
                       child: Text(
                         '+$_otherItemCount more',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.primary,
                           fontWeight: FontWeight.w700,
                           fontSize: 10.5,
@@ -668,7 +672,7 @@ class _BucketSlipTile extends StatelessWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.person_outline,
                           size: 13,
                           color: DplColors.textSecondary,
@@ -677,7 +681,7 @@ class _BucketSlipTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             slip.requestedBy?.name ?? '-',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: DplColors.textSecondary,
                               fontWeight: FontWeight.w600,
                               fontSize: 11.5,
@@ -695,7 +699,7 @@ class _BucketSlipTile extends StatelessWidget {
               if (slip.requestedAt != null)
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.schedule_outlined,
                       size: 12,
                       color: DplColors.textSecondary,
@@ -703,7 +707,7 @@ class _BucketSlipTile extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       dateFmt.format(slip.requestedAt!.toLocal()),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.textSecondary,
                         fontWeight: FontWeight.w600,
                         fontSize: 11.5,
@@ -712,7 +716,7 @@ class _BucketSlipTile extends StatelessWidget {
                   ],
                 ),
               const SizedBox(height: 8),
-              const Divider(height: 1, color: DplColors.divider),
+              Divider(height: 1, color: DplColors.divider),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -744,7 +748,7 @@ class _BucketSlipTile extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.local_shipping_outlined,
                       size: 13,
                       color: DplColors.success,
@@ -753,7 +757,7 @@ class _BucketSlipTile extends StatelessWidget {
                     Text(
                       'Dispatched ${dateFmt.format(slip.dispatchedAt!.toLocal())}'
                       '${slip.dispatchedBy?.name.isNotEmpty == true ? "  by ${slip.dispatchedBy!.name}" : ""}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.success,
                         fontWeight: FontWeight.w700,
                         fontSize: 11.5,
@@ -789,7 +793,7 @@ class _MiniStat extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           '$label: ',
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textSecondary,
             fontWeight: FontWeight.w600,
             fontSize: 11.5,
@@ -797,7 +801,7 @@ class _MiniStat extends StatelessWidget {
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textPrimary,
             fontWeight: FontWeight.w800,
             fontSize: 12,

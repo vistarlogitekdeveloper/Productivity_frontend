@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
@@ -125,9 +126,9 @@ class _OrgTile extends StatelessWidget {
       child: Ink(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: DplColors.cardBg,
           border: Border.all(
-            color: org.isActive ? const Color(0xFFE2EAF6) : const Color(0xFFF0D3D3),
+            color: org.isActive ? DplColors.divider : VistarPalette.badLine,
           ),
           borderRadius: BorderRadius.circular(14),
         ),
@@ -141,7 +142,7 @@ class _OrgTile extends StatelessWidget {
                 color: DplColors.primaryTint,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.apartment_rounded,
                 color: DplColors.primary,
                 size: 20,
@@ -163,9 +164,9 @@ class _OrgTile extends StatelessWidget {
                   Text(
                     '${org.code} · ${org.userCount} '
                     '${org.userCount == 1 ? 'user' : 'users'}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF5D6A7A),
+                      color: DplColors.textSecondary,
                     ),
                   ),
                 ],
@@ -178,7 +179,7 @@ class _OrgTile extends StatelessWidget {
                   color: DplColors.errorBg,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Text(
+                child: Text(
                   'Inactive',
                   style: TextStyle(
                     fontSize: 11,
@@ -276,14 +277,14 @@ class _OrgDialogState extends State<_OrgDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFECEA),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFFFB4AA)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: Color(0xFF8F1D18),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

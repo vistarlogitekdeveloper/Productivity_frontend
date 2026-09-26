@@ -62,7 +62,7 @@ class DplPlanTripRollupCard extends ConsumerWidget {
               const Spacer(),
               Text(
                 _rangeLabel(filter),
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
@@ -202,7 +202,7 @@ class _FilterRow extends ConsumerWidget {
                             ? 'Till date'
                             : _shortRange(filter),
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: DplColors.textPrimary,
@@ -214,7 +214,7 @@ class _FilterRow extends ConsumerWidget {
                         onTap: () => ctrl.set(
                           filter.copyWith(from: null, to: null),
                         ),
-                        child: const Padding(
+                        child: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 4),
                           child: Icon(
                             Icons.close_rounded,
@@ -224,7 +224,7 @@ class _FilterRow extends ConsumerWidget {
                         ),
                       )
                     else
-                      const Icon(
+                      Icon(
                         Icons.keyboard_arrow_down_rounded,
                         size: 18,
                         color: DplColors.textSecondary,
@@ -343,7 +343,7 @@ class _RollupTile extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w700,
               fontSize: 10,
@@ -364,7 +364,7 @@ class _RollupTile extends StatelessWidget {
             Tooltip(
               message: error!,
               child: Row(
-                children: const [
+                children: [
                   Icon(Icons.error_outline,
                       size: 16, color: DplColors.error),
                   SizedBox(width: 4),
@@ -392,7 +392,7 @@ class _RollupTile extends StatelessWidget {
                   if (unit.isNotEmpty)
                     TextSpan(
                       text: '  $unit',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.textSecondary,
                         fontWeight: FontWeight.w600,
                         fontSize: 11,

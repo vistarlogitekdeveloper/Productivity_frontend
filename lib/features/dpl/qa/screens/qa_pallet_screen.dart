@@ -73,6 +73,19 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
 
   bool _busy = false;
 
+  /// PARKING MODE — the cart wheels are going to, while it is on.
+  ///
+  /// Non-null means every scan on this screen goes straight to that trolley
+  /// instead of opening a pallet. It exists because parking is a RUN, not a
+  /// single act: an operator absorbing a changeover has thirty wheels to put
+  /// on a cart, and asking "where does this wheel go?" thirty times, or
+  /// opening a camera thirty times, is not a workflow anybody would use.
+  int? _parkTrolleyId;
+  String _parkTrolleyNo = '';
+  int _parkedCount = 0;
+
+  bool get _parking => _parkTrolleyId != null || _parkTrolleyNo.isNotEmpty;
+
   /// The last few scans, newest first. Shown so an operator who looked away
   /// can see what actually landed without opening anything.
   final List<_ScanEvent> _recent = [];
@@ -130,6 +143,10 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
       children: [
+        if (_parking) ...[
+          _parkingCard(),
+          const SizedBox(height: 12),
+        ],
         DplCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,11 +165,20 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: _busy ? null : _startPallet,
+                  // Disabled while parking. It opens the camera to START a
+                  // pallet, which is the opposite of what the operator is
+                  // doing — and a viewfinder appearing mid-run is precisely
+                  // the surprise this mode was built to remove. "Done
+                  // parking" is the way out.
+                  onPressed: (_busy || _parking) ? null : _startPallet,
                   // Names what the press actually does now. "Start a pallet"
                   // with a camera behind it reads as a mis-tap.
                   icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
-                  label: const Text('Scan a wheel to start'),
+                  label: Text(
+                    _parking
+                        ? 'Parking — scans go to the trolley'
+                        : 'Scan a wheel to start',
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -172,14 +198,12 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
               TextField(
                 controller: _startCtrl,
                 enabled: !_busy,
-                // Focused on purpose, and it is what makes a handheld work
-                // here. A rugged scanner delivers its decode to whichever
-                // field has focus — by typing it in wedge mode, or through
-                // HardwareScanScope in intent mode — so an unfocused start
-                // view would mean the trigger did nothing at all on the one
-                // screen where a shift begins. The open-pallet field below
-                // autofocuses for the same reason.
-                autofocus: true,
+                // NOT autofocused. A handheld's trigger does not need a
+                // cursor here — HardwareScanScope delivers the decode to this
+                // field by position — and autofocus raised the soft keyboard
+                // over half the screen the moment the tab opened, hiding the
+                // stored half pallets the operator came to read. The keyboard
+                // appears when somebody taps, which is the only time it helps.
                 textInputAction: TextInputAction.done,
                 textCapitalization: TextCapitalization.characters,
                 decoration: const InputDecoration(
@@ -476,10 +500,9 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
             controller: _scanCtrl,
             focusNode: _scanFocus,
             enabled: !_busy && !full,
-            // Only grabs focus while it can actually take a wheel. Autofocus
-            // on a disabled-in-spirit field steals the keyboard from the
-            // close button on a tablet.
-            autofocus: !full,
+            // NOT autofocused — see the start field above. The scan arrives
+            // by position, and a keyboard covering the count and the Close
+            // button is the last thing a packing operator needs.
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
               hintText: full ? 'Nothing more fits on this pallet' : 'Scan, or type the serial',
@@ -537,7 +560,25 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     // in flight and a refusal does not leave the old text to be re-submitted.
     _startCtrl.clear();
     if (code.isEmpty) return;
+
+    // While parking, every scan goes to the cart without asking again. This is
+    // the whole point of the mode: the operator pulls the trigger thirty times
+    // and thirty wheels land on the trolley.
+    if (_parking) {
+      await _parkScanned(code);
+      return;
+    }
+
     await _startPallet(typed: code);
+  }
+
+  /// A scan taken while parking. The item comes from the label itself, because
+  /// an old label nobody has seen before needs one and the cart cannot supply
+  /// it — the trolley is mixed-item by design.
+  Future<void> _parkScanned(String code) async {
+    final scanned = await _scanForItem(typed: code);
+    if (!mounted || scanned == null) return;
+    await _parkOne(partId: scanned.partId, code: code);
   }
 
   ///
@@ -866,93 +907,158 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
       trolleyId = picked.id;
     }
 
-    var next = code;
-    var parked = 0;
-    var refused = false;
+    // Remember the cart, then PARK AND STAY.
+    //
+    // This used to loop, reopening the camera for each next wheel. That made
+    // sense when the camera WAS the scanner. It is wrong now the trigger is:
+    // the operator pulls, and a viewfinder nobody asked for covers the screen.
+    //
+    // So the scanned wheel is parked and the screen switches into a parking
+    // mode instead. Every pull after this goes straight to the cart — no
+    // sheet, no camera, no taps — which is what parking a changeover's worth
+    // of wheels actually looks like.
+    setState(() {
+      _parkTrolleyId = trolleyId;
+      _parkTrolleyNo = '';
+      _parkedCount = 0;
+    });
 
-    while (true) {
-      if (next == null || next.isEmpty) {
-        next = await DplQrScanSheet.open(
-          context,
-          expecting: customerPartNo,
-          allowExternal: ref
-              .read(dplPermissionsProvider)
-              .can(DplPermission.labelsScanExternal),
+    await _parkOne(partId: partId, code: code);
+  }
+
+  /// Park one wheel on the cart this screen is currently parking to.
+  Future<void> _parkOne({required int partId, String? code}) async {
+    final value = (code ?? '').trim();
+    if (value.isEmpty) return;
+
+    setState(() => _busy = true);
+    final res = await ref.read(dplApiServiceProvider).parkWheelOnTrolley(
+          trolleyId: _parkTrolleyId,
+          // Only consulted for an old label nobody has scanned before, where
+          // there is no pallet to take the item from.
+          partId: partId,
+          code: value,
         );
-        if (!mounted) return;
-        // Backed out. Whatever was parked stays parked — it is on the cart.
-        if (next == null || next.isEmpty) break;
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    if (res.isError) {
+      // Shown exactly as the server worded it: ALREADY_ON_ANOTHER_PALLET,
+      // ITEM_UNKNOWN and the rest each name a situation the operator can act
+      // on, and rewording them into something vaguer helps nobody.
+      _note(res.error ?? 'Refused', ok: false);
+      HapticFeedback.heavyImpact();
+      DplSnacks.error(context, res.error ?? 'That wheel was refused.');
+
+      // ONE BAD WHEEL IS NOT THE END OF THE RUN. These refusals are about the
+      // wheel in the operator's hand and nothing else — already on a cart,
+      // already packed, already shipped, voided, wrong item — so parking mode
+      // stays on and the next pull is taken. Only a refusal about the TROLLEY
+      // itself stops it, because that one would refuse every wheel after it
+      // just the same.
+      const aboutTheTrolley = <String>{
+        'TROLLEY_NOT_FOUND',
+        'TROLLEY_RETIRED',
+        'TROLLEY_NOT_CHOSEN',
+      };
+      if (aboutTheTrolley.contains(res.code)) {
+        setState(() => _parkTrolleyId = null);
       }
-
-      setState(() => _busy = true);
-      final res = await ref.read(dplApiServiceProvider).parkWheelOnTrolley(
-            trolleyId: trolleyId,
-            code: next,
-            // Only consulted for an old label nobody has scanned before, where
-            // there is no pallet to take the item from.
-            partId: partId,
-          );
-      if (!mounted) return;
-      setState(() => _busy = false);
-
-      if (res.isError) {
-        // Shown exactly as the server worded it: ALREADY_ON_ANOTHER_PALLET,
-        // ITEM_UNKNOWN and the rest each name a situation the operator can act
-        // on, and rewording them into something vaguer helps nobody.
-        _note(res.error ?? 'Refused', ok: false);
-        HapticFeedback.heavyImpact();
-        DplSnacks.error(context, res.error ?? 'That wheel was refused.');
-
-        // ONE BAD WHEEL IS NOT THE END OF THE RUN.
-        //
-        // These refusals are about the wheel in the operator's hand and
-        // nothing else: it is already on a cart, already packed, already
-        // shipped, voided, or of the wrong item. The right answer is to put it
-        // down and scan the next one — so the loop carries on, and only a
-        // refusal about the TROLLEY or the request itself stops it, because
-        // those would refuse every wheel that followed just the same.
-        const perWheel = {
-          'ALREADY_ON_THIS_TROLLEY',
-          'ALREADY_ON_ANOTHER_TROLLEY',
-          'ALREADY_ON_ANOTHER_PALLET',
-          'ALREADY_ON_A_TRIP',
-          'STICKER_VOIDED',
-          'STICKER_NOT_FOUND',
-          'WRONG_PART',
-          'ITEM_UNKNOWN',
-          'EMPTY_SCAN',
-        };
-        if (perWheel.contains(res.code)) {
-          next = null;
-          continue;
-        }
-
-        refused = true;
-        break;
-      }
-
-      parked += 1;
-      final out = res.data;
-      _note(
-        'Parked $next on ${out?.trolley.trolleyNo ?? 'the trolley'}',
-        ok: true,
-      );
-      HapticFeedback.selectionClick();
-      next = null;
+      return;
     }
 
-    if (!mounted || parked < 1) return;
+    final out = res.data;
+    final cart = out?.trolley;
+    setState(() {
+      _parkedCount += 1;
+      if (cart != null && cart.trolleyNo.isNotEmpty) {
+        _parkTrolleyNo = cart.trolleyNo;
+        // Now known even if the server auto-created it, so the next wheel goes
+        // to the SAME cart rather than risking a second one being made.
+        if (cart.id > 0) _parkTrolleyId = cart.id;
+      }
+    });
+    _note(
+      'Parked $value on ${_parkTrolleyNo.isEmpty ? 'the trolley' : _parkTrolleyNo}',
+      ok: true,
+    );
+    HapticFeedback.selectionClick();
+  }
 
-    // NOT when the run ended in a refusal. DplSnacks hides the current bar
-    // before showing the next, and nothing has been rebuilt since the red one
-    // went up — so a success message here would wipe the explanation off the
-    // screen before the operator could read a word of it, in the same frame.
-    if (refused) return;
+  /// What parking mode looks like while it is on.
+  ///
+  /// Shown ABOVE everything else, because it changes what every scan does. An
+  /// operator who wandered back to this screen and pulled the trigger
+  /// expecting to open a pallet needs to see, without reading, that the wheel
+  /// is going on a cart instead.
+  Widget _parkingCard() {
+    final cart = _parkTrolleyNo.isEmpty ? 'the trolley' : _parkTrolleyNo;
+    return DplCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.shopping_cart, size: 20, color: DplColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Parking on $cart',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Text(
+                '$_parkedCount',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: DplColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _parkedCount == 0
+                ? 'Scan wheels and they go straight on the trolley. No pallet '
+                    'is opened.'
+                : '$_parkedCount parked. Keep scanning — every wheel goes on '
+                    'the trolley until you stop.',
+            style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _busy ? null : _stopParking,
+              icon: const Icon(Icons.stop_circle_outlined, size: 18),
+              label: const Text('Done parking'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  /// Leave parking mode. Whatever was parked stays on the cart.
+  void _stopParking() {
+    final n = _parkedCount;
+    setState(() {
+      _parkTrolleyId = null;
+      _parkTrolleyNo = '';
+      _parkedCount = 0;
+    });
+    if (n < 1) return;
     DplSnacks.success(
       context,
-      'Parked $parked wheel${parked == 1 ? '' : 's'} on the trolley. '
-      'Merge them into half pallets from the Merge screen.',
+      'Parked $n wheel${n == 1 ? '' : 's'}. Merge them into half pallets from '
+      'the Merge screen.',
     );
   }
 

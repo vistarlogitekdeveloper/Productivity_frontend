@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_snack.dart';
@@ -183,8 +184,8 @@ class _QaScannerScreenState extends ConsumerState<QaScannerScreen> {
                     'Substrate ${resolution.substratePartNo} is used by '
                     '${resolution.parts.length} customer parts. Pick the one '
                     'you are packing.',
-                    style: const TextStyle(
-                      color: Color(0xFF5D6A7A),
+                    style: TextStyle(
+                      color: VistarPalette.txt2,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),
@@ -251,7 +252,7 @@ class _QaScannerScreenState extends ConsumerState<QaScannerScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.block_rounded, color: Color(0xFFB91C1C)),
+                Icon(Icons.block_rounded, color: VistarPalette.bad),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -276,11 +277,11 @@ class _QaScannerScreenState extends ConsumerState<QaScannerScreen> {
               good: false,
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'Labels can only be printed for the part on the plan item. '
               'Fetch the correct raw material and scan again.',
               style: TextStyle(
-                color: Color(0xFF5D6A7A),
+                color: VistarPalette.txt2,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -289,10 +290,10 @@ class _QaScannerScreenState extends ConsumerState<QaScannerScreen> {
               const SizedBox(height: 10),
               Text(
                 'Scanned substrate: ${resolution.substratePartNo}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 12,
-                  color: Color(0xFF334155),
+                  color: VistarPalette.txt,
                 ),
               ),
             ],
@@ -318,7 +319,7 @@ class _QaScannerScreenState extends ConsumerState<QaScannerScreen> {
     required String value,
     required bool good,
   }) {
-    final color = good ? const Color(0xFF15803D) : const Color(0xFFB91C1C);
+    final color = good ? VistarPalette.ok : VistarPalette.bad;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(10),
@@ -341,10 +342,10 @@ class _QaScannerScreenState extends ConsumerState<QaScannerScreen> {
           const SizedBox(height: 2),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w800,
               fontSize: 16,
-              color: Color(0xFF111827),
+              color: VistarPalette.txt,
             ),
           ),
         ],
@@ -494,8 +495,8 @@ class _ManualEntrySheetState extends State<_ManualEntrySheet> {
             widget.message ??
                 'Type the substrate part number printed under the code, '
                     'for example 195245450-083.',
-            style: const TextStyle(
-              color: Color(0xFF5D6A7A),
+            style: TextStyle(
+              color: VistarPalette.txt2,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
@@ -509,19 +510,19 @@ class _ManualEntrySheetState extends State<_ManualEntrySheet> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: VistarPalette.surface2,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: VistarPalette.line),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Scanned',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF64748B),
+                      color: VistarPalette.txt2,
                     ),
                   ),
                   const SizedBox(height: 2),

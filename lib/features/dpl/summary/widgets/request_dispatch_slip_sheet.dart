@@ -172,7 +172,7 @@ class _RequestDispatchSlipSheetState
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: DplColors.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: DplShadows.sheet,
@@ -208,7 +208,7 @@ class _RequestDispatchSlipSheetState
                           color: DplColors.primaryTint,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.local_shipping_outlined,
                           size: 18,
                           color: DplColors.primaryDark,
@@ -222,7 +222,7 @@ class _RequestDispatchSlipSheetState
                             Text('Request Dispatch Slip',
                                 style: DplText.h3()),
                             const SizedBox(height: 2),
-                            const Text(
+                            Text(
                               'QA + PDI will review before it can ship.',
                               style: TextStyle(
                                 color: DplColors.textSecondary,
@@ -346,7 +346,7 @@ class _RequestDispatchSlipSheetState
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.error_outline,
                             size: 18,
                             color: DplColors.error,
@@ -355,7 +355,7 @@ class _RequestDispatchSlipSheetState
                           Expanded(
                             child: Text(
                               _serverError!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: DplColors.error,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -431,7 +431,7 @@ class _LabelValue extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.textSecondary,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,

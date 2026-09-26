@@ -45,15 +45,15 @@ class DispatchSlipStatusBadge extends StatelessWidget {
       case DplDispatchSlipStatus.pendingQa:
       case DplDispatchSlipStatus.pendingDeo:
       case DplDispatchSlipStatus.pendingPdi:
-        return const _StatusPalette(DplColors.warning, DplColors.warningBg);
+        return _StatusPalette(DplColors.warning, DplColors.warningBg);
       case DplDispatchSlipStatus.approved:
-        return const _StatusPalette(DplColors.info, DplColors.infoBg);
+        return _StatusPalette(DplColors.info, DplColors.infoBg);
       case DplDispatchSlipStatus.dispatched:
-        return const _StatusPalette(DplColors.success, DplColors.successBg);
+        return _StatusPalette(DplColors.success, DplColors.successBg);
       case DplDispatchSlipStatus.rejected:
-        return const _StatusPalette(DplColors.error, DplColors.errorBg);
+        return _StatusPalette(DplColors.error, DplColors.errorBg);
       default:
-        return const _StatusPalette(DplColors.neutral, DplColors.neutralBg);
+        return _StatusPalette(DplColors.neutral, DplColors.neutralBg);
     }
   }
 }

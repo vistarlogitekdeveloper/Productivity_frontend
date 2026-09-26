@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdf/pdf.dart' show PdfPageFormat;
 import 'package:printing/printing.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_response.dart';
 import '../../core/dpl_api_service.dart';
@@ -145,9 +146,9 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
       decoration: BoxDecoration(
         color: DplColors.warningBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF5D08C)),
+        border: Border.all(color: VistarPalette.warnLine),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.info_outline, size: 18, color: DplColors.warning),
@@ -161,7 +162,7 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                 fontSize: 12,
                 height: 1.4,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF8A5A00),
+                color: VistarPalette.warnInk,
               ),
             ),
           ),
@@ -200,10 +201,10 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
               }
               final machines = res.data ?? const <DplMachine>[];
               if (machines.isEmpty) {
-                return const Text(
+                return Text(
                   'No machines are set up for this organization yet. A manager '
                   'adds them under Masters.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF5D6A7A)),
+                  style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
                 );
               }
               return Wrap(
@@ -272,9 +273,9 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                           const SizedBox(height: 2),
                           Text(
                             selected.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF5D6A7A),
+                              color: DplColors.textSecondary,
                             ),
                           ),
                         ],
@@ -318,9 +319,9 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                 }
                 final parts = res.data ?? const <DplPart>[];
                 if (parts.isEmpty) {
-                  return const Text(
+                  return Text(
                     'No parts match.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF5D6A7A)),
+                    style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
                   );
                 }
                 return ConstrainedBox(
@@ -428,8 +429,8 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
             Text(
               'At most ${BatchQuantity.maxPerBatch} per press — that is what '
               'will be printed. Press again for the rest.',
-              style: const TextStyle(
-                color: Color(0xFFD97706),
+              style: TextStyle(
+                color: DplColors.warning,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),

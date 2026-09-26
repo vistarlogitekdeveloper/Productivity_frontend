@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../models/dpl_downtime_reason.dart';
 import '../providers/downtime_provider.dart';
 
@@ -98,14 +99,14 @@ class _PauseEntrySheetState extends ConsumerState<PauseEntrySheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFD9E2EF),
+                color: VistarPalette.line2,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           Row(
             children: [
-              const Icon(Icons.pause_circle_outline, color: Color(0xFFB45309)),
+              Icon(Icons.pause_circle_outline, color: VistarPalette.warn),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -126,21 +127,21 @@ class _PauseEntrySheetState extends ConsumerState<PauseEntrySheet> {
             padding: const EdgeInsets.only(bottom: 10),
             child: Text(
               widget.itemLabel,
-              style: const TextStyle(color: Color(0xFF5D6A7A)),
+              style: TextStyle(color: VistarPalette.txt2),
             ),
           ),
           if (_error != null) ...[
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFECEA),
+                color: VistarPalette.badBg,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFFB4AA)),
+                border: Border.all(color: VistarPalette.badLine),
               ),
               child: Text(
                 _error!,
-                style: const TextStyle(
-                  color: Color(0xFF8F1D18),
+                style: TextStyle(
+                  color: VistarPalette.badInk,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -221,7 +222,7 @@ class _PauseEntrySheetState extends ConsumerState<PauseEntrySheet> {
                     label: const Text('Pause Item'),
                     onPressed: _submit,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFB45309),
+                      backgroundColor: VistarPalette.warnSolid,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),

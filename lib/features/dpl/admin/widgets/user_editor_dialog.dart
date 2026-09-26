@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../models/dpl_admin.dart';
 
 /// What the editor hands back.
@@ -142,14 +143,14 @@ class _UserEditorDialogState extends State<UserEditorDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFECEA),
+                    color: VistarPalette.badBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFFFB4AA)),
+                    border: Border.all(color: VistarPalette.badLine),
                   ),
                   child: Text(
                     _error!,
-                    style: const TextStyle(
-                      color: Color(0xFF8F1D18),
+                    style: TextStyle(
+                      color: VistarPalette.badInk,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -224,14 +225,14 @@ class _UserEditorDialogState extends State<UserEditorDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: VistarPalette.surface3,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     selectedRole.description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF4B5563),
+                      color: VistarPalette.txt2,
                     ),
                   ),
                 ),
@@ -257,11 +258,11 @@ class _UserEditorDialogState extends State<UserEditorDialog> {
                 ),
               ] else ...[
                 const SizedBox(height: 14),
-                const Text(
+                Text(
                   'To change this person\'s password, use "Set new password" '
                   'from the row menu. Passwords are never shown — the system '
                   'stores only a one-way hash of them.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                  style: TextStyle(fontSize: 12, color: VistarPalette.txt2),
                 ),
               ],
             ],

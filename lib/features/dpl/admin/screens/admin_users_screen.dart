@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
@@ -182,7 +183,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: DplColors.error),
+              style: FilledButton.styleFrom(backgroundColor: VistarPalette.badSolid),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: const Text('Disable'),
             ),
@@ -360,8 +361,8 @@ class _Dropdown<T> extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        color: DplColors.cardBg,
+        border: Border.all(color: DplColors.divider),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -374,7 +375,7 @@ class _Dropdown<T> extends StatelessWidget {
             hint: Text(hint, style: const TextStyle(fontSize: 13)),
             underline: const SizedBox.shrink(),
             isDense: true,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF111827)),
+            style: TextStyle(fontSize: 13, color: DplColors.textPrimary),
             items: items,
             onChanged: onChanged,
           ),
@@ -421,9 +422,9 @@ class _UserTile extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: DplColors.cardBg,
           border: Border.all(
-            color: user.isActive ? const Color(0xFFE2EAF6) : const Color(0xFFF0D3D3),
+            color: user.isActive ? DplColors.divider : VistarPalette.badLine,
           ),
           borderRadius: BorderRadius.circular(14),
         ),
@@ -438,7 +439,7 @@ class _UserTile extends ConsumerWidget {
                   backgroundColor: DplColors.primaryTint,
                   child: Text(
                     _initials(user.name),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
                       color: DplColors.primary,
@@ -460,9 +461,9 @@ class _UserTile extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         user.email,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF5D6A7A),
+                          color: DplColors.textSecondary,
                         ),
                       ),
                     ],
@@ -507,9 +508,9 @@ class _UserTile extends ConsumerWidget {
                 if (user.employeeCode.isNotEmpty)
                   _Chip(text: user.employeeCode, color: DplColors.neutral),
                 if (!user.isActive)
-                  const _Chip(text: 'Disabled', color: DplColors.error),
+                  _Chip(text: 'Disabled', color: DplColors.error),
                 if (user.mustChangePassword)
-                  const _Chip(
+                  _Chip(
                     text: 'Must change password',
                     color: DplColors.warning,
                   ),
@@ -520,7 +521,7 @@ class _UserTile extends ConsumerWidget {
               user.hasNeverLoggedIn
                   ? 'Never signed in'
                   : 'Last signed in ${DateFormat('d MMM yyyy, HH:mm').format(user.lastLoginAt!.toLocal())}',
-              style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+              style: TextStyle(fontSize: 11, color: DplColors.textTertiary),
             ),
           ],
         ),
@@ -667,14 +668,14 @@ class _ErrorBox extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFECEA),
+        color: VistarPalette.badBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFFFB4AA)),
+        border: Border.all(color: VistarPalette.badLine),
       ),
       child: Text(
         message,
-        style: const TextStyle(
-          color: Color(0xFF8F1D18),
+        style: TextStyle(
+          color: VistarPalette.badInk,
           fontWeight: FontWeight.w600,
         ),
       ),

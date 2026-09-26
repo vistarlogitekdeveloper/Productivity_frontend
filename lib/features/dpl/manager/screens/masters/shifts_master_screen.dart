@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../core/theme/vistar_palette.dart';
 import '../../../../../core/widgets/shimmer_skeleton.dart';
+import '../../../core/design/dpl_theme.dart';
 import '../../../core/dpl_api_service.dart';
 import '../../../core/widgets/dpl_app_bar.dart';
 import '../../../core/widgets/dpl_refresh_icon_button.dart';
@@ -156,7 +158,7 @@ class DplShiftsMasterScreen extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB3261E),
+              backgroundColor: VistarPalette.badSolid,
             ),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Delete'),
@@ -198,7 +200,7 @@ class _ShiftCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: const Color(0xFFE2EAF6)),
+          border: Border.all(color: DplColors.divider),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
@@ -208,13 +210,13 @@ class _ShiftCard extends StatelessWidget {
               height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF3FB),
+                color: VistarPalette.surface3,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 shift.code.isEmpty ? '?' : shift.code,
-                style: const TextStyle(
-                  color: Color(0xFF1D4ED8),
+                style: TextStyle(
+                  color: VistarPalette.info,
                   fontWeight: FontWeight.w900,
                   fontSize: 14,
                 ),
@@ -234,8 +236,8 @@ class _ShiftCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                         shift.windowLabel,
-                        style: const TextStyle(
-                          color: Color(0xFF5D6A7A),
+                        style: TextStyle(
+                          color: DplColors.textSecondary,
                           fontFamily: 'monospace',
                         ),
                       ),
@@ -248,21 +250,21 @@ class _ShiftCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEEF1F5),
+                  color: VistarPalette.surface3,
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Text(
+                child: Text(
                   'Inactive',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF5D6A7A),
+                    color: DplColors.textSecondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 20),
-              color: const Color(0xFFB3261E),
+              color: VistarPalette.bad,
               onPressed: onDelete,
             ),
           ],
@@ -375,14 +377,14 @@ class _ShiftDialogState extends State<_ShiftDialog> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFECEA),
+                  color: VistarPalette.badBg,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFFB4AA)),
+                  border: Border.all(color: VistarPalette.badLine),
                 ),
                 child: Text(
                   _error!,
-                  style: const TextStyle(
-                    color: Color(0xFF8F1D18),
+                  style: TextStyle(
+                    color: VistarPalette.badInk,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

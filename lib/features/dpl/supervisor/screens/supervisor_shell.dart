@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../auth/change_password_dialog.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -58,7 +59,7 @@ class _SupervisorProfileTab extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              border: Border.all(color: const Color(0xFFE2EAF6)),
+              border: Border.all(color: VistarPalette.line),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -91,7 +92,7 @@ class _SupervisorProfileTab extends ConsumerWidget {
                         Text(
                           username,
                           style:
-                              const TextStyle(color: Color(0xFF5D6A7A)),
+                              TextStyle(color: VistarPalette.txt2),
                         ),
                       const SizedBox(height: 4),
                       Container(
@@ -100,13 +101,13 @@ class _SupervisorProfileTab extends ConsumerWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF3FB),
+                          color: VistarPalette.infoBg,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
                           role,
-                          style: const TextStyle(
-                            color: Color(0xFF1D4ED8),
+                          style: TextStyle(
+                            color: VistarPalette.info,
                             fontWeight: FontWeight.w700,
                             fontSize: 11,
                           ),
@@ -124,20 +125,20 @@ class _SupervisorProfileTab extends ConsumerWidget {
             title: const Text('Change Password'),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Color(0xFFE2EAF6)),
+              side: BorderSide(color: VistarPalette.line),
             ),
             onTap: () => showChangePasswordDialog(context, ref),
           ),
           const SizedBox(height: 8),
           ListTile(
-            leading: const Icon(Icons.logout, color: Color(0xFFB3261E)),
-            title: const Text(
+            leading: Icon(Icons.logout, color: VistarPalette.bad),
+            title: Text(
               'Logout',
-              style: TextStyle(color: Color(0xFFB3261E)),
+              style: TextStyle(color: VistarPalette.bad),
             ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Color(0xFFFFB4AA)),
+              side: BorderSide(color: VistarPalette.badLine),
             ),
             onTap: () => ref.read(authControllerProvider.notifier).logout(),
           ),

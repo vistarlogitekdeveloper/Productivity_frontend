@@ -355,7 +355,7 @@ class _NoMatchesState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.filter_alt_off_rounded,
               size: 56,
               color: DplColors.textTertiary,
@@ -366,7 +366,7 @@ class _NoMatchesState extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Try a different search, plant, or machine.',
               style: TextStyle(
                 color: DplColors.textSecondary,
@@ -404,7 +404,7 @@ class _HeaderHint extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.lightbulb_outline, color: DplColors.primaryDark),
+          Icon(Icons.lightbulb_outline, color: DplColors.primaryDark),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -413,7 +413,7 @@ class _HeaderHint extends StatelessWidget {
               children: [
                 Text(
                   kind.cadence,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
                     color: DplColors.primaryDark,
@@ -423,7 +423,7 @@ class _HeaderHint extends StatelessWidget {
                 Text(
                   '${totals.configured} of ${totals.totalParts} parts have '
                   'a ${kind.label.toLowerCase()} set.',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.textSecondary,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
@@ -457,7 +457,7 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
@@ -505,7 +505,7 @@ class _FieldEditCard extends StatelessWidget {
             ),
             child: Text(
               entry.description.isEmpty ? '-' : entry.description,
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.primaryDark,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
@@ -532,7 +532,7 @@ class _FieldEditCard extends StatelessWidget {
                   children: [
                     Text(
                       entry.customerPn,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'monospace',
                         color: DplColors.textSecondary,
                         fontWeight: FontWeight.w600,
@@ -541,14 +541,14 @@ class _FieldEditCard extends StatelessWidget {
                     ),
                     if (entry.machineName.isNotEmpty) ...[
                       const SizedBox(width: 6),
-                      const Text(
+                      Text(
                         '·',
                         style: TextStyle(color: DplColors.textTertiary),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         entry.machineName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.textSecondary,
                           fontWeight: FontWeight.w700,
                           fontSize: 10.5,
@@ -622,7 +622,7 @@ class _SaveBar extends StatelessWidget {
                 ),
                 child: Text(
                   error!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.error,
                     fontWeight: FontWeight.w700,
                   ),

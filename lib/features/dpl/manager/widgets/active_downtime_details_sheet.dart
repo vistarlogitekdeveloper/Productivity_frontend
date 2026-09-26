@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_organization_provider.dart';
 import '../../models/dpl_supervisor_today.dart';
@@ -120,7 +121,7 @@ class _ManagerActiveDowntimeDetailsSheetState
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFB3261E),
+              backgroundColor: VistarPalette.badSolid,
             ),
             onPressed: () =>
                 Navigator.of(dialogCtx).pop(ctrl.text.trim()),
@@ -164,7 +165,7 @@ class _ManagerActiveDowntimeDetailsSheetState
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
+                color: VistarPalette.line2,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -172,7 +173,7 @@ class _ManagerActiveDowntimeDetailsSheetState
               margin: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFB3261E),
+                color: VistarPalette.badSolid,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -312,7 +313,7 @@ class _ManagerActiveDowntimeDetailsSheetState
                             : const Icon(Icons.stop_circle_outlined),
                         label: const Text('Close downtime'),
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFB3261E),
+                          backgroundColor: VistarPalette.badSolid,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -369,10 +370,10 @@ class _DetailRow extends StatelessWidget {
             height: 30,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF3FB),
+              color: VistarPalette.surface3,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 16, color: const Color(0xFF6B1F8C)),
+            child: Icon(icon, size: 16, color: VistarPalette.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -381,8 +382,8 @@ class _DetailRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Color(0xFF5D6A7A),
+                  style: TextStyle(
+                    color: VistarPalette.txt2,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.2,

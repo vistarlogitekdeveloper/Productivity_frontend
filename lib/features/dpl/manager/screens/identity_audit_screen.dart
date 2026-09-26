@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
+import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_refresh_icon_button.dart';
@@ -12,11 +14,11 @@ import '../providers/dpl_shifts_provider.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_retry.dart';
 
-const _kPrimary = Color(0xFF1D4ED8);
-const _kBad = Color(0xFFB3261E);
-const _kNeutral = Color(0xFF5D6A7A);
-const _kBorder = Color(0xFFE2EAF6);
-const _kSurfaceAlt = Color(0xFFF8FAFC);
+Color get _kPrimary => VistarPalette.info;
+Color get _kBad => VistarPalette.bad;
+Color get _kNeutral => DplColors.textSecondary;
+Color get _kBorder => DplColors.divider;
+Color get _kSurfaceAlt => VistarPalette.surface2;
 
 class DplIdentityAuditScreen extends ConsumerWidget {
   const DplIdentityAuditScreen({super.key});
@@ -27,7 +29,7 @@ class DplIdentityAuditScreen extends ConsumerWidget {
     final filters = ref.watch(dplIdentityAuditFiltersProvider);
 
     return Scaffold(
-      backgroundColor: _kSurfaceAlt,
+      backgroundColor: DplColors.pageBg,
       appBar: DplAppBar(
         title: 'Identity Audit',
         actions: [
@@ -151,7 +153,7 @@ class _FilterBar extends ConsumerWidget {
     }
 
     return Container(
-      color: Colors.white,
+      color: DplColors.cardBg,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -263,7 +265,7 @@ class _FilterBar extends ConsumerWidget {
               onTap: () => Navigator.pop(context, 0),
             ),
             ListTile(
-              leading: const Icon(Icons.flag, color: _kBad),
+              leading: Icon(Icons.flag, color: _kBad),
               title: const Text('Flagged only'),
               onTap: () => Navigator.pop(context, 1),
             ),
@@ -302,7 +304,7 @@ class _ChipBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: active ? const Color(0xFFEFF3FB) : Colors.white,
+      color: active ? VistarPalette.surface3 : DplColors.cardBg,
       borderRadius: BorderRadius.circular(999),
       child: InkWell(
         borderRadius: BorderRadius.circular(999),
@@ -332,7 +334,7 @@ class _ChipBtn extends StatelessWidget {
                 const SizedBox(width: 6),
                 GestureDetector(
                   onTap: onClear,
-                  child: const Icon(
+                  child: Icon(
                     Icons.close,
                     size: 14,
                     color: _kNeutral,
@@ -368,7 +370,7 @@ class _VerificationCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: Colors.white,
+        color: DplColors.cardBg,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -388,11 +390,11 @@ class _VerificationCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF3FB),
+                    color: VistarPalette.surface3,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: _kBorder),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.person_outline,
                     color: _kPrimary,
                   ),
@@ -420,13 +422,13 @@ class _VerificationCard extends StatelessWidget {
                             color: _kNeutral,
                           ),
                           if (item.flagged)
-                            const _Tag(text: 'Flagged', color: _kBad),
+                            _Tag(text: 'Flagged', color: _kBad),
                         ],
                       ),
                       const SizedBox(height: 6),
                       Text(
                         whenLine,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: _kNeutral,
                           fontSize: 12,
                         ),
@@ -434,7 +436,7 @@ class _VerificationCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: _kNeutral),
+                Icon(Icons.chevron_right, color: _kNeutral),
               ],
             ),
           ),
@@ -447,7 +449,7 @@ class _VerificationCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: DplColors.cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -538,14 +540,14 @@ class _PhotoDetailSheetState extends ConsumerState<_PhotoDetailSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD9E2EF),
+                    color: DplColors.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               Row(
                 children: [
-                  const Icon(Icons.image_outlined, color: _kPrimary),
+                  Icon(Icons.image_outlined, color: _kPrimary),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
@@ -584,7 +586,7 @@ class _PhotoDetailSheetState extends ConsumerState<_PhotoDetailSheet> {
                                   child: Text(
                                     e.toString(),
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(color: _kBad),
+                                    style: TextStyle(color: _kBad),
                                   ),
                                 ),
                               ),
@@ -593,7 +595,7 @@ class _PhotoDetailSheetState extends ConsumerState<_PhotoDetailSheet> {
                                   return Center(
                                     child: Text(
                                       res.error ?? 'Photo unavailable',
-                                      style: const TextStyle(color: _kBad),
+                                      style: TextStyle(color: _kBad),
                                     ),
                                   );
                                 }
@@ -655,16 +657,16 @@ class _PhotoDetailSheetState extends ConsumerState<_PhotoDetailSheet> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFECEA),
+                            color: VistarPalette.badBg,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: const Color(0xFFFFB4AA),
+                              color: VistarPalette.badLine,
                             ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Row(
+                              Row(
                                 children: [
                                   Icon(Icons.flag, color: _kBad, size: 16),
                                   SizedBox(width: 6),
@@ -681,8 +683,8 @@ class _PhotoDetailSheetState extends ConsumerState<_PhotoDetailSheet> {
                                 const SizedBox(height: 4),
                                 Text(
                                   item.flagReason!,
-                                  style: const TextStyle(
-                                    color: Color(0xFF8F1D18),
+                                  style: TextStyle(
+                                    color: VistarPalette.badInk,
                                   ),
                                 ),
                               ],
@@ -690,7 +692,7 @@ class _PhotoDetailSheetState extends ConsumerState<_PhotoDetailSheet> {
                                 Text(
                                   DateFormat('d MMM yyyy, HH:mm')
                                       .format(item.flaggedAt!.toLocal()),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: _kNeutral,
                                     fontSize: 11,
                                   ),
@@ -710,7 +712,7 @@ class _PhotoDetailSheetState extends ConsumerState<_PhotoDetailSheet> {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _kBad,
-                      side: const BorderSide(color: _kBad),
+                      side: BorderSide(color: _kBad),
                     ),
                     icon: _flagging
                         ? const SizedBox(
@@ -781,7 +783,7 @@ class _MetaRow extends StatelessWidget {
             width: 88,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: _kNeutral,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -879,7 +881,7 @@ class _Pager extends StatelessWidget {
           ),
           Text(
             'Page $page of $last',
-            style: const TextStyle(
+            style: TextStyle(
               color: _kNeutral,
               fontWeight: FontWeight.w700,
             ),

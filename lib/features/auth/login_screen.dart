@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../core/theme/theme_mode_provider.dart';
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
+import '../../core/widgets/vistar/vistar_ambient.dart';
+import '../../core/widgets/vistar/vistar_brand.dart';
+import '../../core/widgets/vistar/vistar_buttons.dart';
 import '../dpl/core/dpl_organization_provider.dart';
-import '../dpl/core/widgets/vistar_logo.dart';
 import '../dpl/models/dpl_organization.dart';
 import 'auth_repository.dart';
 import 'auth_provider.dart';
-
-// Vistar brand palette — mirrors DplColors.
-const _kBrandPurple = Color(0xFF6B1F8C);
-const _kBrandPurpleDark = Color(0xFF4A1163);
-const _kBrandOrange = Color(0xFFE54B2A);
 
 /// Which login backend the form should authenticate against.
 /// - [productivity]: classic Productivity flow (`/auth/login`, username + password)
@@ -153,9 +154,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Could not load organizations.',
-              style: TextStyle(color: Color(0xFF5F6B7A)),
+              style: TextStyle(color: VistarPalette.txt2),
             ),
             TextButton(
               onPressed: submitting
@@ -233,6 +234,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.isLoading;
+    final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
 
     ref.listen(authControllerProvider, (previous, next) {
       if (!mounted) return;
@@ -247,7 +249,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ..showSnackBar(
             SnackBar(
               content: Text(message),
-              backgroundColor: Colors.red.shade700,
+              backgroundColor: VistarPalette.badSolid,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -260,366 +262,562 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Welcome back, $username.'),
-            backgroundColor: Colors.green.shade700,
+            backgroundColor: VistarPalette.okSolid,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
     });
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFFBF5FF), Color(0xFFFFF6EC), Color(0xFFF6E6FA)],
-          ),
-        ),
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 860;
-              final horizontalPadding = isWide ? 48.0 : 20.0;
-              final cardWidth = isWide ? 430.0 : 480.0;
+    final themeToggle = _ThemeToggleButton(
+      isDark: isDark,
+      onPressed: () => ref.read(themeModeProvider.notifier).toggleThemeMode(),
+    );
 
-              return Stack(
-                children: [
-                  Positioned(
-                    top: -80,
-                    right: -40,
-                    child: Container(
-                      width: 220,
-                      height: 220,
-                      decoration: BoxDecoration(
-                        color: _kBrandPurple.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -100,
-                    left: -20,
-                    child: Container(
-                      width: 260,
-                      height: 260,
-                      decoration: BoxDecoration(
-                        color: _kBrandOrange.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Center(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(
-                        horizontalPadding,
-                        24,
-                        horizontalPadding,
-                        24,
-                      ),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: cardWidth),
-                        child: Card(
-                          elevation: 0,
-                          color: Colors.white.withValues(alpha: 0.93),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.all(isWide ? 36 : 24),
-                            child: AutofillGroup(
-                              child: Form(
-                                key: _formKey,
-                                autovalidateMode: _submittedOnce
-                                    ? AutovalidateMode.onUserInteraction
-                                    : AutovalidateMode.disabled,
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Center(
-                                      child: VistarLogo(
-                                        height: 96,
-                                        showWordmark: true,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 18),
-                                    Text(
-                                      _flow == _LoginFlow.vistarPulse
-                                          ? 'Vistar Pulse'
-                                          : 'Productivity',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                            letterSpacing: 0.2,
-                                            color:
-                                                _flow == _LoginFlow.vistarPulse
-                                                ? _kBrandPurpleDark
-                                                : _kBrandOrange,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _flow == _LoginFlow.vistarPulse
-                                          ? 'Sign in to manage daily production loading, shifts, and downtime on the shop floor.'
-                                          : 'Sign in to track classic production entries, quality, and operator activity.',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color: const Color(0xFF5F6B7A),
-                                            height: 1.4,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 18),
-                                    // Flow toggle — Productivity (classic) vs Vistar Pulse (DPL).
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: SegmentedButton<_LoginFlow>(
-                                        segments: const [
-                                          ButtonSegment<_LoginFlow>(
-                                            value: _LoginFlow.productivity,
-                                            label: Text('Productivity'),
-                                            icon: Icon(
-                                              Icons.bar_chart_outlined,
-                                            ),
-                                          ),
-                                          ButtonSegment<_LoginFlow>(
-                                            value: _LoginFlow.vistarPulse,
-                                            label: Text('Vistar Pulse'),
-                                            icon: Icon(Icons.factory_outlined),
-                                          ),
-                                        ],
-                                        selected: {_flow},
-                                        onSelectionChanged: isLoading
-                                            ? null
-                                            : (s) => _onFlowChanged(s.first),
-                                        showSelectedIcon: false,
-                                        style: ButtonStyle(
-                                          backgroundColor:
-                                              WidgetStateProperty.resolveWith<
-                                                Color?
-                                              >((states) {
-                                                if (states.contains(
-                                                  WidgetState.selected,
-                                                )) {
-                                                  return _flow ==
-                                                          _LoginFlow.vistarPulse
-                                                      ? _kBrandPurple
-                                                      : _kBrandOrange;
-                                                }
-                                                return Colors.white;
-                                              }),
-                                          foregroundColor:
-                                              WidgetStateProperty.resolveWith<
-                                                Color?
-                                              >((states) {
-                                                if (states.contains(
-                                                  WidgetState.selected,
-                                                )) {
-                                                  return Colors.white;
-                                                }
-                                                return const Color(0xFF5F6B7A);
-                                              }),
-                                          side: WidgetStateProperty.all(
-                                            BorderSide(
-                                              color:
-                                                  _flow ==
-                                                      _LoginFlow.vistarPulse
-                                                  ? _kBrandPurple
-                                                  : _kBrandOrange,
-                                              width: 1.4,
-                                            ),
-                                          ),
-                                          textStyle: WidgetStateProperty.all(
-                                            const TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    if (_inlineError != null) ...[
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 10,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFFFE9E8),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          border: Border.all(
-                                            color: const Color(0xFFFFB1AC),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.error_outline,
-                                              color: Color(0xFFB3261E),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                _inlineError!,
-                                                style: const TextStyle(
-                                                  color: Color(0xFF8F1D18),
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                    ],
-                                    if (_flow == _LoginFlow.vistarPulse) ...[
-                                      _buildOrgSelector(isLoading),
-                                      const SizedBox(height: 14),
-                                    ],
-                                    TextFormField(
-                                      controller: _usernameController,
-                                      focusNode: _usernameFocusNode,
-                                      autofillHints: [
-                                        _flow == _LoginFlow.vistarPulse
-                                            ? AutofillHints.email
-                                            : AutofillHints.username,
-                                      ],
-                                      keyboardType:
-                                          _flow == _LoginFlow.vistarPulse
-                                          ? TextInputType.emailAddress
-                                          : TextInputType.text,
-                                      textInputAction: TextInputAction.next,
-                                      onFieldSubmitted: (_) =>
-                                          _passwordFocusNode.requestFocus(),
-                                      enabled: !isLoading,
-                                      onChanged: (_) {
-                                        if (_inlineError != null) {
-                                          setState(() => _inlineError = null);
-                                        }
-                                      },
-                                      decoration: InputDecoration(
-                                        labelText:
-                                            _flow == _LoginFlow.vistarPulse
-                                            ? 'Email'
-                                            : 'Username',
-                                        hintText:
-                                            _flow == _LoginFlow.vistarPulse
-                                            ? 'name@vistarlogitek.com'
-                                            : 'Enter your username',
-                                        prefixIcon: Icon(
-                                          _flow == _LoginFlow.vistarPulse
-                                              ? Icons.alternate_email
-                                              : Icons.person_outline,
-                                        ),
-                                      ),
-                                      validator: _validateUsername,
-                                    ),
-                                    const SizedBox(height: 14),
-                                    TextFormField(
-                                      controller: _passwordController,
-                                      focusNode: _passwordFocusNode,
-                                      autofillHints: const [
-                                        AutofillHints.password,
-                                      ],
-                                      textInputAction: TextInputAction.done,
-                                      enabled: !isLoading,
-                                      obscureText: _obscurePassword,
-                                      onChanged: (_) {
-                                        if (_inlineError != null) {
-                                          setState(() => _inlineError = null);
-                                        }
-                                      },
-                                      onFieldSubmitted: (_) => _onLogin(),
-                                      decoration: InputDecoration(
-                                        labelText: 'Password',
-                                        hintText: 'Enter your password',
-                                        prefixIcon: const Icon(
-                                          Icons.lock_outline,
-                                        ),
-                                        suffixIcon: IconButton(
-                                          onPressed: () => setState(
-                                            () => _obscurePassword =
-                                                !_obscurePassword,
-                                          ),
-                                          icon: Icon(
-                                            _obscurePassword
-                                                ? Icons.visibility_off_outlined
-                                                : Icons.visibility_outlined,
-                                          ),
-                                        ),
-                                      ),
-                                      validator: _validatePassword,
-                                    ),
-                                    const SizedBox(height: 22),
-                                    SizedBox(
-                                      height: 52,
-                                      child: FilledButton(
-                                        onPressed: isLoading ? null : _onLogin,
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor:
-                                              _flow == _LoginFlow.vistarPulse
-                                              ? _kBrandPurple
-                                              : _kBrandOrange,
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                          ),
-                                        ),
-                                        child: isLoading
-                                            ? const SizedBox(
-                                                width: 22,
-                                                height: 22,
-                                                child: Center(
-                                                  child: ShimmerButtonDots(
-                                                    size: 7,
-                                                    spacing: 3.5,
-                                                  ),
-                                                ),
-                                              )
-                                            : Text(
-                                                _flow == _LoginFlow.vistarPulse
-                                                    ? 'Sign in to Vistar Pulse'
-                                                    : 'Sign in to Productivity',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    const Text(
-                                      'Need access help? Contact your supervisor or admin.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: Color(0xFF5F6B7A),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
+    return Scaffold(
+      backgroundColor: VistarPalette.bg,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 860;
+          final form = _buildForm(context, isLoading, isWide: isWide);
+
+          if (isWide) {
+            // Split layout: brand "art" panel | form panel (1.05fr .95fr).
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Expanded(flex: 105, child: _LoginArtPanel()),
+                Expanded(
+                  flex: 95,
+                  child: ColoredBox(
+                    color: VistarPalette.bg2,
+                    child: SafeArea(
+                      child: Stack(
+                        children: [
+                          Center(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 48,
+                                vertical: 32,
+                              ),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 420,
                                 ),
+                                child: form,
                               ),
                             ),
                           ),
+                          Positioned(top: 16, right: 16, child: themeToggle),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          // Phone / narrow: condensed brand header above the form card.
+          return VistarAmbientScaffoldBody(
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 480),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Center(child: VistarWordmark(height: 88)),
+                            const SizedBox(height: 18),
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(
+                                22,
+                                24,
+                                22,
+                                22,
+                              ),
+                              decoration: BoxDecoration(
+                                color: VistarPalette.surface,
+                                borderRadius: BorderRadius.circular(
+                                  VistarPalette.rLg,
+                                ),
+                                border: Border.all(color: VistarPalette.line),
+                                boxShadow: VistarPalette.shadow,
+                              ),
+                              child: form,
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
+                  Positioned(top: 8, right: 8, child: themeToggle),
                 ],
-              );
-            },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// The sign-in form — identical fields, validation and actions in both
+  /// layouts; only the frame around it changes.
+  Widget _buildForm(
+    BuildContext context,
+    bool isLoading, {
+    required bool isWide,
+  }) {
+    final isPulse = _flow == _LoginFlow.vistarPulse;
+
+    return AutofillGroup(
+      child: Form(
+        key: _formKey,
+        autovalidateMode: _submittedOnce
+            ? AutovalidateMode.onUserInteraction
+            : AutovalidateMode.disabled,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const VistarMark(size: 40),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    isPulse ? 'Vistar Pulse' : 'Productivity',
+                    style: GoogleFonts.bricolageGrotesque(
+                      fontSize: isWide ? 30 : 26,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
+                      height: 1.05,
+                      color: VistarPalette.txt,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              isPulse
+                  ? 'Sign in to manage daily production loading, shifts, and downtime on the shop floor.'
+                  : 'Sign in to track classic production entries, quality, and operator activity.',
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                height: 1.45,
+                color: VistarPalette.txt2,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'SIGN IN WITH',
+              style: GoogleFonts.manrope(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.6,
+                color: VistarPalette.txt3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Flow toggle — Productivity (classic) vs Vistar Pulse (DPL),
+            // as a role-chip grid; the active chip carries the ribbon.
+            Row(
+              children: [
+                Expanded(
+                  child: _FlowChip(
+                    label: 'Productivity',
+                    icon: Icons.bar_chart_outlined,
+                    selected: !isPulse,
+                    onTap: isLoading
+                        ? null
+                        : () => _onFlowChanged(_LoginFlow.productivity),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _FlowChip(
+                    label: 'Vistar Pulse',
+                    icon: Icons.factory_outlined,
+                    selected: isPulse,
+                    onTap: isLoading
+                        ? null
+                        : () => _onFlowChanged(_LoginFlow.vistarPulse),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            if (_inlineError != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: VistarPalette.badBg,
+                  borderRadius: BorderRadius.circular(VistarPalette.rSm),
+                  border: Border.all(color: VistarPalette.badLine),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: VistarPalette.bad),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _inlineError!,
+                        style: TextStyle(
+                          color: VistarPalette.badInk,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (isPulse) ...[
+              _buildOrgSelector(isLoading),
+              const SizedBox(height: 14),
+            ],
+            TextFormField(
+              controller: _usernameController,
+              focusNode: _usernameFocusNode,
+              autofillHints: [
+                isPulse ? AutofillHints.email : AutofillHints.username,
+              ],
+              keyboardType: isPulse
+                  ? TextInputType.emailAddress
+                  : TextInputType.text,
+              textInputAction: TextInputAction.next,
+              onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
+              enabled: !isLoading,
+              onChanged: (_) {
+                if (_inlineError != null) {
+                  setState(() => _inlineError = null);
+                }
+              },
+              decoration: InputDecoration(
+                labelText: isPulse ? 'Email' : 'Username',
+                hintText: isPulse
+                    ? 'name@vistarlogitek.com'
+                    : 'Enter your username',
+                prefixIcon: Icon(
+                  isPulse ? Icons.alternate_email : Icons.person_outline,
+                ),
+              ),
+              validator: _validateUsername,
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _passwordController,
+              focusNode: _passwordFocusNode,
+              autofillHints: const [AutofillHints.password],
+              textInputAction: TextInputAction.done,
+              enabled: !isLoading,
+              obscureText: _obscurePassword,
+              onChanged: (_) {
+                if (_inlineError != null) {
+                  setState(() => _inlineError = null);
+                }
+              },
+              onFieldSubmitted: (_) => _onLogin(),
+              decoration: InputDecoration(
+                labelText: 'Password',
+                hintText: 'Enter your password',
+                prefixIcon: const Icon(Icons.lock_outline),
+                suffixIcon: IconButton(
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                  ),
+                ),
+              ),
+              validator: _validatePassword,
+            ),
+            const SizedBox(height: 22),
+            VistarRibbonButton(
+              height: 52,
+              onPressed: isLoading ? null : _onLogin,
+              child: isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: Center(
+                        child: ShimmerButtonDots(size: 7, spacing: 3.5),
+                      ),
+                    )
+                  : Text(
+                      isPulse
+                          ? 'Sign in to Vistar Pulse'
+                          : 'Sign in to Productivity',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Need access help? Contact your supervisor or admin.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: VistarPalette.txt3,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// `.role-chip` — one of the two sign-in flows. The active chip wears the
+/// ribbon; the other sits quietly on the surface scale.
+class _FlowChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  const _FlowChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(VistarPalette.rSm);
+    final fg = selected ? Colors.white : VistarPalette.txt2;
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 46,
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          gradient: selected ? VistarPalette.ribbon : null,
+          color: selected ? null : VistarPalette.surface2,
+          border: selected ? null : Border.all(color: VistarPalette.line2),
+          boxShadow: selected
+              ? const [
+                  BoxShadow(
+                    color: Color(0x66E0218A),
+                    blurRadius: 22,
+                    spreadRadius: -10,
+                    offset: Offset(0, 10),
+                  ),
+                ]
+              : null,
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: radius,
+            onTap: onTap,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 18, color: fg),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.manrope(
+                      color: fg,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Sun / moon switch in the login corner — lets people pick their mode
+/// before signing in. Light is the default.
+class _ThemeToggleButton extends StatelessWidget {
+  final bool isDark;
+  final VoidCallback onPressed;
+
+  const _ThemeToggleButton({required this.isDark, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+      child: Material(
+        color: VistarPalette.surface2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(VistarPalette.rSm),
+          side: BorderSide(color: VistarPalette.line),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(VistarPalette.rSm),
+          onTap: onPressed,
+          child: SizedBox(
+            width: 42,
+            height: 42,
+            child: Icon(
+              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              size: 20,
+              color: VistarPalette.txt2,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The brand "art" half of the wide login: aurora glows, an oversized
+/// faint S, the wordmark, a pitch with one ribbon word, and three facts.
+class _LoginArtPanel extends StatelessWidget {
+  const _LoginArtPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = VistarPalette.isDark;
+    final headline = GoogleFonts.bricolageGrotesque(
+      fontSize: 48,
+      height: 1.04,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -1.2,
+      color: VistarPalette.txt,
+    );
+    return ClipRect(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const VistarAmbient(watermark: false),
+          // Huge rotated S, opacity .16.
+          Positioned(
+            right: -120,
+            bottom: -140,
+            child: IgnorePointer(
+              child: Transform.rotate(
+                angle: -0.18,
+                child: VistarMark(size: 620, opacity: dark ? 0.16 : 0.12),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(56, 44, 56, 44),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const VistarWordmark(height: 88),
+                  const Spacer(),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Text.rich(
+                      TextSpan(
+                        style: headline,
+                        children: [
+                          const TextSpan(
+                            text: 'Every shift, every pallet,\none ',
+                          ),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.baseline,
+                            baseline: TextBaseline.alphabetic,
+                            child: VistarRibbonText('pulse', style: headline),
+                          ),
+                          const TextSpan(text: '.'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: Text(
+                      'Plan, produce, inspect and dispatch — live from the '
+                      'shop floor to the loading dock, for every role on '
+                      'the team.',
+                      style: GoogleFonts.manrope(
+                        fontSize: 15.5,
+                        height: 1.55,
+                        color: VistarPalette.txt2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 34),
+                  const Wrap(
+                    spacing: 36,
+                    runSpacing: 18,
+                    children: [
+                      _ArtStat(
+                        value: 'Live',
+                        caption: 'Shift timers & downtime',
+                      ),
+                      _ArtStat(value: 'QR', caption: 'Signed dispatch slips'),
+                      _ArtStat(
+                        value: 'Plan → Dock',
+                        caption: 'One flow, every role',
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArtStat extends StatelessWidget {
+  final String value;
+  final String caption;
+
+  const _ArtStat({required this.value, required this.caption});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        VistarRibbonText(
+          value,
+          style: GoogleFonts.bricolageGrotesque(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.4,
+            height: 1.0,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          caption,
+          style: GoogleFonts.manrope(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: VistarPalette.txt3,
+          ),
+        ),
+      ],
     );
   }
 }

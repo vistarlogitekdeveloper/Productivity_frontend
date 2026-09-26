@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../models/dpl_pallet.dart';
 import '../../models/dpl_spd.dart';
@@ -98,14 +99,14 @@ class WheelTransferBoard extends StatelessWidget {
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: hovering ? DplColors.primaryTint : Colors.white,
+            color: hovering ? DplColors.primaryTint : DplColors.cardBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: over
                   ? DplColors.error
                   : hovering
                       ? DplColors.primary
-                      : const Color(0xFFE2EAF6),
+                      : DplColors.divider,
               width: hovering || over ? 1.6 : 1,
             ),
           ),
@@ -144,7 +145,7 @@ class WheelTransferBoard extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
                     'Too many — a full pallet is $standard.',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
                       color: DplColors.error,
@@ -152,11 +153,11 @@ class WheelTransferBoard extends StatelessWidget {
                   ),
                 )
               else if (wheels.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 2),
                   child: Text(
                     'Empty — this pallet stops existing.',
-                    style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                    style: TextStyle(fontSize: 11.5, color: DplColors.textSecondary),
                   ),
                 ),
               const SizedBox(height: 8),
@@ -167,13 +168,13 @@ class WheelTransferBoard extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: const Color(0xFFD5DCE6),
+                      color: DplColors.divider,
                       style: BorderStyle.solid,
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Drop wheels here',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9AA5B4)),
+                    style: TextStyle(fontSize: 12, color: DplColors.textTertiary),
                   ),
                 )
               else
@@ -196,13 +197,13 @@ class WheelTransferBoard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
+        color: VistarPalette.surface2,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: DplColors.divider),
       ),
       child: Row(
         children: [
-          const Icon(Icons.drag_indicator, size: 16, color: Color(0xFF9AA5B4)),
+          Icon(Icons.drag_indicator, size: 16, color: DplColors.textTertiary),
           const SizedBox(width: 6),
           Expanded(
             child: Column(
@@ -221,9 +222,9 @@ class WheelTransferBoard extends StatelessWidget {
                       if (w.shiftCode.isNotEmpty) 'Shift ${w.shiftCode}',
                       if (w.machineName.isNotEmpty) w.machineName,
                     ].join(' · '),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF6B7280),
+                      color: DplColors.textSecondary,
                     ),
                   ),
               ],

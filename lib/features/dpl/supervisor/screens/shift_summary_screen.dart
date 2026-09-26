@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -234,7 +235,7 @@ class _SummaryBody extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -242,23 +243,23 @@ class _SummaryBody extends StatelessWidget {
               Row(
                 children: [
                   Expanded(child: _big('Plan', fmt.format(summary.totals.planQty),
-                      const Color(0xFF1D4ED8))),
+                      VistarPalette.info)),
                   Expanded(child: _big('Actual', fmt.format(summary.totals.actualQty),
-                      const Color(0xFF047857))),
+                      VistarPalette.ok)),
                   Expanded(child: _big('Completion', '$pct%',
-                      const Color(0xFFB45309))),
+                      VistarPalette.warn)),
                 ],
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.timer_off_outlined,
-                      size: 16, color: Color(0xFF5D6A7A)),
+                  Icon(Icons.timer_off_outlined,
+                      size: 16, color: VistarPalette.txt2),
                   const SizedBox(width: 6),
                   Text(
                     'Total downtime: ${summary.totals.totalDowntimeMinutes} min',
-                    style: const TextStyle(
-                      color: Color(0xFF5D6A7A),
+                    style: TextStyle(
+                      color: VistarPalette.txt2,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -274,30 +275,30 @@ class _SummaryBody extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFFE6F4EA),
+              color: VistarPalette.okBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF15803D)),
+              border: Border.all(color: VistarPalette.ok),
             ),
             child: Row(
               children: [
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF15803D),
+                  decoration: BoxDecoration(
+                    color: VistarPalette.okSolid,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.check, color: Colors.white),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Shift submitted',
                         style: TextStyle(
-                          color: Color(0xFF14532D),
+                          color: VistarPalette.okInk,
                           fontWeight: FontWeight.w900,
                           fontSize: 15,
                         ),
@@ -307,7 +308,7 @@ class _SummaryBody extends StatelessWidget {
                         "Today's production has been locked. "
                         'Pull to refresh if you need the latest view.',
                         style: TextStyle(
-                          color: Color(0xFF166534),
+                          color: VistarPalette.ok,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -333,18 +334,18 @@ class _SummaryBody extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
+              color: VistarPalette.warnBg,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFCD34D)),
+              border: Border.all(color: VistarPalette.warnLine),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Cannot submit yet:',
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF92400E),
+                    color: VistarPalette.warnInk,
                   ),
                 ),
                 for (final b in blockers)
@@ -352,8 +353,8 @@ class _SummaryBody extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       '• $b',
-                      style: const TextStyle(
-                        color: Color(0xFF92400E),
+                      style: TextStyle(
+                        color: VistarPalette.warnInk,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -368,8 +369,8 @@ class _SummaryBody extends StatelessWidget {
           child: FilledButton.icon(
             style: alreadySubmitted
                 ? FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF15803D),
-                    disabledBackgroundColor: const Color(0xFF15803D),
+                    backgroundColor: VistarPalette.okSolid,
+                    disabledBackgroundColor: VistarPalette.okSolid,
                     disabledForegroundColor: Colors.white,
                   )
                 : null,
@@ -408,8 +409,8 @@ class _SummaryBody extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF5D6A7A),
+          style: TextStyle(
+            color: VistarPalette.txt2,
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
@@ -437,10 +438,10 @@ class _MachineCard extends StatelessWidget {
     final pct = (m.completionPct * 100).round();
     final variance = m.variance;
     final varianceColor = variance == 0
-        ? const Color(0xFF5D6A7A)
+        ? VistarPalette.txt2
         : (variance > 0
-            ? const Color(0xFF047857)
-            : const Color(0xFFB3261E));
+            ? VistarPalette.ok
+            : VistarPalette.bad);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -448,7 +449,7 @@ class _MachineCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,8 +469,8 @@ class _MachineCard extends StatelessWidget {
               ),
               Text(
                 '$pct%',
-                style: const TextStyle(
-                  color: Color(0xFFB45309),
+                style: TextStyle(
+                  color: VistarPalette.warn,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -492,13 +493,13 @@ class _MachineCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.timer_off_outlined,
-                  size: 14, color: Color(0xFF5D6A7A)),
+              Icon(Icons.timer_off_outlined,
+                  size: 14, color: VistarPalette.txt2),
               const SizedBox(width: 4),
               Text(
                 'Downtime: ${m.downtimeMinutes} min',
-                style: const TextStyle(
-                  color: Color(0xFF5D6A7A),
+                style: TextStyle(
+                  color: VistarPalette.txt2,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),
@@ -508,8 +509,8 @@ class _MachineCard extends StatelessWidget {
                 'Items: ${m.itemsCompleted}/${m.itemsTotal} done',
                 style: TextStyle(
                   color: m.itemsIncomplete > 0
-                      ? const Color(0xFFB45309)
-                      : const Color(0xFF047857),
+                      ? VistarPalette.warn
+                      : VistarPalette.ok,
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
                 ),
@@ -529,14 +530,14 @@ class _MachineCard extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
+                      color: VistarPalette.warnBg,
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFFFCD34D)),
+                      border: Border.all(color: VistarPalette.warnLine),
                     ),
                     child: Text(
                       '${r.reasonName} · ${r.minutes}m',
-                      style: const TextStyle(
-                        color: Color(0xFF92400E),
+                      style: TextStyle(
+                        color: VistarPalette.warnInk,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -556,8 +557,8 @@ class _MachineCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF5D6A7A),
+          style: TextStyle(
+            color: VistarPalette.txt2,
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),

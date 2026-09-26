@@ -68,12 +68,12 @@ class OpenTripsSection extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
               child: Row(
                 children: [
-                  const Icon(Icons.local_shipping_rounded,
+                  Icon(Icons.local_shipping_rounded,
                       size: 16, color: DplColors.primaryDark),
                   const SizedBox(width: 6),
                   Text(
                     'OPEN TRIPS (${trips.length})',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.0,
@@ -88,7 +88,7 @@ class OpenTripsSection extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: _OpenTripCard(trip: t),
               ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: Divider(color: DplColors.divider, height: 1),
             ),
@@ -115,10 +115,10 @@ class _NoOpenTrips extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.local_shipping_outlined,
+            Icon(Icons.local_shipping_outlined,
                 size: 18, color: DplColors.textSecondary),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text(
                 'No open trips. Once the manager submits a Plan Trip, '
                 'it will appear here ready to dispatch.',
@@ -569,7 +569,7 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
               slipIds: _priorSlipIds(t.plans),
             ),
           for (final plan in openPlans) ...[
-            const Divider(height: 1, color: DplColors.divider),
+            Divider(height: 1, color: DplColors.divider),
             _PlanRow(
               plan: plan,
               isSelected: _isSelected(plan),
@@ -595,7 +595,7 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
           // pieces this system printed labels for. Informational while
           // DplFeatureFlags.enforceLabelScanOnSend is off.
           if (openPlans.isNotEmpty) ...[
-            const Divider(height: 1, color: DplColors.divider),
+            Divider(height: 1, color: DplColors.divider),
             _ScanPanel(
               progress: _scanProgress,
               loading: _loadingScans,
@@ -608,7 +608,7 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
           ],
           // Vehicle + notes — apply to whichever plans are checked.
           if (openPlans.isNotEmpty) ...[
-            const Divider(height: 1, color: DplColors.divider),
+            Divider(height: 1, color: DplColors.divider),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               child: Column(
@@ -637,7 +637,7 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
                 ],
               ),
             ),
-            const Divider(height: 1, color: DplColors.divider),
+            Divider(height: 1, color: DplColors.divider),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               child: Row(
@@ -743,12 +743,12 @@ class _ScanPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.qr_code_scanner_rounded,
+              Icon(Icons.qr_code_scanner_rounded,
                   size: 16, color: DplColors.textSecondary),
               const SizedBox(width: 6),
               Text(
                 enforced ? 'LABEL SCAN' : 'LABEL SCAN · OPTIONAL',
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,
@@ -821,7 +821,7 @@ class _ScanPlanRow extends StatelessWidget {
                 ? Icons.check_circle_rounded
                 : Icons.radio_button_unchecked_rounded,
             size: 15,
-            color: complete ? const Color(0xFF15803D) : DplColors.textSecondary,
+            color: complete ? DplColors.success : DplColors.textSecondary,
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -844,7 +844,7 @@ class _ScanPlanRow extends StatelessWidget {
               // Amber only when the shortfall actually stops the send. With
               // the gate off it is a running total, not a fault.
               color: complete
-                  ? const Color(0xFF15803D)
+                  ? DplColors.success
                   : (enforced
                       ? DplColors.warning
                       : DplColors.textSecondary),
@@ -891,14 +891,14 @@ class _PriorSlipsSummary extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_outline_rounded,
+          Icon(Icons.check_circle_outline_rounded,
               size: 14, color: DplColors.success),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               '$slippedCount plan${slippedCount == 1 ? "" : "s"} already '
               'slipped · ${fmt.format(slippedQty)} NOS',
-              style: const TextStyle(
+              style: TextStyle(
                 color: DplColors.success,
                 fontWeight: FontWeight.w800,
                 fontSize: 11.5,
@@ -914,14 +914,14 @@ class _PriorSlipsSummary extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: DplColors.cardBg,
                       borderRadius: BorderRadius.circular(999),
                       border:
                           Border.all(color: DplColors.success, width: 0.8),
                     ),
                     child: Text(
                       'Slip #$id',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: DplColors.success,
                         fontWeight: FontWeight.w800,
                         fontSize: 10.5,
@@ -950,20 +950,20 @@ class _TripHeader extends StatelessWidget {
     final plantLabel =
         trip.plantName.isNotEmpty ? trip.plantName : trip.plantCode;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: DplColors.primaryTint,
         borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
       ),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Row(
         children: [
-          const Icon(Icons.local_shipping_rounded,
+          Icon(Icons.local_shipping_rounded,
               color: DplColors.primaryDark, size: 20),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
               plantLabel.isEmpty ? 'Trip ${trip.tripNumber}' : plantLabel,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 14,
                 color: DplColors.primaryDark,
@@ -976,12 +976,12 @@ class _TripHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: DplColors.cardBg,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 'Trip ${trip.tripNumber}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.primaryDark,
                   fontWeight: FontWeight.w800,
                   fontSize: 10.5,
@@ -997,7 +997,7 @@ class _TripHeader extends StatelessWidget {
                 color: DplColors.warningBg,
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: const Text(
+              child: Text(
                 'Partial',
                 style: TextStyle(
                   color: DplColors.warning,
@@ -1010,7 +1010,7 @@ class _TripHeader extends StatelessWidget {
           Text(
             '${fmt.format(trip.openQty ?? 0)} / '
             '${fmt.format(trip.totalQty ?? 0)} NOS',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.primaryDark,
               fontWeight: FontWeight.w800,
               fontSize: 12,
@@ -1100,7 +1100,7 @@ class _PlanRow extends StatelessWidget {
                 ),
                 child: Text(
                   plan.description.isEmpty ? '-' : plan.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.primaryDark,
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
@@ -1125,7 +1125,7 @@ class _PlanRow extends StatelessWidget {
                     if (plan.machineName.isNotEmpty)
                       Text(
                         plan.machineName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: DplColors.textSecondary,
                           fontWeight: FontWeight.w600,
                           fontSize: 10.5,
@@ -1185,7 +1185,7 @@ class _PlanRow extends StatelessWidget {
               padding: const EdgeInsets.only(left: 32, top: 4),
               child: Text(
                 _statusLabel(plan),
-                style: const TextStyle(
+                style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w700,
                   fontSize: 10.5,
@@ -1200,11 +1200,11 @@ class _PlanRow extends StatelessWidget {
                 maxLength: 240,
                 decoration: InputDecoration(
                   isDense: true,
-                  prefixIcon: const Icon(Icons.flag_outlined,
+                  prefixIcon: Icon(Icons.flag_outlined,
                       size: 16, color: DplColors.warning),
                   hintText:
                       'Variance note (required — qty reduced by ${plan.qty - qty})',
-                  hintStyle: const TextStyle(
+                  hintStyle: TextStyle(
                     color: DplColors.warning,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
@@ -1338,7 +1338,7 @@ class _QtyFieldState extends State<_QtyField> {
           borderSide: BorderSide(color: borderColor),
         ),
         helperText: 'max ${widget.plannedQty}',
-        helperStyle: const TextStyle(
+        helperStyle: TextStyle(
           fontSize: 9.5,
           color: DplColors.textSecondary,
           fontWeight: FontWeight.w600,
@@ -1388,12 +1388,12 @@ class _PackHint extends StatelessWidget {
       // Clean state — just inform the dispatcher of the pack size.
       return Row(
         children: [
-          const Icon(Icons.all_inbox_outlined,
+          Icon(Icons.all_inbox_outlined,
               size: 13, color: DplColors.textSecondary),
           const SizedBox(width: 4),
           Text(
             'Pack: ${fmt.format(pack)} NOS',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.textSecondary,
               fontWeight: FontWeight.w700,
               fontSize: 10.5,
@@ -1410,11 +1410,11 @@ class _PackHint extends StatelessWidget {
       spacing: 4,
       runSpacing: 4,
       children: [
-        const Icon(Icons.warning_amber_rounded,
+        Icon(Icons.warning_amber_rounded,
             size: 13, color: DplColors.warning),
         Text(
           'Not a multiple of $pack — try',
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.warning,
             fontWeight: FontWeight.w700,
             fontSize: 10.5,
@@ -1447,7 +1447,7 @@ class _PackSuggestionChip extends StatelessWidget {
         ),
         child: Text(
           '$value',
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.warning,
             fontWeight: FontWeight.w800,
             fontSize: 10.5,
@@ -1473,7 +1473,7 @@ class _AvailabilityHint extends StatelessWidget {
     final fmt = NumberFormat.decimalPattern();
     if (available == 0) {
       return Row(
-        children: const [
+        children: [
           Icon(Icons.block_rounded, size: 13, color: DplColors.warning),
           SizedBox(width: 4),
           Text(
@@ -1490,12 +1490,12 @@ class _AvailabilityHint extends StatelessWidget {
     if (currentQty > available) {
       return Row(
         children: [
-          const Icon(Icons.error_outline_rounded,
+          Icon(Icons.error_outline_rounded,
               size: 13, color: DplColors.error),
           const SizedBox(width: 4),
           Text(
             'Reduce qty — only ${fmt.format(available)} NOS available.',
-            style: const TextStyle(
+            style: TextStyle(
               color: DplColors.error,
               fontWeight: FontWeight.w800,
               fontSize: 10.5,
@@ -1506,12 +1506,12 @@ class _AvailabilityHint extends StatelessWidget {
     }
     return Row(
       children: [
-        const Icon(Icons.inventory_2_outlined,
+        Icon(Icons.inventory_2_outlined,
             size: 13, color: DplColors.textSecondary),
         const SizedBox(width: 4),
         Text(
           '${fmt.format(available)} NOS available · planned ${fmt.format(plannedQty)}',
-          style: const TextStyle(
+          style: TextStyle(
             color: DplColors.textSecondary,
             fontWeight: FontWeight.w700,
             fontSize: 10.5,
@@ -1572,7 +1572,7 @@ class _OptionalText extends StatelessWidget {
           fontWeight: required ? FontWeight.w700 : FontWeight.normal,
         ),
         errorText: showError ? errorText : null,
-        errorStyle: const TextStyle(
+        errorStyle: TextStyle(
           fontSize: 11,
           color: DplColors.error,
           fontWeight: FontWeight.w700,

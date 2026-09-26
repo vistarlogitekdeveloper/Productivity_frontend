@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/vistar_palette.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
@@ -118,7 +119,8 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
             controller: _scanCtrl,
             focusNode: _scanFocus,
             enabled: !_busy,
-            autofocus: true,
+            // NOT autofocused: the handheld delivers here by position, and a
+            // soft keyboard on entry is pure obstruction on a rugged device.
             textInputAction: TextInputAction.done,
             textCapitalization: TextCapitalization.characters,
             decoration: const InputDecoration(
@@ -239,7 +241,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
                 ),
                 child: Text(
                   p.typeLabel.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w800,
                     color: DplColors.primary,
@@ -252,7 +254,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
           Text(
             '${p.customerPartNo}'
             '${p.partDescription.isEmpty ? '' : ' · ${p.partDescription}'}',
-            style: const TextStyle(fontSize: 12.5, color: Color(0xFF5D6A7A)),
+            style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
           ),
           const SizedBox(height: 6),
           Text(
@@ -274,10 +276,10 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
               child: Text(
                 'Already stored at ${r.current!.code}. Saving a different rack '
                 'MOVES it, and frees the space it is using now.',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF92400E),
+                  color: VistarPalette.warnInk,
                 ),
               ),
             ),
@@ -311,12 +313,12 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
               // The REASON, not just the code. A suggestion an operator does
               // not understand is one they override at random.
               suggestion.reason,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF5D6A7A)),
+              style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
             )
           else
-            const Text(
+            Text(
               'No rack could be suggested — choose one.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF5D6A7A)),
+              style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
             ),
           const SizedBox(height: 12),
           InkWell(
@@ -327,7 +329,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
               decoration: BoxDecoration(
                 border: Border.all(
                   color: chosen == null
-                      ? const Color(0xFFD5DCE6)
+                      ? VistarPalette.line
                       : DplColors.primary,
                   width: chosen == null ? 1 : 1.5,
                 ),
@@ -339,7 +341,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
                     Icons.warehouse_outlined,
                     size: 20,
                     color: chosen == null
-                        ? const Color(0xFF9AA5B4)
+                        ? DplColors.textTertiary
                         : DplColors.primary,
                   ),
                   const SizedBox(width: 10),
@@ -353,7 +355,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
                             fontWeight: FontWeight.w800,
                             fontSize: 15,
                             color: chosen == null
-                                ? const Color(0xFF9AA5B4)
+                                ? DplColors.textTertiary
                                 : DplColors.textPrimary,
                           ),
                         ),
@@ -361,9 +363,9 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
                           Text(
                             '${chosen.zone.isEmpty ? '' : '${chosen.zone} · '}'
                             'room for ${chosen.freeQty}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11.5,
-                              color: Color(0xFF6B7280),
+                              color: DplColors.textSecondary,
                             ),
                           ),
                       ],
@@ -378,10 +380,10 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
             const SizedBox(height: 8),
             Text(
               'Changed from the suggested ${suggestion?.code ?? ''}.',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFFD97706),
+                color: DplColors.warning,
               ),
             ),
           ],

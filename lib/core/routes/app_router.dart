@@ -44,6 +44,7 @@ import '../../features/dpl/supervisor/screens/supervisor_shell.dart';
 import '../../features/production_entry/production_entry_screen.dart';
 import '../../features/workspace/workspace_screen.dart';
 import '../constants/app_constants.dart';
+import '../widgets/vistar/vistar_loaders.dart';
 
 part 'app_router.g.dart';
 
@@ -60,6 +61,8 @@ GoRouter appRouter(Ref ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/login',
+    // Visual only — flashes the breathing-S loader on screen switches.
+    observers: [VistarRouteLoader.instance],
     redirect: (context, state) {
       const loginPath = '/login';
       const adminDashboardPath = '/admin-dashboard';

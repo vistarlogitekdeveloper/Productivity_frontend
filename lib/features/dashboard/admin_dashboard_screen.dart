@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/theme_mode_provider.dart';
+import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../../features/auth/auth_provider.dart';
 import '../../features/auth/change_password_dialog.dart';
@@ -328,20 +329,20 @@ class _ManagementHubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const modules = <_ManagementOption>[
+    final modules = <_ManagementOption>[
       _ManagementOption(
         module: _ManagementModule.user,
         title: 'User Management',
         subtitle: 'Create, update, and organize user access.',
         icon: Icons.group_outlined,
-        accent: Color(0xFF1E63D3),
+        accent: VistarPalette.primary,
       ),
       _ManagementOption(
         module: _ManagementModule.machine,
         title: 'Machine Management',
         subtitle: 'Maintain machine records and production mapping.',
         icon: Icons.precision_manufacturing_outlined,
-        accent: Color(0xFF008A6E),
+        accent: VistarPalette.ok,
       ),
       _ManagementOption(
         module: _ManagementModule.item,
@@ -353,11 +354,11 @@ class _ManagementHubScreen extends StatelessWidget {
     ];
 
     final body = Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF8FBFF), Color(0xFFF2FFF9), Color(0xFFF7F2FF)],
+          colors: [VistarPalette.bg, VistarPalette.bg2, VistarPalette.bg],
         ),
       ),
       child: ListView(
@@ -377,13 +378,13 @@ class _ManagementHubScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.95),
+              color: VistarPalette.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2EAF6)),
+              border: Border.all(color: VistarPalette.line),
             ),
-            child: const Text(
+            child: Text(
               'Use these modules to maintain masters and control system setup.',
-              style: TextStyle(color: Color(0xFF5D6A7A)),
+              style: TextStyle(color: VistarPalette.txt2),
             ),
           ),
           const SizedBox(height: 12),
@@ -459,9 +460,9 @@ class _ManagementOptionCard extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.95),
+            color: VistarPalette.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2EAF6)),
+            border: Border.all(color: VistarPalette.line),
           ),
           child: Row(
             children: [
@@ -488,7 +489,7 @@ class _ManagementOptionCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       option.subtitle,
-                      style: const TextStyle(color: Color(0xFF5D6A7A)),
+                      style: TextStyle(color: VistarPalette.txt2),
                     ),
                   ],
                 ),
@@ -584,7 +585,7 @@ class _AdminHomeView extends ConsumerWidget {
                   countFormat.format(data.kpi.totalProduction),
                   'Weight: ${data.kpi.totalProductionWeight.toStringAsFixed(3)} kg',
                   Icons.inventory_2_outlined,
-                  const Color(0xFF185ADB),
+                  VistarPalette.primary,
                 ),
                 _buildKPICard(
                   context,
@@ -592,7 +593,7 @@ class _AdminHomeView extends ConsumerWidget {
                   countFormat.format(data.kpi.totalRejection),
                   'Weight: ${data.kpi.totalRejectionWeight.toStringAsFixed(3)} kg',
                   Icons.rule_folder_outlined,
-                  const Color(0xFFD64545),
+                  VistarPalette.bad,
                 ),
                 _buildKPICard(
                   context,
@@ -600,7 +601,7 @@ class _AdminHomeView extends ConsumerWidget {
                   '${data.kpi.totalRunningHours.toStringAsFixed(2)} h',
                   'Weight rate: ${data.kpi.totalRunningHoursWeight.toStringAsFixed(2)} kg/hr',
                   Icons.timer_outlined,
-                  const Color(0xFF0E9F6E),
+                  VistarPalette.ok,
                 ),
                 _buildKPICard(
                   context,
@@ -673,7 +674,7 @@ class _AdminHomeView extends ConsumerWidget {
                       barRods: [
                         BarChartRodData(
                           toY: s.totalQuantity.toDouble(),
-                          color: Colors.blue,
+                          color: VistarPalette.info,
                           width: 22,
                         ),
                       ],
@@ -906,9 +907,9 @@ class _AdminHomeView extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: VistarPalette.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EAF6)),
+        border: Border.all(color: VistarPalette.line),
       ),
       child: Wrap(
         spacing: 10,
@@ -1003,7 +1004,7 @@ class _AdminHomeView extends ConsumerWidget {
             barRods: [
               BarChartRodData(
                 toY: e.value.toDouble(),
-                color: const Color(0xFF185ADB),
+                color: VistarPalette.primary,
                 width: 18,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(4),
@@ -1055,7 +1056,7 @@ class _AdminHomeView extends ConsumerWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF4C596A),
+                        color: VistarPalette.txt2,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1069,7 +1070,7 @@ class _AdminHomeView extends ConsumerWidget {
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF687789),
+                        color: VistarPalette.txt2,
                       ),
                     ),
                   ],
@@ -1129,7 +1130,7 @@ class _AdminDashboardLoadingView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: VistarPalette.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Wrap(
@@ -1153,7 +1154,7 @@ class _AdminDashboardLoadingView extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.95),
+                        color: VistarPalette.surface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
@@ -1184,7 +1185,7 @@ class _AdminDashboardLoadingView extends StatelessWidget {
               Container(
                 height: 250,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: VistarPalette.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
@@ -1194,7 +1195,7 @@ class _AdminDashboardLoadingView extends StatelessWidget {
               Container(
                 height: 250,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: VistarPalette.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
@@ -1204,7 +1205,7 @@ class _AdminDashboardLoadingView extends StatelessWidget {
               Container(
                 height: 250,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: VistarPalette.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),

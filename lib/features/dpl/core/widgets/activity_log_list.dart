@@ -76,7 +76,7 @@ class _Entry extends StatelessWidget {
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: DplColors.primary,
                     shape: BoxShape.circle,
                   ),

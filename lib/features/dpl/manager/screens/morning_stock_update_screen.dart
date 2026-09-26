@@ -67,7 +67,7 @@ class _MorningStockUpdateScreenState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _FilterBar(plantCode: plantCode, date: date),
-          const Divider(height: 1, color: DplColors.divider),
+          Divider(height: 1, color: DplColors.divider),
           Expanded(
             child: plantCode == null
                 ? const _PickAPlantPrompt()
@@ -204,7 +204,7 @@ class _FilterBar extends ConsumerWidget {
               loading: () => const _FilterSkeleton(label: 'Plant'),
               error: (e, _) => Text(
                 'Plants error: $e',
-                style: const TextStyle(color: DplColors.error),
+                style: TextStyle(color: DplColors.error),
               ),
               data: (res) {
                 final plants =
@@ -393,7 +393,7 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
@@ -453,7 +453,7 @@ class _SnapshotEditCard extends StatelessWidget {
                 ),
                 child: Text(
                   description.isEmpty ? '-' : description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.primaryDark,
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
@@ -464,7 +464,7 @@ class _SnapshotEditCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   customerPn,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'monospace',
                     color: DplColors.textSecondary,
                     fontWeight: FontWeight.w700,
@@ -475,7 +475,7 @@ class _SnapshotEditCard extends StatelessWidget {
               if (wasEntered && enteredBy != null && enteredBy!.isNotEmpty)
                 Text(
                   'by $enteredBy${enteredAt != null ? "  ·  ${DateFormat('HH:mm').format(enteredAt!.toLocal())}" : ""}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.textTertiary,
                     fontWeight: FontWeight.w600,
                     fontSize: 10.5,
@@ -601,7 +601,7 @@ class _SaveBar extends StatelessWidget {
                 ),
                 child: Text(
                   error!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: DplColors.error,
                     fontWeight: FontWeight.w700,
                   ),
