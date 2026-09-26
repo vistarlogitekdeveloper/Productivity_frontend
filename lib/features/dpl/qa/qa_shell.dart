@@ -1,3 +1,5 @@
+import '../maxion/maxion_tools_screen.dart';
+import '../maxion/sync/sync_status_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -158,7 +160,7 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
       // every tab is mounted at once and, on a freshly-opened one, none of
       // them holds focus.
       activeArea: _tabKeys[tab],
-      child: _buildShell(context, tab, canDirectPrint, canBuildPallets,
+      child: _buildShell(context, tab, perms, canDirectPrint, canBuildPallets,
           canMerge, canPutAway, canSpd, canViewPallets, canSlips, titles,
           pendingCount),
     );
@@ -167,6 +169,7 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
   Widget _buildShell(
     BuildContext context,
     int tab,
+    DplPermissions perms,
     bool canDirectPrint,
     bool canBuildPallets,
     bool canMerge,
@@ -186,6 +189,19 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
         // describing a control that is not on screen.
         subtitle: (tab == 0 && !canDirectPrint) ? const _ShiftSubtitle() : null,
         actions: [
+          // Offline handhelds: queued scans and blocked state, tap to sync.
+          if (perms.can(DplPermission.syncPush))
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: Center(child: DplSyncStatusChip(hideWhenSynced: true)),
+            ),
+          if (hasAnyMaxionTool(perms))
+            IconButton(
+              tooltip: 'Tools',
+              icon: const Icon(Icons.handyman_outlined),
+              onPressed: () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => const DplMaxionToolsScreen())),
+            ),
           DplRefreshIconButton(
             onRefresh: () async {
               // Always re-read permissions: this is also how the direct-print

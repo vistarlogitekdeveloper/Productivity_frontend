@@ -15,12 +15,18 @@ class DplApiResponse<T> {
   final String? code;
   final int? statusCode;
 
+  /// The server's translation of [error] into the operator's language
+  /// (Marathi / Hindi), when the app asked for one and the code has one.
+  /// [error] always stays English; show both on the floor.
+  final String? errorLocal;
+
   const DplApiResponse._({
     required this.success,
     this.data,
     this.error,
     this.code,
     this.statusCode,
+    this.errorLocal,
   });
 
   factory DplApiResponse.ok(T? data) =>
@@ -30,13 +36,20 @@ class DplApiResponse<T> {
     String message, {
     String? code,
     int? statusCode,
+    String? errorLocal,
   }) =>
       DplApiResponse._(
         success: false,
         error: message,
         code: code,
         statusCode: statusCode,
+        errorLocal: errorLocal,
       );
+
+  /// The message to show an operator: the local-language line first, then
+  /// the English with its serial or pallet number.
+  String get floorMessage =>
+      errorLocal == null ? (error ?? '') : '$errorLocal\n${error ?? ''}';
 
   bool get isOk => success;
   bool get isError => !success;

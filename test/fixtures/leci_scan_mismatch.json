@@ -1,0 +1,54 @@
+{
+  "success": true,
+  "data": {
+    "scanId": null,
+    "readable": true,
+    "leci_truck_no": "MH12AB1234",
+    "leci_no": "LE/2026/778101",
+    "tripVehicle": "MH14CD9876",
+    "plateCheck": {
+      "status": "mismatch",
+      "matchesTrip": false,
+      "note": "Read \"MH12AB1234\" but the trip vehicle is \"MH14CD9876\". If the slip really is for a different truck, gate-in will be rejected."
+    },
+    "review": {
+      "truckNo": {
+        "value": "MH12AB1234",
+        "confidence": 0.826,
+        "needsReview": false,
+        "source": "label:Truck No",
+        "reason": "classic plate"
+      },
+      "leciNo": {
+        "value": "LE/2026/778101",
+        "confidence": 0.733,
+        "needsReview": true,
+        "source": "label:LECI No",
+        "reason": "reference shape"
+      },
+      "slipDate": {
+        "value": "2026-09-03",
+        "confidence": 0.585,
+        "needsReview": true,
+        "source": "label:Date",
+        "reason": "dd/mm assumed (ambiguous — both fields ≤ 12)"
+      }
+    },
+    "warnings": [
+      {
+        "code": "TRUCK_NUMBER_MISMATCH",
+        "message": "Read \"MH12AB1234\" but the trip vehicle is \"MH14CD9876\". If the slip really is for a different truck, gate-in will be rejected.",
+        "fields": [
+          "leci_truck_no"
+        ]
+      }
+    ],
+    "confidence": 90,
+    "durationMs": 285,
+    "recordsNothing": true,
+    "trip": {
+      "id": 502,
+      "status": "in_transit"
+    }
+  }
+}

@@ -179,7 +179,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
       // Verbatim: the server distinguishes "no pallet here is numbered X" from
       // "that is a wheel label, not a pallet label", and those need different
       // reactions from the operator.
-      DplSnacks.error(context, res.error ?? 'Could not read that pallet label.');
+      DplSnacks.error(context, (res.floorMessage.isEmpty ? 'Could not read that pallet label.' : res.floorMessage));
       _scanCtrl.selection =
           TextSelection(baseOffset: 0, extentOffset: _scanCtrl.text.length);
       _scanFocus.requestFocus();
@@ -456,7 +456,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
       // LOCATION_FULL, ALREADY_ASSIGNED and PALLET_NOT_CLOSED each name a
       // different remedy and the server words them precisely, so they are
       // shown as written rather than flattened into "could not save".
-      DplSnacks.error(context, res.error ?? 'Failed to record the location.');
+      DplSnacks.error(context, (res.floorMessage.isEmpty ? 'Failed to record the location.' : res.floorMessage));
       return;
     }
 

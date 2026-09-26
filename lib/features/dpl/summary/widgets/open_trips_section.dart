@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
+import '../../maxion/logistics/trip_shipment_screen.dart';
+import '../../core/dpl_permissions_provider.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_feature_flags.dart';
@@ -604,6 +606,10 @@ class _OpenTripCardState extends ConsumerState<_OpenTripCard> {
               enforced: DplFeatureFlags.enforceLabelScanOnSend,
               onScan: _openScanner,
               onMasterSticker: _printMasterSticker,
+              onShipment: ref.watch(dplPermissionsProvider).can(DplPermission.tripsShipment)
+                  ? () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => DplTripShipmentScreen(tripId: widget.trip.id, tripNumber: widget.trip.tripNumber)))
+                  : null,
             ),
           ],
           // Vehicle + notes — apply to whichever plans are checked.
@@ -723,6 +729,7 @@ class _ScanPanel extends StatelessWidget {
   final bool enforced;
   final VoidCallback onScan;
   final ValueChanged<DplTripPlan> onMasterSticker;
+  final VoidCallback? onShipment;
 
   const _ScanPanel({
     required this.progress,
@@ -732,6 +739,7 @@ class _ScanPanel extends StatelessWidget {
     required this.enforced,
     required this.onScan,
     required this.onMasterSticker,
+    this.onShipment,
   });
 
   @override
@@ -762,7 +770,20 @@ class _ScanPanel extends StatelessWidget {
                   height: 14,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              else
+              else ...[
+                // Shipment details (backend migration 160) — transporter,
+                // driver, seal and vehicle-in can be recorded while loading.
+                if (onShipment != null)
+                  TextButton.icon(
+                    onPressed: onShipment,
+                    icon: const Icon(Icons.local_shipping_outlined, size: 16),
+                    label: const Text('Shipment'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
                 TextButton.icon(
                   onPressed: onScan,
                   icon: const Icon(Icons.qr_code_scanner_rounded, size: 16),
@@ -774,6 +795,7 @@ class _ScanPanel extends StatelessWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: 4),

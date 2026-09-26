@@ -1,3 +1,6 @@
+import '../../core/dpl_permissions_provider.dart';
+import '../../maxion/common/maxion_kit.dart';
+import '../../maxion/logistics/gate_pass_verify_screen.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -65,7 +68,21 @@ class _SecurityHomeScreenState extends ConsumerState<SecurityHomeScreen> {
 
     return Scaffold(
       backgroundColor: DplColors.pageBg,
-      appBar: const DplAppBar(title: 'Security'),
+      appBar: DplAppBar(
+        title: 'Security',
+        actions: [
+          // Maxion gate pass (backend migration 160): scan the pass's QR and
+          // see CLEAR TO GO / DO NOT LET OUT before the truck leaves.
+          if (ref.watch(dplPermissionsProvider).can(DplPermission.gatepassView))
+            IconButton(
+              tooltip: 'Verify a gate pass',
+              icon: const Icon(Icons.verified_user_outlined),
+              onPressed: () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => const DplGatePassVerifyScreen())),
+            ),
+          const DplLanguageMenuButton(),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: ListView(

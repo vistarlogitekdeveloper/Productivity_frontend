@@ -1,3 +1,5 @@
+import '../core/dpl_permissions_provider.dart';
+import '../maxion/maxion_tools_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,16 +35,21 @@ class DplManagerShell extends ConsumerWidget {
     final viewerOnly = ref.watch(dplViewerOnlyProvider);
     final rawIndex = ref.watch(dplManagerTabProvider);
 
+    // Maxion tools (backend phases 1–4): one extra tab, only for a manager
+    // who holds at least one of their permissions. Every other plant's
+    // manager sees exactly the four tabs they had.
+    final showTools = !viewerOnly && hasAnyMaxionTool(ref.watch(dplPermissionsProvider));
     final pages = viewerOnly
         ? const <Widget>[
             DplManagerDashboardScreen(),
             _EmbeddedPlanList(),
           ]
-        : const <Widget>[
-            DplManagerDashboardScreen(),
-            _EmbeddedPlanList(),
-            DplReportsScreen(),
-            DplMastersHubScreen(embedded: true),
+        : <Widget>[
+            const DplManagerDashboardScreen(),
+            const _EmbeddedPlanList(),
+            const DplReportsScreen(),
+            const DplMastersHubScreen(embedded: true),
+            if (showTools) const DplMaxionToolsScreen(),
           ];
 
     final navItems = viewerOnly
@@ -58,7 +65,7 @@ class DplManagerShell extends ConsumerWidget {
               label: 'Plans',
             ),
           ]
-        : dplManagerNavItems;
+        : [...dplManagerNavItems, if (showTools) dplManagerToolsNavItem];
 
     // Clamp the selected tab so an old index from a previous role/session
     // can never overflow the (possibly shorter) viewer-only nav.
