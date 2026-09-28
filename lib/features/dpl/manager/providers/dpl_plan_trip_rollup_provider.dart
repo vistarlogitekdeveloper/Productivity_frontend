@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/design/dpl_format.dart';
 import '../../core/dpl_api_response.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_constants.dart';
@@ -140,7 +141,5 @@ final dplPlanTripDispatchedRollupProvider = FutureProvider.autoDispose<
       );
 });
 
-DateTime _today() {
-  final n = DateTime.now();
-  return DateTime(n.year, n.month, n.day);
-}
+/// IST calendar day, like the rest of the Plan Trip screen.
+DateTime _today() => DplFormat.calendarDay();

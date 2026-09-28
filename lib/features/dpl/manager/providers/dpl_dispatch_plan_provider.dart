@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/design/dpl_format.dart';
 import '../../core/dpl_api_response.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_dispatch_calculator.dart';
@@ -21,7 +22,8 @@ class DplDispatchPlanPlantController extends Notifier<String?> {
 }
 
 /// Date currently shown on the Today's Dispatch Plan screen.
-/// Defaults to today. Manager can flip to yesterday for retro view.
+/// Defaults to today — the IST calendar day, matching the customer
+/// snapshots it reads. Manager can flip to yesterday for retro view.
 final dplDispatchPlanDateProvider =
     NotifierProvider<DplDispatchPlanDateController, DateTime>(
   DplDispatchPlanDateController.new,
@@ -29,10 +31,7 @@ final dplDispatchPlanDateProvider =
 
 class DplDispatchPlanDateController extends Notifier<DateTime> {
   @override
-  DateTime build() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
-  }
+  DateTime build() => DplFormat.calendarDay();
 
   void set(DateTime date) {
     state = DateTime(date.year, date.month, date.day);

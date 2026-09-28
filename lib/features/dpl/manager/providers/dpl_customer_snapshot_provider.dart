@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/design/dpl_format.dart';
 import '../../core/dpl_api_response.dart';
 import '../../core/dpl_api_service.dart';
 import '../../models/dpl_customer_snapshot.dart';
@@ -19,8 +20,10 @@ class DplCustomerSnapshotPlantController extends Notifier<String?> {
   void set(String? plantCode) => state = plantCode;
 }
 
-/// Date currently being edited. Defaults to today. Manager can flip
-/// to yesterday for retro entry (backend allows up to 7 days back).
+/// Date currently being edited. Defaults to today — the IST calendar
+/// day, which is what the backend's "no future dates" check uses.
+/// Manager can flip to yesterday for retro entry (backend allows up to
+/// 7 days back).
 final dplCustomerSnapshotDateProvider =
     NotifierProvider<DplCustomerSnapshotDateController, DateTime>(
   DplCustomerSnapshotDateController.new,
@@ -28,10 +31,7 @@ final dplCustomerSnapshotDateProvider =
 
 class DplCustomerSnapshotDateController extends Notifier<DateTime> {
   @override
-  DateTime build() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
-  }
+  DateTime build() => DplFormat.calendarDay();
 
   void set(DateTime date) {
     state = DateTime(date.year, date.month, date.day);

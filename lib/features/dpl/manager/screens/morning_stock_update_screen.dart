@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/design/dpl_format.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/widgets/dpl_app_bar.dart';
@@ -242,12 +243,20 @@ class _FilterBar extends ConsumerWidget {
             width: 170,
             child: InkWell(
               onTap: () async {
+                // Backend allows max 7 days back, no future — counted
+                // from the IST calendar day.
+                final today = DplFormat.calendarDay();
+                final firstDate =
+                    DateTime(today.year, today.month, today.day - 7);
                 final picked = await showDatePicker(
                   context: context,
-                  initialDate: date,
-                  // Backend allows max 7 days back, no future.
-                  firstDate: DateTime.now().subtract(const Duration(days: 7)),
-                  lastDate: DateTime.now(),
+                  initialDate: date.isBefore(firstDate)
+                      ? firstDate
+                      : date.isAfter(today)
+                          ? today
+                          : date,
+                  firstDate: firstDate,
+                  lastDate: today,
                 );
                 if (picked != null) {
                   ref

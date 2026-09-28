@@ -14,10 +14,11 @@ class DplFormat {
   static const Duration _istOffset = Duration(hours: 5, minutes: 30);
 
   /// IST hour at which the plant's business day rolls over (migration
-  /// 050). Backend's "today" endpoints (`/supervisor/today`,
-  /// `/dispatch/trips`, `/manager/alerts`, etc.) return yesterday's
+  /// 050). Backend's shift/production "today" endpoints
+  /// (`/supervisor/today`, `/manager/alerts`, etc.) return yesterday's
   /// calendar date when called between 00:00 and 06:59 IST, because
-  /// Shift C is still running on the previous business day.
+  /// Shift C is still running on the previous business day. Dispatch
+  /// dates use [calendarDay] instead.
   static const int _businessDayCutoverHour = 7;
 
   /// Converts any [DateTime] (UTC or local) to the equivalent wall
@@ -49,11 +50,11 @@ class DplFormat {
   /// 07:00 business-day cutover. Returned as a date-only DateTime, same
   /// shape as [businessDay].
   ///
-  /// Dispatch trips are dated by calendar day: `POST /dispatch/trips`
-  /// rejects dates before the IST calendar day and the 04:00 expiry job
-  /// cancels trips dated before it. Trip screens use this, and pass it
-  /// explicitly to `GET /dispatch/trips`, whose server-side default is
-  /// still the business day.
+  /// The trip plan / dispatch flow runs on calendar days: trip dates,
+  /// the trip list's default, customer snapshots and slip numbers all
+  /// roll over at midnight on the backend, and the 04:00 expiry job
+  /// cancels trips dated before today. Trip screens use this and pass
+  /// it explicitly to `GET /dispatch/trips`.
   ///
   /// At 01:00 IST on June 18 → returns June 18.
   static DateTime calendarDay([DateTime? now]) {
