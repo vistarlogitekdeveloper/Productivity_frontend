@@ -87,7 +87,21 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
   String _parkTrolleyNo = '';
   int _parkedCount = 0;
 
-  bool get _parking => _parkTrolleyId != null || _parkTrolleyNo.isNotEmpty;
+  /// Whether the screen is in parking mode.
+  ///
+  /// HELD, NOT DERIVED. This used to be `_parkTrolleyId != null ||
+  /// _parkTrolleyNo.isNotEmpty`, and both halves of that were wrong in a way
+  /// the operator paid for:
+  ///
+  ///   * a plant with one cart never gets a trolley id — the server picks the
+  ///     cart — so if the FIRST wheel was refused, the mode silently never
+  ///     turned on and the next pull tried to open a pallet instead; and
+  ///   * once a wheel HAD been parked, `_parkTrolleyNo` was set, so clearing
+  ///     the id on a dead-cart refusal left the mode on and the wheels after
+  ///     it went to a cart nobody chose.
+  bool _parkingOn = false;
+
+  bool get _parking => _parkingOn;
 
   /// The last few scans, newest first. Shown so an operator who looked away
   /// can see what actually landed without opening anything.
@@ -581,7 +595,26 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
   Future<void> _parkScanned(String code) async {
     final scanned = await _scanForItem(typed: code);
     if (!mounted || scanned == null) return;
-    await _parkOne(partId: scanned.partId, code: code);
+
+    // resolveWheel answers 0 rather than null when it cannot tell, and
+    // `_scanForItem` returns the resolution anyway — it only warns. Sending 0
+    // would post `part_id: 0`, so the wheel is either refused with ITEM_UNKNOWN
+    // or parked against an item that does not exist.
+    //
+    // An old label nobody has scanned before is exactly the case this mode is
+    // for, so it gets the same picker `_startPallet` offers rather than being
+    // dropped on the floor.
+    var partId = scanned.partId;
+    if (partId <= 0) {
+      final picked = await showDialog<_StartChoice>(
+        context: context,
+        builder: (_) => const _StartPalletDialog(),
+      );
+      if (picked == null || !mounted) return;
+      partId = picked.partId;
+    }
+
+    await _parkOne(partId: partId, code: code);
   }
 
   ///
@@ -702,7 +735,9 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: (_busy || pallet.qty < 1) ? null : () => _close(pallet),
+              onPressed: (_busy || _queuedScans > 0 || pallet.qty < 1)
+                  ? null
+                  : () => _close(pallet),
               icon: _busy
                   ? const SizedBox(
                       width: 18,
@@ -921,6 +956,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     // sheet, no camera, no taps — which is what parking a changeover's worth
     // of wheels actually looks like.
     setState(() {
+      _parkingOn = true;
       _parkTrolleyId = trolleyId;
       _parkTrolleyNo = '';
       _parkedCount = 0;
@@ -953,19 +989,36 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
       HapticFeedback.heavyImpact();
       DplSnacks.error(context, res.floorMessage.isEmpty ? 'That wheel was refused.' : res.floorMessage);
 
-      // ONE BAD WHEEL IS NOT THE END OF THE RUN. These refusals are about the
-      // wheel in the operator's hand and nothing else — already on a cart,
-      // already packed, already shipped, voided, wrong item — so parking mode
-      // stays on and the next pull is taken. Only a refusal about the TROLLEY
-      // itself stops it, because that one would refuse every wheel after it
-      // just the same.
-      const aboutTheTrolley = <String>{
-        'TROLLEY_NOT_FOUND',
-        'TROLLEY_RETIRED',
-        'TROLLEY_NOT_CHOSEN',
+      // ONE BAD WHEEL IS NOT THE END OF THE RUN — BUT ONLY THESE ONES.
+      //
+      // Each of these names a situation about the wheel in the operator's
+      // hand and nothing else: already on a cart, already packed, already
+      // shipped, voided, wrong item. Parking mode stays on and the next pull
+      // is taken.
+      //
+      // It is an ALLOWLIST on purpose. A denylist of trolley codes left
+      // NETWORK, TIMEOUT and every 5xx on the "carry on" side, so a handheld
+      // that walked out of signal sat there firing a red snackbar per pull
+      // and parking nothing. Anything not named here would refuse the wheel
+      // after it just the same, so the run ends and the operator is told.
+      const perWheel = <String>{
+        'ALREADY_ON_THIS_TROLLEY',
+        'ALREADY_ON_ANOTHER_TROLLEY',
+        'ALREADY_ON_ANOTHER_PALLET',
+        'ALREADY_ON_A_TRIP',
+        'STICKER_VOIDED',
+        'STICKER_NOT_FOUND',
+        'WRONG_PART',
+        'ITEM_UNKNOWN',
+        'EMPTY_SCAN',
       };
-      if (aboutTheTrolley.contains(res.code)) {
-        setState(() => _parkTrolleyId = null);
+      if (!perWheel.contains(res.code)) {
+        // Ends the mode outright rather than only forgetting the cart id.
+        // Clearing the id alone left `_parking` true once a wheel had been
+        // parked, and the next pull was sent with no trolley_id at all — which
+        // the server answers by CHOOSING a cart, so the rest of the changeover
+        // quietly landed somewhere the operator never picked.
+        _stopParking();
       }
       return;
     }
@@ -1053,6 +1106,7 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
   void _stopParking() {
     final n = _parkedCount;
     setState(() {
+      _parkingOn = false;
       _parkTrolleyId = null;
       _parkTrolleyNo = '';
       _parkedCount = 0;
@@ -1084,31 +1138,76 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     _scanFocus.requestFocus();
     if (value.isEmpty) return Future.value();
 
+    // EVERYTHING THE SEND NEEDS IS READ HERE, ON THE TRIGGER PULL.
+    //
+    // `ref.read` throws a StateError once this State is disposed — it is a real
+    // throw, not a debug assert. The sends are deferred behind the chain, so
+    // reading providers inside them would throw for every wheel still queued
+    // when the operator leaves the screen, and the `catchError` below would
+    // swallow each one in silence. The wheels the outbox exists to preserve
+    // would be exactly the ones lost.
+    //
+    // `runOnlineOrQueue` is the widget-free form of the same rule, so the
+    // offline behaviour is unchanged — only where the providers are read is.
+    final api = ref.read(dplApiServiceProvider);
+    final outbox = ref.read(dplOfflineOutboxProvider.notifier);
+    final canQueue = ref.read(dplPermissionsProvider).can(DplPermission.syncPush);
+    final userId = ref.read(dplCurrentUserIdProvider) ?? 0;
+
+    // Counted from the moment it is accepted, not from the moment it is sent.
+    // `_close` and the Close button both read this: a wheel sitting in the
+    // chain is in neither the server's count nor the outbox, so it is
+    // invisible to anything that asks either of them.
+    setState(() => _queuedScans += 1);
+
     // Chained, and the error is swallowed HERE rather than allowed to break
     // the chain — one refused wheel must not stop the ones behind it.
     _scanQueue = _scanQueue
-        .then((_) => _sendScan(pallet.id, value))
-        .catchError((_) {});
+        .then((_) => _sendScan(
+              palletId: pallet.id,
+              value: value,
+              api: api,
+              outbox: outbox,
+              canQueue: canQueue,
+              userId: userId,
+            ))
+        .catchError((_) {})
+        .whenComplete(() {
+          _queuedScans -= 1;
+          if (mounted) setState(() {});
+        });
     return _scanQueue;
   }
 
   /// Wheels waiting their turn. Starts resolved so the first scan goes at once.
   Future<void> _scanQueue = Future<void>.value();
 
-  Future<void> _sendScan(int palletId, String value) async {
+  /// Wheels accepted but not yet sent or queued. See [_scan].
+  int _queuedScans = 0;
+
+  Future<void> _sendScan({
+    required int palletId,
+    required String value,
+    required DplApiService api,
+    required DplOfflineOutbox outbox,
+    required bool canQueue,
+    required int userId,
+  }) async {
     // Online first; on a dropped connection (NETWORK / TIMEOUT only — never a
     // real refusal) the scan is queued on the handheld and synced later, in
     // order, as this operator (backend migration 164).
     //
-    // This sits INSIDE the serialised queue rather than around it. The offline
-    // path appends to the outbox, and "in order" is only true if the appends
-    // are: a trigger burst firing several at once would reach the outbox in
-    // whatever order the awaits happened to resolve.
-    final attempt = await scanToPalletOrQueue(
-      ref,
-      palletId: palletId,
-      code: value,
-      userId: ref.read(dplCurrentUserIdProvider) ?? 0,
+    // This sits INSIDE the serialised queue rather than around it. The outbox
+    // appends here, and "in order" is only true if the appends are: a trigger
+    // burst firing several at once would reach the outbox in whatever order
+    // the awaits happened to resolve.
+    final attempt = await runOnlineOrQueue<DplPallet>(
+      outbox: outbox,
+      canQueue: canQueue,
+      type: 'pallet.scan',
+      payload: {'pallet_id': palletId, 'code': value},
+      userId: userId,
+      online: () => api.scanWheelOntoPallet(palletId: palletId, code: value),
     );
     if (!mounted) return;
     if (attempt.status == OfflineScanStatus.queued) {
@@ -1202,6 +1301,30 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
   }
 
   Future<void> _close(DplPallet pallet) async {
+    // WHEELS STILL IN THE CHAIN COME FIRST.
+    //
+    // Scans are serialised, so a wheel that has been pulled but not yet sent
+    // exists only as a pending closure: it is not in the server's count and it
+    // is not in the outbox either. The outbox guard below would read 0 for it
+    // and close the pallet short — then the chain would drain, the scans would
+    // be refused against a closed pallet, and the outbox would jam behind the
+    // refusal. The button is disabled while this is true; this is the backstop
+    // for the case where a scan lands between the tap and here.
+    if (_queuedScans > 0) {
+      setState(() => _busy = true);
+      await _scanQueue;
+      if (!mounted) return;
+      setState(() => _busy = false);
+      // The count has moved since the operator tapped, so they get to look at
+      // it again rather than closing against a number that is already stale.
+      ref.invalidate(qaOpenPalletProvider);
+      DplSnacks.warning(
+        context,
+        'Wheels were still being sent. Check the count, then close.',
+      );
+      return;
+    }
+
     // Wheels scanned while offline are still on their way. Closing now would
     // close the pallet short and let the server refuse those scans later.
     final waiting = ref

@@ -45,6 +45,22 @@ class DplFormat {
     return dayOnly;
   }
 
+  /// IST calendar day for [now] — rolls over at midnight, NOT at the
+  /// 07:00 business-day cutover. Returned as a date-only DateTime, same
+  /// shape as [businessDay].
+  ///
+  /// Dispatch trips are dated by calendar day: `POST /dispatch/trips`
+  /// rejects dates before the IST calendar day and the 04:00 expiry job
+  /// cancels trips dated before it. Trip screens use this, and pass it
+  /// explicitly to `GET /dispatch/trips`, whose server-side default is
+  /// still the business day.
+  ///
+  /// At 01:00 IST on June 18 → returns June 18.
+  static DateTime calendarDay([DateTime? now]) {
+    final ist = _toIst(now ?? DateTime.now());
+    return DateTime(ist.year, ist.month, ist.day);
+  }
+
   /// True when [now] lies in the 00:00–06:59 IST window where the
   /// business day is one calendar day behind. UI uses this to decide
   /// whether to render the "Business Day" advisory banner.

@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 
 import '../../maxion/logistics/trip_shipment_screen.dart';
 import '../../core/dpl_permissions_provider.dart';
+import '../../core/design/dpl_format.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_feature_flags.dart';
@@ -971,75 +972,103 @@ class _TripHeader extends StatelessWidget {
     // with the plant name keeps the two cards visually distinct.
     final plantLabel =
         trip.plantName.isNotEmpty ? trip.plantName : trip.plantCode;
+    // Before 07:00 the list also carries yesterday's still-open trips,
+    // and `trip_number` restarts each day — the date tells two
+    // "Trip 1"s on the same plant apart.
+    final d = trip.tripDate;
+    final day = d == null ? null : DateTime(d.year, d.month, d.day);
+    final earlierDay =
+        day != null && day.isBefore(DplFormat.calendarDay()) ? day : null;
     return Container(
       decoration: BoxDecoration(
         color: DplColors.primaryTint,
         borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
       ),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.local_shipping_rounded,
-              color: DplColors.primaryDark, size: 20),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              plantLabel.isEmpty ? 'Trip ${trip.tripNumber}' : plantLabel,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
-                color: DplColors.primaryDark,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (plantLabel.isNotEmpty) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: DplColors.cardBg,
-                borderRadius: BorderRadius.circular(999),
-              ),
+          _row(fmt, isPartial, plantLabel),
+          if (earlierDay != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 28, top: 4),
               child: Text(
-                'Trip ${trip.tripNumber}',
-                style: TextStyle(
-                  color: DplColors.primaryDark,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 10.5,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(width: 6),
-          if (isPartial)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: DplColors.warningBg,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                'Partial',
+                'Planned for ${DateFormat('EEE, d MMM').format(earlierDay)}',
                 style: TextStyle(
                   color: DplColors.warning,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
                 ),
               ),
             ),
-          const Spacer(),
-          Text(
-            '${fmt.format(trip.openQty ?? 0)} / '
-            '${fmt.format(trip.totalQty ?? 0)} NOS',
+        ],
+      ),
+    );
+  }
+
+  Widget _row(NumberFormat fmt, bool isPartial, String plantLabel) {
+    return Row(
+      children: [
+        Icon(Icons.local_shipping_rounded,
+            color: DplColors.primaryDark, size: 20),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            plantLabel.isEmpty ? 'Trip ${trip.tripNumber}' : plantLabel,
             style: TextStyle(
-              color: DplColors.primaryDark,
               fontWeight: FontWeight.w800,
-              fontSize: 12,
+              fontSize: 14,
+              color: DplColors.primaryDark,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (plantLabel.isNotEmpty) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: DplColors.cardBg,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              'Trip ${trip.tripNumber}',
+              style: TextStyle(
+                color: DplColors.primaryDark,
+                fontWeight: FontWeight.w800,
+                fontSize: 10.5,
+              ),
             ),
           ),
         ],
-      ),
+        const SizedBox(width: 6),
+        if (isPartial)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: DplColors.warningBg,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              'Partial',
+              style: TextStyle(
+                color: DplColors.warning,
+                fontWeight: FontWeight.w800,
+                fontSize: 10.5,
+              ),
+            ),
+          ),
+        const Spacer(),
+        Text(
+          '${fmt.format(trip.openQty ?? 0)} / '
+          '${fmt.format(trip.totalQty ?? 0)} NOS',
+          style: TextStyle(
+            color: DplColors.primaryDark,
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
+          ),
+        ),
+      ],
     );
   }
 }

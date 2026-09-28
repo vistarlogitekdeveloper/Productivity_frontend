@@ -361,4 +361,89 @@ void main() {
       s.container.dispose();
     });
   });
+
+  /// THE TRAP THAT CLOSED A PALLET SHORT.
+  ///
+  /// The QA pallet screen serialises trigger pulls through a future chain, so
+  /// a wheel can be accepted long before its request is sent. Anything that
+  /// asks the OUTBOX whether it is safe to close will be told "nothing
+  /// pending" for that wheel, because a scan only reaches the outbox after
+  /// `online()` has been awaited and failed.
+  ///
+  /// These pin that fact, so the screen keeps its own count of accepted
+  /// wheels rather than trusting `pendingOf`.
+  group('a wheel that has been accepted is not yet a wheel the outbox knows', () {
+    Future<WidgetRef> pumpRef(WidgetTester tester, ProviderContainer container) async {
+      late WidgetRef captured;
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: container,
+        child: Consumer(builder: (_, ref, _) {
+          captured = ref;
+          return const SizedBox();
+        }),
+      ));
+      return captured;
+    }
+
+    testWidgets('pendingOf reports 0 for the whole time the request is in flight', (tester) async {
+      final gate = Completer<void>();
+      final s = _setup((o) async {
+        // Stands in for the connect timeout on a handheld that has walked out
+        // of signal: the request is alive and going nowhere.
+        await gate.future;
+        throw DioException(requestOptions: o, type: DioExceptionType.connectionError);
+      });
+      final ref = await pumpRef(tester, s.container);
+
+      late final Future<OfflineScanResult<dynamic>> inFlight;
+      await tester.runAsync(() async {
+        inFlight = scanToPalletOrQueue(ref, palletId: 7, code: 'H26000001', userId: 9);
+        // Let it get as far as it can, which is into the request.
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      });
+
+      // The wheel is physically on the pallet and the operator has seen it
+      // accepted — and the outbox still says there is nothing to wait for.
+      expect(
+        s.container.read(dplOfflineOutboxProvider).pendingOf('pallet.scan', where: {'pallet_id': 7}),
+        0,
+        reason: 'this is why the screen cannot use pendingOf on its own',
+      );
+
+      gate.complete();
+      final r = (await tester.runAsync(() => inFlight))!;
+      expect(r.isQueued, isTrue, reason: 'it lands in the outbox only once the send has failed');
+      expect(
+        s.container.read(dplOfflineOutboxProvider).pendingOf('pallet.scan', where: {'pallet_id': 7}),
+        1,
+      );
+
+      await tester.pumpWidget(const SizedBox());
+      s.container.dispose();
+    });
+
+    testWidgets('serialised sends reach the outbox in scan order', (tester) async {
+      // The offline path appends, so "synced in order" is only true if the
+      // appends are. This is why the offline call sits INSIDE the chain.
+      final s = _setup(_offline());
+      final ref = await pumpRef(tester, s.container);
+
+      await tester.runAsync(() async {
+        var chain = Future<void>.value();
+        for (final code in ['H26000001', 'H26000002', 'H26000003']) {
+          chain = chain.then((_) async {
+            await scanToPalletOrQueue(ref, palletId: 7, code: code, userId: 9);
+          });
+        }
+        await chain;
+      });
+
+      final queued = s.container.read(dplOfflineOutboxProvider).queue.where((t) => t.type == 'pallet.scan').toList();
+      expect(queued.map((t) => t.payload['code']), ['H26000001', 'H26000002', 'H26000003']);
+      expect(queued.map((t) => t.seq).toList(), orderedEquals(queued.map((t) => t.seq).toList()..sort()));
+
+      await tester.pumpWidget(const SizedBox());
+      s.container.dispose();
+    });
+  });
 }

@@ -359,6 +359,12 @@ class _PlanTripScreenState extends ConsumerState<PlanTripScreen> {
     if (_trips.isEmpty) {
       return 'Add at least one trip before submitting.';
     }
+    // A date picked before midnight is in the past after it; the
+    // backend would reject it with 400.
+    final planForDate = ref.read(dplManagerPlanForDateProvider);
+    if (planForDate.isBefore(DplFormat.calendarDay())) {
+      return 'The planning date has passed. Pick today or a later date.';
+    }
     for (final t in _trips) {
       if (t.plantCode == null) {
         return '${_tripLabel(t)}: pick a plant.';
@@ -693,9 +699,9 @@ class _PlanTripScreenState extends ConsumerState<PlanTripScreen> {
 // ────────────── Today's trips overview ──────────────
 
 /// Live overview of every trip the manager (and any other manager on
-/// the same org) has filed under today's business day — read from
+/// the same org) has filed under the planning date — read from
 /// `dplManagerPlanForDateTripsProvider`, which calls
-/// `GET /dispatch/trips?date=<businessDay>&statuses=all`. Auto-refreshes
+/// `GET /dispatch/trips?date=<planForDate>&statuses=all`. Auto-refreshes
 /// on submit (the screen invalidates the provider in `_onSubmit`).
 class _TodaysTripsCard extends ConsumerWidget {
   const _TodaysTripsCard();
@@ -813,7 +819,7 @@ class _TodaysTripsHeader extends ConsumerWidget {
   /// when planning for today, "Tomorrow's trips" for D+1, and an
   /// explicit "Trips for 25 Jun" for further-out dates.
   static String _titleFor(DateTime planForDate) {
-    final today = DplFormat.businessDay();
+    final today = DplFormat.calendarDay();
     final diff = planForDate.difference(today).inDays;
     if (diff == 0) return "Today's trips";
     if (diff == 1) return "Tomorrow's trips";
@@ -1145,8 +1151,9 @@ class _PlantChip extends StatelessWidget {
 // ────────────── Production-summary header ──────────────
 
 /// Date pill at the top of the Plan Trip body — surfaces which IST
-/// business day the manager is planning for and lets them shift it via
-/// the system date picker.
+/// calendar day the manager is planning for and lets them shift it via
+/// the system date picker. The day rolls over at midnight, not at the
+/// 07:00 business-day cutover.
 ///
 /// Defaults to tomorrow (handled in `dplManagerPlanForDateProvider`).
 /// Forward window matches the backend cap: today → today+14 (mig.
@@ -1161,7 +1168,7 @@ class _PlanForDatePicker extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final planForDate = ref.watch(dplManagerPlanForDateProvider);
-    final today = DplFormat.businessDay();
+    final today = DplFormat.calendarDay();
     final diff = planForDate.difference(today).inDays;
     final relative = switch (diff) {
       0 => 'Today',
@@ -1264,11 +1271,20 @@ class _PlanForDatePicker extends ConsumerWidget {
     DateTime today,
   ) async {
     final current = ref.read(dplManagerPlanForDateProvider);
+    final lastDate =
+        DateTime(today.year, today.month, today.day + _maxDaysAhead);
+    // The screen can outlive midnight, leaving a planning date that is
+    // now in the past. showDatePicker asserts initialDate is in range.
+    final initialDate = current.isBefore(today)
+        ? today
+        : current.isAfter(lastDate)
+            ? lastDate
+            : current;
     final picked = await showDatePicker(
       context: context,
-      initialDate: current,
+      initialDate: initialDate,
       firstDate: today,
-      lastDate: today.add(const Duration(days: _maxDaysAhead)),
+      lastDate: lastDate,
     );
     if (picked == null) return;
     onDateChanged(DateTime(picked.year, picked.month, picked.day));
@@ -1306,7 +1322,7 @@ class _ProductionSummaryCard extends StatelessWidget {
               Text('Today\'s production', style: DplText.h3()),
               const Spacer(),
               Text(
-                DateFormat('EEE, dd MMM').format(DateTime.now()),
+                DateFormat('EEE, dd MMM').format(DplFormat.calendarDay()),
                 style: TextStyle(
                   color: DplColors.textSecondary,
                   fontWeight: FontWeight.w600,

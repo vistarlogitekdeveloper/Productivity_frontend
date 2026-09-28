@@ -11,16 +11,40 @@ import '../../models/dpl_dispatch_trip.dart';
 /// work to dispatchers. The `family` parameter lets the same provider
 /// serve both the global landing (no plant filter) and per-plant
 /// drill-ins.
+///
+/// "Today" is the IST calendar day, passed explicitly: the backend's
+/// default is the 07:00 business day, which hid a trip planned for
+/// today after midnight until 07:00. Before 07:00 yesterday's trips are
+/// fetched too — Shift C may still be loading them, and they stay open
+/// until the 04:00 expiry job cancels them.
 final dplOpenTripsProvider = FutureProvider.autoDispose
     .family<DplApiResponse<DplTripListResponse>, String?>(
   (ref, plantCode) async {
     final svc = ref.watch(dplApiServiceProvider);
-    return svc.listTrips(
-      statuses: const [DplTripStatus.open, DplTripStatus.partial],
-      plantCode: plantCode,
-      // Backend defaults `date` to today IST, which is what the
-      // dispatcher needs.
-    );
+    Future<DplApiResponse<DplTripListResponse>> load(DateTime date) =>
+        svc.listTrips(
+          statuses: const [DplTripStatus.open, DplTripStatus.partial],
+          plantCode: plantCode,
+          date: date,
+        );
+
+    final now = DateTime.now();
+    final today = DplFormat.calendarDay(now);
+    if (!DplFormat.isBeforeBusinessDayCutover(now)) return load(today);
+
+    final res = await Future.wait([
+      load(DateTime(today.year, today.month, today.day - 1)),
+      load(today),
+    ]);
+    final failed = res.where((r) => r.isError);
+    if (failed.isNotEmpty) return failed.first;
+    // Yesterday's first: they expire at 04:00, today's can wait.
+    final trips = [for (final r in res) ...?r.data?.trips];
+    return DplApiResponse.ok(DplTripListResponse(
+      trips: trips,
+      total: res.fold<int>(0, (s, r) => s + (r.data?.total ?? 0)),
+      limit: trips.length,
+    ));
   },
 );
 
@@ -41,15 +65,21 @@ final dplManagerTripsMineOnlyProvider = NotifierProvider.autoDispose<
   DplManagerTripsMineOnlyNotifier.new,
 );
 
-/// IST business day the manager is currently *planning for* on the
+/// IST calendar day the manager is currently *planning for* on the
 /// Plan Trip screen (migration 052). Defaults to tomorrow — the
 /// common case is filing tomorrow's trips today. The screen's date
 /// picker writes back to this provider; the trip-list provider and
 /// the `peekNextTripNumber` call both read it.
+///
+/// Calendar day, not business day: the day rolls over at midnight, so
+/// at 01:00 on the 28th "today" is the 28th — matching the backend's
+/// trip-date validation.
 class DplManagerPlanForDateNotifier extends Notifier<DateTime> {
   @override
-  DateTime build() =>
-      DplFormat.businessDay().add(const Duration(days: 1));
+  DateTime build() {
+    final today = DplFormat.calendarDay();
+    return DateTime(today.year, today.month, today.day + 1);
+  }
 
   void set(DateTime date) {
     state = DateTime(date.year, date.month, date.day);
