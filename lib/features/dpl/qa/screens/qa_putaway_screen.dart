@@ -12,6 +12,46 @@ import '../../models/dpl_pallet.dart';
 import '../widgets/location_picker_sheet.dart';
 import 'dpl_qr_scan_sheet.dart';
 
+/// The code of the bay a putaway defaults to.
+///
+/// MATCHED ON CODE, and only on code. `q` searches code, name and zone
+/// together, so a rack merely described as "next to staging" would come back
+/// from the same search — the exact-code test below is what stops one being
+/// picked as the default.
+///
+/// A plant that does not stage simply never creates this row, and the screen
+/// falls back to the server's recommended bay exactly as it did before.
+const String kDplStagingLocationCode = 'STAGING';
+
+/// The staging bay from the location master, or null when the plant has none.
+///
+/// MAXION WHEELS ONLY. This is read by the putaway screen and nothing else;
+/// the classic DPL flow that assigns a location to a plan item's labels
+/// (qa_plan_detail_screen) is deliberately untouched.
+///
+/// Not autoDispose: the location master barely changes within a shift, and
+/// putaway is worked in a loop — one pallet after another — so re-fetching per
+/// pallet would put a round trip in front of every scan for an answer that is
+/// the same every time.
+final dplStagingLocationProvider = FutureProvider<DplLocation?>((ref) async {
+  final res = await ref.read(dplApiServiceProvider).getLocations(
+        q: kDplStagingLocationCode,
+        limit: 50,
+        // The warehouse router, not the QA one: a putaway operator may hold
+        // `pallet.putaway` without being dpl_qa, and the QA router refuses on
+        // role before the permission is ever consulted.
+        asWarehouse: true,
+      );
+  if (res.isError) return null;
+  for (final l in res.data ?? const <DplLocation>[]) {
+    if (l.isActive &&
+        l.code.trim().toUpperCase() == kDplStagingLocationCode) {
+      return l;
+    }
+  }
+  return null;
+});
+
 /// Putting a closed pallet on a rack — Maxion SSR Module 6, Warehouse Bin
 /// Putaway.
 ///
@@ -51,9 +91,14 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
   DplPalletResolution? _found;
   DplLocation? _chosen;
 
-  /// The suggested bay, held separately so the screen can say "you changed it"
-  /// — an override is a decision worth showing back, not hiding.
-  int? _suggestedId;
+  /// What the screen pre-selected, held separately so it can say "you changed
+  /// it" — an override is a decision worth showing back, not hiding.
+  ///
+  /// This is the DEFAULT, not the server's recommendation. Since staging wins
+  /// the pre-selection, comparing against the recommendation would have
+  /// stamped "changed from FG-A-01" on every pallet the operator never
+  /// touched, and a badge that is always on is a badge nobody reads.
+  DplLocation? _default;
 
   @override
   void initState() {
@@ -167,7 +212,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
       _busy = true;
       _found = null;
       _chosen = null;
-      _suggestedId = null;
+      _default = null;
     });
 
     final res =
@@ -194,21 +239,45 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
         'That label is out of date — reprint it.',
       );
     }
+    // STAGING IS THE DEFAULT, when the plant has one.
+    //
+    // Wheels come off the line faster than a forklift can put them on a rack,
+    // so in practice a closed pallet goes to the staging area and is racked
+    // later. Defaulting to the bay the pallet is actually about to sit in
+    // makes the common case one press, and the picker below still opens on
+    // every rack in the master for the pallet that does go straight to FG.
+    //
+    // Falls back to the server's recommendation, so a plant with no STAGING
+    // row behaves exactly as this screen did before.
+    final staging = await _stagingBay();
+    if (!mounted) return;
+
+    final fromSuggestion = found.suggestion == null
+        ? null
+        : DplLocation(
+            id: found.suggestion!.id,
+            code: found.suggestion!.code,
+            name: found.suggestion!.name,
+            zone: found.suggestion!.zone,
+            freeQty: found.suggestion!.freeQty,
+          );
+
     setState(() {
       _found = found;
-      _suggestedId = found.suggestion?.id;
-      // Pre-select the suggestion so the common case is one press. The picker
-      // is still right there for the rack that is actually reachable today.
-      _chosen = found.suggestion == null
-          ? null
-          : DplLocation(
-              id: found.suggestion!.id,
-              code: found.suggestion!.code,
-              name: found.suggestion!.name,
-              zone: found.suggestion!.zone,
-              freeQty: found.suggestion!.freeQty,
-            );
+      _default = staging ?? fromSuggestion;
+      _chosen = _default;
     });
+  }
+
+  /// The staging bay, or null. Never throws and never blocks a scan: a lookup
+  /// that failed is the same answer as a plant with no staging area, because
+  /// in both cases there is nothing to pre-select and the operator picks.
+  Future<DplLocation?> _stagingBay() async {
+    try {
+      return await ref.read(dplStagingLocationProvider.future);
+    } catch (_) {
+      return null;
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -297,7 +366,10 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
     final suggestion = r.suggestion;
     final chosen = _chosen;
     final overridden =
-        chosen != null && _suggestedId != null && chosen.id != _suggestedId;
+        chosen != null && _default != null && chosen.id != _default!.id;
+    final defaultedToStaging =
+        _default != null &&
+        _default!.code.trim().toUpperCase() == kDplStagingLocationCode;
 
     return DplCard(
       child: Column(
@@ -308,7 +380,22 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
           const SizedBox(height: 6),
-          if (suggestion != null)
+          // SAY WHY THIS BAY IS IN THE BOX, whichever bay it is.
+          //
+          // The reason line used to describe the server's routing, which was
+          // also what sat pre-selected. Now that staging wins, printing
+          // "half pallet → half-pallet bay" above a box reading STAGING would
+          // be explaining a choice the screen did not make — and the operator
+          // would reasonably believe the pallet was routed there.
+          if (defaultedToStaging)
+            Text(
+              suggestion == null
+                  ? 'Going to staging. Change it if this one is racked now.'
+                  : 'Going to staging. ${suggestion.code} is free if this one '
+                      'is racked now.',
+              style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
+            )
+          else if (suggestion != null)
             Text(
               // The REASON, not just the code. A suggestion an operator does
               // not understand is one they override at random.
@@ -379,7 +466,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
           if (overridden) ...[
             const SizedBox(height: 8),
             Text(
-              'Changed from the suggested ${suggestion?.code ?? ''}.',
+              'Changed from ${_default?.code ?? ''}.',
               style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
@@ -471,7 +558,7 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
     setState(() {
       _found = null;
       _chosen = null;
-      _suggestedId = null;
+      _default = null;
       _scanCtrl.clear();
       _remarksCtrl.clear();
     });

@@ -2,7 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:productivity_tracker/features/dpl/core/dpl_constants.dart';
 import 'package:productivity_tracker/features/dpl/core/dpl_permissions_provider.dart';
+import 'package:productivity_tracker/features/dpl/models/dpl_location.dart';
 import 'package:productivity_tracker/features/dpl/models/dpl_pallet.dart';
+import 'package:productivity_tracker/features/dpl/qa/screens/qa_putaway_screen.dart';
 
 /// Warehouse putaway — Maxion SSR Module 6.
 void main() {
@@ -233,6 +235,73 @@ void _mergeDiffTests() {
       expect(onB, 0);
       // A pallet emptied by the drag stops being a pallet, so it gets no label.
       expect(onB < 1, isTrue);
+    });
+  });
+
+  /// Defaulting putaway to the staging bay — Maxion wheels only.
+  ///
+  /// Wheels leave the line faster than a forklift racks them, so a closed
+  /// pallet goes to staging and is racked later. The screen pre-selects that
+  /// bay instead of the server's routing recommendation, and the operator can
+  /// still pick any rack.
+  group('the staging default', () {
+    /// Mirrors the provider's filter. Kept in lockstep with
+    /// `dplStagingLocationProvider` — if that changes, this must.
+    DplLocation? pick(List<DplLocation> rows) {
+      for (final l in rows) {
+        if (l.isActive &&
+            l.code.trim().toUpperCase() == kDplStagingLocationCode) {
+          return l;
+        }
+      }
+      return null;
+    }
+
+    test('the code is matched exactly, not searched for', () {
+      // `q` searches code, name AND zone, so a rack merely DESCRIBED as being
+      // near staging comes back from the same request. Taking the first row
+      // would put a pallet on whichever of those the server happened to sort
+      // first.
+      final rows = [
+        const DplLocation(id: 1, code: 'FG-A-01', name: 'Next to staging'),
+        const DplLocation(id: 2, code: 'FG-A-02', zone: 'STAGING-ADJACENT'),
+        const DplLocation(id: 3, code: 'STAGING', name: 'Staging area'),
+      ];
+      expect(pick(rows)?.id, 3);
+    });
+
+    test('case and stray whitespace in the master still match', () {
+      // A manager types the master by hand. 'staging ' is the same bay.
+      expect(pick([const DplLocation(id: 9, code: 'staging ')])?.id, 9);
+      expect(pick([const DplLocation(id: 9, code: ' Staging')])?.id, 9);
+    });
+
+    test('a retired staging bay is not used', () {
+      // Retiring it in the master is how a plant turns this off.
+      final rows = [
+        const DplLocation(id: 4, code: 'STAGING', isActive: false),
+      ];
+      expect(pick(rows), isNull);
+    });
+
+    test('a near miss is not staging', () {
+      final rows = [
+        const DplLocation(id: 5, code: 'STAGING-2'),
+        const DplLocation(id: 6, code: 'PRE-STAGING'),
+        const DplLocation(id: 7, code: 'STAGE'),
+      ];
+      expect(pick(rows), isNull, reason: 'the fallback is the server suggestion');
+    });
+
+    test('a plant with no staging row gets null, not a guess', () {
+      expect(pick(const []), isNull);
+      expect(pick([const DplLocation(id: 8, code: 'FG-B-04')]), isNull);
+    });
+
+    test('the code is the one the manager is told to create', () {
+      // Pinned because it is the entire contract with the Locations master:
+      // change this string and every plant silently loses its default.
+      expect(kDplStagingLocationCode, 'STAGING');
     });
   });
 }
