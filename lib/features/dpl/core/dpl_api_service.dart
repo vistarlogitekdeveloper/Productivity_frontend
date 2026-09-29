@@ -15,6 +15,7 @@ import '../models/dpl_machine.dart';
 import '../models/dpl_manpower_log.dart';
 import '../models/dpl_organization.dart';
 import '../models/dpl_pallet.dart';
+import '../models/dpl_pallet_audit.dart';
 import '../models/dpl_wheel_trolley.dart';
 import '../models/dpl_spd.dart';
 import '../models/dpl_monthly_chart.dart';
@@ -4767,6 +4768,180 @@ class DplApiService {
       data is Map && data['user'] is Map
           ? Map<String, dynamic>.from(data['user'] as Map)
           : Map<String, dynamic>.from(data as Map),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pallet audit (migration 167)
+  //
+  // Every one of these is on /warehouse rather than /qa. The QA router
+  // role-locks before permissions are read, so an auditor calling a /qa path
+  // gets a 403 the permission grid says should not happen.
+  // ---------------------------------------------------------------------------
+
+  /// `POST /warehouse/audits` — start, or resume the one already running.
+  ///
+  /// Takes a scanned [code] or a [palletId], because the auditor arrives both
+  /// ways: scanning the label in front of them, or tapping a row in the
+  /// register they were filtering.
+  Future<DplApiResponse<DplPalletAuditSession>> startPalletAudit({
+    String? code,
+    int? palletId,
+  }) {
+    return _send<DplPalletAuditSession>(
+      () => _dio.post(
+        DplPaths.warehouseAudits,
+        data: _cleanQuery({'code': code, 'pallet_id': palletId}),
+      ),
+      fallback: 'Failed to start the audit.',
+      fromJson: (data) => DplPalletAuditSession.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `GET /warehouse/audits/:id`
+  Future<DplApiResponse<DplPalletAuditSession>> getPalletAudit(int id) {
+    return _send<DplPalletAuditSession>(
+      () => _dio.get(DplPaths.warehouseAudit(id)),
+      fallback: 'Failed to read the audit.',
+      fromJson: (data) => DplPalletAuditSession.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `POST /warehouse/audits/:id/scan` — one wheel.
+  ///
+  /// `duplicate` comes back true when this serial was already scanned. The
+  /// server answers rather than refusing, because a hardware trigger fires
+  /// faster than a round trip and a red banner for a double pull blames the
+  /// auditor for the scanner's behaviour.
+  Future<DplApiResponse<DplAuditScanResult>> scanWheelForAudit({
+    required int auditId,
+    required String code,
+  }) {
+    return _send<DplAuditScanResult>(
+      () => _dio.post(
+        DplPaths.warehouseAuditScan(auditId),
+        data: {'code': code},
+      ),
+      fallback: 'Failed to record that scan.',
+      fromJson: (data) => DplAuditScanResult.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `DELETE /warehouse/audits/:id/scan/:lineId` — undo one scan.
+  Future<DplApiResponse<bool>> undoAuditScan({
+    required int auditId,
+    required int lineId,
+  }) {
+    return _send<bool>(
+      () => _dio.delete(DplPaths.warehouseAuditScanLine(auditId, lineId)),
+      fallback: 'Failed to undo that scan.',
+      fromJson: (_) => true,
+    );
+  }
+
+  /// `POST /warehouse/audits/:id/decide` — approve or reject.
+  ///
+  /// [approve] is a request, not an instruction: the server recomputes the
+  /// comparison and refuses to pass a pallet with missing or foreign wheels.
+  /// A reason is required on a rejection and ignored on an approval.
+  Future<DplApiResponse<DplPalletAuditSession>> decidePalletAudit({
+    required int auditId,
+    required bool approve,
+    String? reason,
+  }) {
+    return _send<DplPalletAuditSession>(
+      () => _dio.post(
+        DplPaths.warehouseAuditDecide(auditId),
+        data: _cleanQuery({'approve': approve, 'reason': reason}),
+      ),
+      fallback: 'Failed to record the verdict.',
+      fromJson: (data) => DplPalletAuditSession.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `POST /warehouse/audits/:id/abandon` — walk away without a verdict.
+  Future<DplApiResponse<bool>> abandonPalletAudit(int auditId) {
+    return _send<bool>(
+      () => _dio.post(DplPaths.warehouseAuditAbandon(auditId)),
+      fallback: 'Failed to abandon the audit.',
+      fromJson: (_) => true,
+    );
+  }
+
+  /// `GET /warehouse/audits` — the register.
+  Future<DplApiResponse<DplPalletAuditPage>> getPalletAudits({
+    String? status,
+    int? palletId,
+    int? auditedBy,
+    String? from,
+    String? to,
+    int limit = 50,
+    int offset = 0,
+  }) {
+    return _send<DplPalletAuditPage>(
+      () => _dio.get(
+        DplPaths.warehouseAudits,
+        queryParameters: _cleanQuery({
+          'status': (status ?? '').trim().isEmpty ? null : status,
+          'pallet_id': palletId,
+          'audited_by': auditedBy,
+          'from': (from ?? '').trim().isEmpty ? null : from,
+          'to': (to ?? '').trim().isEmpty ? null : to,
+          'limit': limit,
+          'offset': offset,
+        }),
+      ),
+      fallback: 'Failed to load the audit register.',
+      fromJson: (data) => DplPalletAuditPage.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
+  /// `GET /warehouse/pallets` — the pallet register, reachable by an auditor.
+  ///
+  /// Same filters as the QA one because it is the same controller; this path
+  /// is the one a role without dpl_qa can actually call.
+  Future<DplApiResponse<List<DplPallet>>> getPalletsForAudit({
+    String? status,
+    String? palletType,
+    int? partId,
+    int? machineId,
+    String? shiftCode,
+    String? search,
+    String? from,
+    String? to,
+    int limit = 50,
+    int offset = 0,
+  }) {
+    return _send<List<DplPallet>>(
+      () => _dio.get(
+        DplPaths.warehousePallets,
+        queryParameters: _cleanQuery({
+          'status': (status ?? '').trim().isEmpty ? null : status,
+          'pallet_type': (palletType ?? '').trim().isEmpty ? null : palletType,
+          'part_id': partId,
+          'machine_id': machineId,
+          'shift_code': (shiftCode ?? '').trim().isEmpty ? null : shiftCode,
+          'search': (search ?? '').trim().isEmpty ? null : search,
+          'from': (from ?? '').trim().isEmpty ? null : from,
+          'to': (to ?? '').trim().isEmpty ? null : to,
+          'limit': limit,
+          'offset': offset,
+        }),
+      ),
+      fallback: 'Failed to load pallets.',
+      fromJson: (data) => _parseListEnvelope(
+        data is Map ? data['pallets'] ?? data : data,
+      ).map(DplPallet.fromJson).toList(),
     );
   }
 }

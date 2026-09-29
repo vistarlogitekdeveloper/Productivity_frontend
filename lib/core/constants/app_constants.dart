@@ -1,12 +1,12 @@
 class AppConstants {
   static const String appName = 'Vistar Pulse';
   static const String apiBaseUrl =
-      'https://api.vistarlogitek.com/api/v1/productivity';
+      'https://uat-api.vistarlogitek.com/api/v1/productivity';
 
   // Base URL for the Daily Production Loading (DPL) module. The DPL
   // endpoints live under a parallel path on the same backend host.
   static const String dplApiBaseUrl =
-      'https://api.vistarlogitek.com/api/v1/dpl';
+      'https://uat-api.vistarlogitek.com/api/v1/dpl';
 
   // Shared Preferences Keys
   static const String tokenKey = 'AUTH_TOKEN';
@@ -97,6 +97,10 @@ class AppConstants {
   static const String roleDplQre = 'DPL_QRE';
   static const String roleDplDriver = 'DPL_DRIVER';
 
+  /// Checks finished pallets against what the system says is on them.
+  /// Backend enum value `dpl_auditor` (migration 167).
+  static const String roleDplAuditor = 'DPL_AUDITOR';
+
   static const List<String> assignableRoles = <String>[
     roleAdmin,
     roleSupervisor,
@@ -138,6 +142,8 @@ class AppConstants {
         return 'DPL QRE';
       case roleDplDriver:
         return 'DPL Driver';
+      case roleDplAuditor:
+        return 'DPL Auditor';
       case roleVistarWorkspace:
         return 'Vistar Workspace';
       default:
@@ -183,6 +189,9 @@ class AppConstants {
 
   static bool isDplDriverRole(String role) =>
       normalizeRole(role) == roleDplDriver;
+
+  static bool isDplAuditorRole(String role) =>
+      normalizeRole(role) == roleDplAuditor;
 
   static bool isVistarWorkspaceRole(String role) =>
       normalizeRole(role) == roleVistarWorkspace;

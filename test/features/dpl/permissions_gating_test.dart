@@ -209,6 +209,11 @@ void main() {
         DplPermission.palletSpd,
         DplPermission.labelsScanExternal,
         DplPermission.palletTrolley,
+        // The pallet audit (backend migration 167). Opt-in like the rest of
+        // the Maxion work: the role exists for any plant that wants it, and
+        // nobody holds it until an administrator ticks the box.
+        DplPermission.palletAuditView,
+        DplPermission.palletAuditPerform,
         DplPermission.reportsStock,
         DplPermission.reportsSchedule,
         DplPermission.tripsShipment,

@@ -383,6 +383,25 @@ class DplPaths {
   // alone, which is what makes "who racks a pallet" a setting.
   static const String warehouseLocations = '/warehouse/locations';
   static const String warehousePalletResolve = '/warehouse/pallets/resolve';
+
+  // --- Pallet audit (migration 167) ---
+  //
+  // On /warehouse and not /qa, and that is load-bearing: the QA router
+  // role-locks to dpl_qa / dpl_supervisor / dpl_manager BEFORE any permission
+  // is consulted, so an auditor would be refused on role however the
+  // administrator sets the grid.
+  static const String warehouseAudits = '/warehouse/audits';
+  static String warehouseAudit(int id) => '/warehouse/audits/$id';
+  static String warehouseAuditScan(int id) => '/warehouse/audits/$id/scan';
+  static String warehouseAuditScanLine(int id, int lineId) =>
+      '/warehouse/audits/$id/scan/$lineId';
+  static String warehouseAuditDecide(int id) => '/warehouse/audits/$id/decide';
+  static String warehouseAuditAbandon(int id) => '/warehouse/audits/$id/abandon';
+
+  /// The pallet register, reachable by an auditor. Same controller as
+  /// `/qa/pallets`, mounted where a permission is enough.
+  static const String warehousePallets = '/warehouse/pallets';
+  static String warehousePalletWheels(int id) => '/warehouse/pallets/$id/wheels';
   static String warehousePalletPutaway(int palletId) =>
       '/warehouse/pallets/$palletId/putaway';
 

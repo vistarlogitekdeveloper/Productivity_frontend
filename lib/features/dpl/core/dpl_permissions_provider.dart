@@ -193,6 +193,14 @@ class DplPermission {
   /// needs it badly.
   static const String palletTrolley = 'pallet.trolley';
 
+  /// See the pallet audit register and the reason a pallet was rejected.
+  static const String palletAuditView = 'audit.view';
+
+  /// Scan a pallet and every wheel on it, and record approved or rejected.
+  /// Records the finding only: a rejected pallet is not stopped from being
+  /// dispatched.
+  static const String palletAuditPerform = 'audit.perform';
+
   /// Use the device camera to read wheel labels, instead of a hardware
   /// scanner or typing the serial. Separate so a plant issuing ring scanners
   /// can revoke it without touching the operator's ability to pack.
@@ -308,6 +316,8 @@ class DplPermission {
     palletSpd,
     labelsScanExternal,
     palletTrolley,
+    palletAuditView,
+    palletAuditPerform,
     // Maxion phases 1–4 and offline handhelds.
     reportsStock,
     reportsSchedule,

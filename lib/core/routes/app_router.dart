@@ -34,6 +34,7 @@ import '../../features/dpl/manager/screens/plan_trip_screen.dart';
 import '../../features/dpl/manager/screens/todays_dispatch_plan_screen.dart';
 import '../../features/dpl/models/dpl_part_field.dart';
 import '../../features/dpl/manager/screens/upload_plan_screen.dart';
+import '../../features/dpl/auditor/auditor_shell.dart';
 import '../../features/dpl/qa/qa_shell.dart';
 import '../../features/dpl/qa/screens/qa_plan_detail_screen.dart';
 import '../../features/dpl/qa/screens/qa_scanner_screen.dart';
@@ -74,6 +75,7 @@ GoRouter appRouter(Ref ref) {
       const dplSupervisorPath = '/dpl/supervisor';
       const dplSummaryPath = '/dpl/summary';
       const dplQaPath = '/dpl/qa';
+      const dplAuditorPath = '/dpl/auditor';
       const dplSecurityPath = '/dpl/security';
       const dplQrePath = '/dpl/qre';
       const dplDriverPath = '/dpl/driver';
@@ -91,6 +93,7 @@ GoRouter appRouter(Ref ref) {
       final isDplSummaryViewerRole =
           AppConstants.isDplSummaryViewerRole(role);
       final isDplQaRole = AppConstants.isDplQaRole(role);
+      final isDplAuditorRole = AppConstants.isDplAuditorRole(role);
       final isDplSecurityRole = AppConstants.isDplSecurityRole(role);
       final isDplQreRole = AppConstants.isDplQreRole(role);
       final isDplDriverRole = AppConstants.isDplDriverRole(role);
@@ -115,6 +118,11 @@ GoRouter appRouter(Ref ref) {
                   // landing on /dpl/summary.
                   : isDplQaRole
                       ? dplQaPath
+                      // Before isDplSummaryViewerRole for the same reason QA is:
+                      // a predicate that also claims this role would make the
+                      // branch unreachable.
+                      : isDplAuditorRole
+                      ? dplAuditorPath
                       : isDplSummaryViewerRole
                       ? dplSummaryPath
                       : isDplSecurityRole
@@ -412,6 +420,14 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/dpl/summary',
         builder: (context, state) => const DplSummaryShell(),
+      ),
+      // DPL AUDITOR — checks finished pallets against what the system says is
+      // on them. Every screen is gated on a permission an administrator grants
+      // per organization, like the rest of the Maxion work, so the shell shows
+      // what to ask for rather than an empty bar.
+      GoRoute(
+        path: '/dpl/auditor',
+        builder: (context, state) => const DplAuditorShell(),
       ),
       // DPL QA — production plan vs actual, then scan the raw-material label
       // and print finished-goods labels capped at the recorded actual qty.
