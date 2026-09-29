@@ -16,6 +16,8 @@ import '../../core/widgets/dpl_snack.dart';
 import '../../models/dpl_machine.dart';
 import '../../models/dpl_part.dart';
 import '../../models/dpl_part_sticker.dart';
+import '../../models/dpl_shift.dart';
+import '../providers/qa_production_provider.dart' show qaCurrentShiftProvider;
 import '../services/batch_quantity.dart';
 import '../services/part_sticker_label_pdf.dart';
 
@@ -30,6 +32,18 @@ final qaMachinesProvider =
   return ref.watch(dplApiServiceProvider).getQaMachines();
 });
 
+
+/// The shift master, for the direct-print shift picker.
+///
+/// Maxion's own Production Sticker screen asks for the shift because labels
+/// for a run are routinely printed once the shift has rolled over — the wheels
+/// were made on A, the printing happens at the start of B. Left to the clock,
+/// the label would claim B for a wheel made on A, on a physical sticker nobody
+/// can correct afterwards.
+final qaShiftsProvider =
+    FutureProvider.autoDispose<DplApiResponse<List<DplShift>>>((ref) async {
+  return ref.watch(dplApiServiceProvider).getShifts();
+});
 /// The part-search term, shared by the direct-print tab and the pallet
 /// screen's "start a pallet" picker. Public because both read it — the search
 /// runs SERVER-side, so filtering has to go through one provider rather than
@@ -83,6 +97,35 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
   Timer? _debounce;
 
   int? _machineId;
+  /// Null means "let the server read the clock", which is what this screen
+  /// did before the picker existed.
+  String? _shiftCode;
+
+  /// True once the operator has chosen or cleared the shift themselves. The
+  /// preselect never overrides a deliberate choice.
+  bool _shiftTouched = false;
+
+  /// The shift these labels will claim.
+  ///
+  /// DERIVED, not stored. Until the operator touches the field this follows
+  /// whatever shift the server says is running; after that it is exactly what
+  /// they chose, including the deliberate "use the clock" of null.
+  ///
+  /// Doing it this way rather than writing the running shift into state on a
+  /// listener avoids two bugs. A listener only fires on a CHANGE, so a
+  /// provider already resolved by the first build would never preselect at
+  /// all; and a later rebuild would quietly put the running shift back over a
+  /// choice the operator had deliberately made.
+  String? get _effectiveShift {
+    if (_shiftTouched) return _shiftCode;
+    // `read`, not `watch`: this is also called from _printNow, and watching
+    // outside a build throws. `_shiftCard` watches the same provider, so the
+    // value is already cached here and the screen still rebuilds when the
+    // running shift arrives.
+    final running = ref.read(qaCurrentShiftProvider).value?.data?.code.trim();
+    return (running == null || running.isEmpty) ? null : running;
+  }
+
   DplPart? _part;
   bool _busy = false;
 
@@ -119,6 +162,8 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
         _noticeCard(),
         const SizedBox(height: 12),
         _machineCard(),
+        const SizedBox(height: 12),
+        _shiftCard(),
         const SizedBox(height: 12),
         _partCard(),
         const SizedBox(height: 12),
@@ -179,7 +224,7 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '1. Machine',
+            '1. Machine (station)',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
           const SizedBox(height: 10),
@@ -230,6 +275,113 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
     );
   }
 
+  /// Production shift — Maxion's "Production Shift".
+  ///
+  /// Preselected to whatever is running now, so the operator printing during
+  /// the shift they are in does nothing. It exists for the case that is not
+  /// that: printing a run's labels after the shift has rolled over.
+  Widget _shiftCard() {
+    // Watched purely to establish the dependency: `_effectiveShift` reads it,
+    // and without this the chips would not repaint when the running shift
+    // finally arrives from the server.
+    ref.watch(qaCurrentShiftProvider);
+    final async = ref.watch(qaShiftsProvider);
+
+    return DplCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '2. Production shift',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                ),
+              ),
+              if (_effectiveShift != null)
+                TextButton(
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() {
+                            _shiftTouched = true;
+                            _shiftCode = null;
+                          }),
+                  child: const Text('Use the clock'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            _effectiveShift == null
+                ? 'Left to the clock — the server stamps whichever shift is '
+                    'running when you press print.'
+                : 'Every label in this run will say shift $_effectiveShift.',
+            style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
+          ),
+          const SizedBox(height: 10),
+          async.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: LinearProgressIndicator(minHeight: 2),
+            ),
+            // A shift master that will not load must not block a print. The
+            // server still resolves one from the clock, which is what this
+            // screen did before the picker existed.
+            error: (e, _) => DplInlineErrorRetry(
+              message: e.toString(),
+              onRetry: () => ref.invalidate(qaShiftsProvider),
+            ),
+            data: (res) {
+              if (res.isError) {
+                return DplInlineErrorRetry(
+                  message: res.error ?? 'Failed to load shifts.',
+                  onRetry: () => ref.invalidate(qaShiftsProvider),
+                );
+              }
+              final shifts = (res.data ?? const <DplShift>[])
+                  .where((s) => s.isActive)
+                  .toList(growable: false);
+              if (shifts.isEmpty) {
+                return Text(
+                  'No shifts are set up for this organization yet. A manager '
+                  'adds them under Masters; until then the clock decides.',
+                  style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
+                );
+              }
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final s in shifts)
+                    ChoiceChip(
+                      selected: _effectiveShift == s.code,
+                      onSelected: _busy
+                          ? null
+                          : (_) {
+                              // Read the answer BEFORE the flag flips. Once
+                              // _shiftTouched is true the getter stops
+                              // consulting the running shift, so tapping the
+                              // already-selected chip would fail to clear it.
+                              final was = _effectiveShift;
+                              setState(() {
+                                _shiftTouched = true;
+                                _shiftCode = was == s.code ? null : s.code;
+                              });
+                            },
+                      label: Text(
+                        s.name.isEmpty ? s.code : '${s.code} · ${s.name}',
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _partCard() {
     final async = ref.watch(qaDirectPartsProvider);
     final selected = _part;
@@ -239,7 +391,7 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '2. Part',
+            '3. Item',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
           const SizedBox(height: 10),
@@ -374,7 +526,7 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '3. How many',
+            '4. Sticker qty',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
           const SizedBox(height: 10),
@@ -470,6 +622,7 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
     final res = await ref.read(dplApiServiceProvider).issueDirectQaStickers(
           partId: part.id,
           machineId: _machineId,
+          shiftCode: _effectiveShift,
           count: _count,
         );
     if (!mounted) return;

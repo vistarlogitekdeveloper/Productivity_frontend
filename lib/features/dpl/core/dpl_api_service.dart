@@ -3609,6 +3609,8 @@ class DplApiService {
     required int partId,
     required int count,
     int? machineId,
+    /// The shift the label claims. Omitted, the server reads the clock.
+    String? shiftCode,
   }) {
     return _send<DplStickerIssueResult>(
       () => _dio.post(
@@ -3617,6 +3619,9 @@ class DplApiService {
           'part_id': partId,
           'machine_id': machineId,
           'count': count,
+          // _cleanQuery strips nulls, so an unset shift is simply absent and the
+          // server falls back to the clock exactly as before.
+          'shift_code': (shiftCode ?? '').trim().isEmpty ? null : shiftCode!.trim(),
         }),
       ),
       fallback: 'Failed to print the labels.',
