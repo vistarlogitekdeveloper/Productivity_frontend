@@ -65,6 +65,11 @@ class PartStickerLabelPdf {
   static const PdfColor _ink = PdfColor.fromInt(0xFF000000);
   static const PdfColor _paper = PdfColor.fromInt(0xFFFFFFFF);
 
+  /// Signed the way Maxion signs it. A production sticker with no plant name
+  /// on it is a label a supervisor cannot place when two plants' wheels are
+  /// standing in the same bay.
+  static const String _brand = 'Maxion Wheels';
+
   /// The die-cut page box. Must equal the stock exactly.
   static const PdfPageFormat rollFormat = PdfPageFormat(
     labelWidthMm * PdfPageFormat.mm,
@@ -73,15 +78,19 @@ class PartStickerLabelPdf {
   );
 
   /// One page per sticker at the true die-cut size — for the thermal roll.
-  static Future<Uint8List> buildRoll(List<DplPartSticker> stickers) async =>
-      buildRollDocument(stickers).save();
+  static Future<Uint8List> buildRoll(List<DplPartSticker> stickers, {DateTime? runAt}) async =>
+      buildRollDocument(stickers, runAt: runAt).save();
 
   /// The roll document itself, before serialisation.
   ///
   /// Separate from [buildRoll] so the page structure can be asserted directly.
   /// Counting pages in the saved bytes is not possible — the output is
   /// compressed, so `/Type /Page` never appears as plain text.
-  static pw.Document buildRollDocument(List<DplPartSticker> stickers) {
+  static pw.Document buildRollDocument(List<DplPartSticker> stickers, {DateTime? runAt}) {
+    // ONE timestamp for the whole run, not one per label. The sample print
+    // has all twenty stickers reading 16:36:45 — they came off one press of
+    // Save & Print, and a run that drifts across a second would sort oddly.
+    final at = runAt ?? DateTime.now();
     final doc = pw.Document(
       title: 'Part Stickers',
       author: 'Grupo Antolin India Private Limited',
@@ -100,6 +109,7 @@ class PartStickerLabelPdf {
             stickers[i],
             index: i + 1,
             total: stickers.length,
+            runAt: at,
             fonts: fonts,
           ),
         ),
@@ -112,11 +122,12 @@ class PartStickerLabelPdf {
   ///
   /// 5 across x 7 down at 3 mm gutters inside an 8 mm margin — the same fit
   /// Maxion computes for this stock on A4 landscape.
-  static Future<Uint8List> buildSheet(List<DplPartSticker> stickers) async =>
-      buildSheetDocument(stickers).save();
+  static Future<Uint8List> buildSheet(List<DplPartSticker> stickers, {DateTime? runAt}) async =>
+      buildSheetDocument(stickers, runAt: runAt).save();
 
   /// The A4 document itself, before serialisation. See [buildRollDocument].
-  static pw.Document buildSheetDocument(List<DplPartSticker> stickers) {
+  static pw.Document buildSheetDocument(List<DplPartSticker> stickers, {DateTime? runAt}) {
+    final at = runAt ?? DateTime.now();
     final doc = pw.Document(
       title: 'Part Stickers',
       author: 'Grupo Antolin India Private Limited',
@@ -146,6 +157,7 @@ class PartStickerLabelPdf {
                     slice[i],
                     index: start + i + 1,
                     total: stickers.length,
+                    runAt: at,
                     fonts: fonts,
                   ),
                 ),
@@ -163,12 +175,9 @@ class PartStickerLabelPdf {
     DplPartSticker sticker, {
     required int index,
     required int total,
+    required DateTime runAt,
     required _LabelFonts fonts,
   }) {
-    final code = sticker.customerPartNo.trim().isNotEmpty
-        ? sticker.customerPartNo.trim()
-        : sticker.substratePartNo.trim();
-
     return pw.Container(
       width: labelWidthMm * PdfPageFormat.mm,
       height: labelHeightMm * PdfPageFormat.mm,
@@ -184,22 +193,26 @@ class PartStickerLabelPdf {
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
+          // THE SYMBOL STILL HOLDS OUR PAYLOAD.
+          //
+          // Maxion's production sticker encodes the same slash string it
+          // prints. Ours cannot: every scan in this system — Pallet, Merge,
+          // Put away, the trolley — resolves on the serial inside
+          // `GA|plant|part|serial|YYMMDD|shift|line`. Changing what the symbol
+          // holds would mean teaching the backend a second format before a
+          // single one of these labels could be scanned.
           _qr(sticker.qrPayload),
           pw.SizedBox(width: _gapMm * PdfPageFormat.mm),
           // Expanded gives the text column a bounded width so nothing can
-          // overflow the die-cut; the explicit height is what lets
-          // spaceAround distribute the three rows instead of collapsing them.
+          // overflow the die-cut.
           pw.Expanded(
             child: pw.SizedBox(
               height: _qrBoxMm * PdfPageFormat.mm,
-              child: pw.Column(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  _rowTop(code, sticker.payloadShift, fonts),
-                  _rowSerial(sticker.payloadSerial, fonts),
-                  _rowMeta(sticker.payloadLine, index, total, fonts),
-                ],
+              child: _productionBlock(
+                productionLine(sticker, index: index, runAt: runAt),
+                sticker.payloadSerial,
+                _brand,
+                fonts,
               ),
             ),
           ),
@@ -255,87 +268,110 @@ class PartStickerLabelPdf {
     );
   }
 
-  /// Customer part reference + shift letter.
+  /// The production-sticker text block: payload line, brand, serial.
   ///
-  /// The part ref gets the flexible width and the chip is sized to content:
-  /// Maxion records that without this the chip won the squeeze and a 5-digit
-  /// item code ellipsised to "18...".
-  static pw.Widget _rowTop(String code, String shift, _LabelFonts fonts) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.center,
+  /// Replaces the three-row scanning layout (part ref + shift chip, serial,
+  /// LINE n/m). Maxion's production sticker prints the payload itself as the
+  /// human-readable text and signs it with the plant name, so a supervisor
+  /// reading a wheel off the floor sees exactly what the symbol holds.
+  ///
+  /// The SERIAL IS KEPT, which Maxion's own sticker does not do. It is the
+  /// only thing on the label that identifies the wheel to this system, and a
+  /// thermal label that has been scuffed against a rack is common enough that
+  /// dropping it would mean unpacking a pallet to work out what a wheel is.
+  /// Small, and under the brand, so it stays out of the way.
+  static pw.Widget _productionBlock(
+    String payloadLine,
+    String serial,
+    String brand,
+    _LabelFonts fonts,
+  ) {
+    return pw.Column(
+      mainAxisAlignment: pw.MainAxisAlignment.center,
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Expanded(
-          child: pw.FittedBox(
-            fit: pw.BoxFit.scaleDown,
-            alignment: pw.Alignment.centerLeft,
-            child: pw.Text(
-              code.isEmpty ? '-' : code,
-              maxLines: 1,
-              style: pw.TextStyle(
-                font: fonts.bold,
-                fontSize: 11,
-                letterSpacing: -0.15, // CSS -0.2px
-              ),
-            ),
+        // Wraps rather than shrinking to fit. The string runs ~35 characters
+        // and the column is ~25 mm; scaled down to one line it would print at
+        // about 3 pt, which a thermal head cannot resolve and nobody can read.
+        // Maxion wraps it across three lines for the same reason.
+        pw.Text(
+          payloadLine,
+          maxLines: 3,
+          overflow: pw.TextOverflow.clip,
+          style: pw.TextStyle(font: fonts.bold, fontSize: 6, lineSpacing: 0.4),
+        ),
+        pw.SizedBox(height: 1.1 * PdfPageFormat.mm),
+        pw.Text(
+          brand,
+          maxLines: 1,
+          style: pw.TextStyle(
+            font: fonts.bold,
+            fontSize: 7.5,
+            decoration: pw.TextDecoration.underline,
           ),
         ),
-        pw.SizedBox(width: 1 * PdfPageFormat.mm),
-        // Square 1 px outline holding ONLY the letter. Spelling out "SHIFT A"
-        // costs ~10 mm of a 22 mm column, which is why Maxion abbreviates it.
-        pw.Container(
-          decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: _ink, width: _hairline),
-          ),
-          padding: const pw.EdgeInsets.symmetric(
-            vertical: 0.6 * PdfPageFormat.mm,
-            horizontal: 1 * PdfPageFormat.mm,
-          ),
-          child: pw.Text(
-            _shiftLetter(shift),
-            maxLines: 1,
-            style: pw.TextStyle(font: fonts.bold, fontSize: 8),
-          ),
+        pw.SizedBox(height: 0.6 * PdfPageFormat.mm),
+        pw.Text(
+          serial.isEmpty ? '-' : serial,
+          maxLines: 1,
+          style: pw.TextStyle(font: fonts.mono, fontSize: 6),
         ),
       ],
     );
   }
+  /// The Maxion production-sticker line, e.g.
+  /// `18663/std01//1/29Sep26/16:36:45/A/1`.
+  ///
+  /// Eight `/`-separated fields, read off a real PROD-007258 print:
+  ///
+  ///   0 item          the customer part ref  (18663)
+  ///   1 station       Maxion's "Station Name" (std01) — our machine
+  ///   2 (empty)       blank on every sticker in the sample; kept so the
+  ///                   positions after it line up with Maxion's
+  ///   3 sequence      1..n within the print run
+  ///   4 date          ddMMMyy   (29Sep26)
+  ///   5 time          HH:mm:ss  (16:36:45)
+  ///   6 shift         A
+  ///   7 sequence      the same number again, as Maxion prints it
+  ///
+  /// Field 2 is left empty deliberately. Every sticker in the sample has it
+  /// blank, so there is nothing to say what belongs there — and guessing a
+  /// value into a positional format would shift every field after it for
+  /// anyone parsing by index.
+  ///
+  /// The time is the sticker's own `printedAt` where the server gave one. It
+  /// falls back to the batch's [runAt] so a whole run carries ONE timestamp,
+  /// which is what the sample shows: all twenty read 16:36:45.
+  static String productionLine(
+    DplPartSticker sticker, {
+    required int index,
+    required DateTime runAt,
+  }) {
+    final at = sticker.printedAt ?? runAt;
+    final seq = sticker.seqInBatch > 0 ? sticker.seqInBatch : index;
+    final item = sticker.customerPartNo.trim().isNotEmpty
+        ? sticker.customerPartNo.trim()
+        : sticker.substratePartNo.trim();
+    final station = sticker.payloadLine == '-' ? '' : sticker.payloadLine.trim();
+    final shift = _shiftLetter(sticker.payloadShift);
 
-  static pw.Widget _rowSerial(String serial, _LabelFonts fonts) {
-    return pw.FittedBox(
-      fit: pw.BoxFit.scaleDown,
-      alignment: pw.Alignment.centerLeft,
-      child: pw.Text(
-        serial.isEmpty ? '-' : serial,
-        maxLines: 1,
-        style: pw.TextStyle(
-          font: fonts.mono,
-          fontSize: 10.5,
-          letterSpacing: 0.15, // CSS 0.2px
-        ),
-      ),
-    );
+    return '$item/$station//$seq/${_ddMMMyy(at)}/${_hhmmss(at)}/$shift/$seq';
   }
 
-  static pw.Widget _rowMeta(
-    String line,
-    int index,
-    int total,
-    _LabelFonts fonts,
-  ) {
-    // Maxion uses U+2022 here. Helvetica's WinAnsi encoding carries it, but a
-    // hyphen is the zero-risk choice on a 7 pt row and reads the same at arm's
-    // length on a thermal print.
-    final text = 'LINE ${_short(line, 12)} - $index/$total';
-    return pw.FittedBox(
-      fit: pw.BoxFit.scaleDown,
-      alignment: pw.Alignment.centerLeft,
-      child: pw.Text(
-        text,
-        maxLines: 1,
-        style: pw.TextStyle(font: fonts.bold, fontSize: 7),
-      ),
-    );
-  }
+  static const _months = <String>[
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  /// `29Sep26`. No padding on the day — the sample shows `29Sep26`, and a
+  /// single-digit day prints as `1Sep26` there too.
+  static String _ddMMMyy(DateTime t) =>
+      '${t.day}${_months[t.month - 1]}${(t.year % 100).toString().padLeft(2, '0')}';
+
+  static String _hhmmss(DateTime t) =>
+      '${_two(t.hour)}:${_two(t.minute)}:${_two(t.second)}';
+
+  static String _two(int v) => v.toString().padLeft(2, '0');
 
   /// Shift codes are single letters in the master ("A"/"B"/"C"), but tolerate
   /// "Shift A" or an empty value without printing something silly.
@@ -345,12 +381,6 @@ class PartStickerLabelPdf {
     final letters = RegExp(r'[A-Za-z0-9]').allMatches(s).map((m) => m[0]!).toList();
     if (letters.isEmpty) return '-';
     return letters.last.toUpperCase();
-  }
-
-  static String _short(String v, int max) {
-    final s = v.trim();
-    if (s.isEmpty) return '-';
-    return s.length <= max ? s : s.substring(0, max);
   }
 }
 

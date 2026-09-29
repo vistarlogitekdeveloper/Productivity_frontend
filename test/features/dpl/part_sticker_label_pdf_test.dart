@@ -143,4 +143,135 @@ void main() {
     expect(s.payloadShift, 'B');
     expect(s.payloadLine, 'X0 HL');
   });
+
+  /// The production-sticker line, checked against a real Maxion print.
+  ///
+  /// Every expectation here is read off PROD-007258 — a 20-up run of item
+  /// 18663 at station std01, shift A, printed 29 Sep 2026 16:36:45.
+  group('the Maxion production line', () {
+    DplPartSticker sticker({
+      String customerPartNo = '18663',
+      String qrPayload = 'GA|P1|18663|GA2600000063|260929|A|std01',
+      int seq = 1,
+      DateTime? printedAt,
+      String shiftCode = 'A',
+      String machineName = 'std01',
+    }) =>
+        DplPartSticker(
+          id: 1,
+          planId: 1,
+          planItemId: 1,
+          partId: 1,
+          serialNo: 'GA2600000063',
+          qrPayload: qrPayload,
+          customerPartNo: customerPartNo,
+          shiftCode: shiftCode,
+          machineName: machineName,
+          seqInBatch: seq,
+          printedAt: printedAt,
+        );
+
+    final runAt = DateTime(2026, 9, 29, 16, 36, 45);
+
+    test('reproduces page 1 of PROD-007258 exactly', () {
+      expect(
+        PartStickerLabelPdf.productionLine(sticker(), index: 1, runAt: runAt),
+        '18663/std01//1/29Sep26/16:36:45/A/1',
+      );
+    });
+
+    test('reproduces the two-digit sequence pages', () {
+      // Pages 10 and 20 are where a padding mistake would show.
+      expect(
+        PartStickerLabelPdf.productionLine(sticker(seq: 10), index: 10, runAt: runAt),
+        '18663/std01//10/29Sep26/16:36:45/A/10',
+      );
+      expect(
+        PartStickerLabelPdf.productionLine(sticker(seq: 20), index: 20, runAt: runAt),
+        '18663/std01//20/29Sep26/16:36:45/A/20',
+      );
+    });
+
+    test('field 2 stays empty', () {
+      // Blank on every sticker in the sample. Putting anything there shifts
+      // the date, time and shift one place along for anyone parsing by index.
+      final parts = PartStickerLabelPdf
+          .productionLine(sticker(), index: 1, runAt: runAt)
+          .split('/');
+      expect(parts.length, 8);
+      expect(parts[2], isEmpty);
+      expect(parts[4], '29Sep26', reason: 'date must stay at index 4');
+      expect(parts[6], 'A', reason: 'shift must stay at index 6');
+    });
+
+    test('a single-digit day is not zero-padded, but the clock is', () {
+      expect(
+        PartStickerLabelPdf.productionLine(
+          sticker(),
+          index: 1,
+          runAt: DateTime(2026, 9, 1, 6, 5, 4),
+        ),
+        '18663/std01//1/1Sep26/06:05:04/A/1',
+      );
+    });
+
+    test('the whole run shares one timestamp', () {
+      // Twenty stickers off one Save & Print all read 16:36:45 in the sample.
+      final one = PartStickerLabelPdf.productionLine(sticker(seq: 1), index: 1, runAt: runAt);
+      final twenty = PartStickerLabelPdf.productionLine(sticker(seq: 20), index: 20, runAt: runAt);
+      expect(one.split('/')[5], twenty.split('/')[5]);
+    });
+
+    test("a sticker's own printedAt wins over the run clock", () {
+      // The server stamps it; a reprint of one spoiled label should carry when
+      // THAT label was issued, not when this run started.
+      expect(
+        PartStickerLabelPdf.productionLine(
+          sticker(printedAt: DateTime(2026, 9, 30, 9, 0, 1)),
+          index: 1,
+          runAt: runAt,
+        ),
+        '18663/std01//1/30Sep26/09:00:01/A/1',
+      );
+    });
+
+    test('station and shift come off the payload, not the stored columns', () {
+      // The payload is the snapshot taken at print time; the columns can be
+      // edited afterwards. The label must say what was printed.
+      expect(
+        PartStickerLabelPdf.productionLine(
+          sticker(
+            qrPayload: 'GA|P1|18663|GA2600000063|260929|B|std07',
+            shiftCode: 'A',
+            machineName: 'std01',
+          ),
+          index: 1,
+          runAt: runAt,
+        ),
+        '18663/std07//1/29Sep26/16:36:45/B/1',
+      );
+    });
+
+    test('a missing station leaves the field empty, not a dash', () {
+      // '-' is what the getters use for "nothing"; printing it into a
+      // positional string would make it look like a real station name.
+      expect(
+        PartStickerLabelPdf.productionLine(
+          sticker(qrPayload: 'GA|P1|18663|GA2600000063|260929|A|', machineName: ''),
+          index: 1,
+          runAt: runAt,
+        ),
+        '18663///1/29Sep26/16:36:45/A/1',
+      );
+    });
+
+    test('the QR still holds OUR payload, not the printed line', () {
+      // The whole system resolves on the serial inside the pipe payload.
+      // If this ever flips, every scanning screen stops working.
+      final s = sticker();
+      expect(s.qrPayload, contains('GA2600000063'));
+      expect(s.qrPayload, contains('|'));
+      expect(s.qrPayload, isNot(contains('/')));
+    });
+  });
 }
