@@ -1,10 +1,8 @@
 class AppConstants {
   static const String appName = 'Vistar Pulse';
-  static const String apiBaseUrl =
-      'https://api.vistarlogitek.com/api/v1/productivity';
 
-  // Base URL for the Daily Production Loading (DPL) module. The DPL
-  // endpoints live under a parallel path on the same backend host.
+  // Base URL for the Daily Production Loading (DPL) module — the only
+  // backend this app signs in to and talks to.
   static const String dplApiBaseUrl =
       'https://api.vistarlogitek.com/api/v1/dpl';
 
@@ -14,7 +12,6 @@ class AppConstants {
   static const String userIdKey = 'USER_ID';
   static const String usernameKey = 'USERNAME';
   static const String userNameKey = 'USER_NAME';
-  static const String offlineEntriesKey = 'OFFLINE_ENTRIES';
   static const String themeModeKey = 'THEME_MODE';
 
   // DPL active-organization snapshot — written on login, read on app
@@ -54,16 +51,9 @@ class AppConstants {
   static const String dplMustChangePasswordKey = 'DPL_MUST_CHANGE_PASSWORD';
 
   // Roles
-  static const String roleAdmin = 'ADMIN';
-  static const String roleSupervisor = 'SUPERVISOR';
-  static const String roleBrin = 'BRIN';
-  static const String roleOperator = 'OPERATOR';
 
   /// DPL Administrator. Creates organizations and users, and edits the
   /// role/permission grid. Backend value `dpl_admin` (migration 148).
-  ///
-  /// Distinct from [roleAdmin], which belongs to the Productivity module and
-  /// lands on `/admin-dashboard`. The two are unrelated despite the name.
   static const String roleDplAdmin = 'DPL_ADMIN';
 
   static const String roleDplManager = 'DPL_MANAGER';
@@ -97,25 +87,10 @@ class AppConstants {
   static const String roleDplQre = 'DPL_QRE';
   static const String roleDplDriver = 'DPL_DRIVER';
 
-  static const List<String> assignableRoles = <String>[
-    roleAdmin,
-    roleSupervisor,
-    roleBrin,
-    roleOperator,
-  ];
-
   static String normalizeRole(String role) => role.trim().toUpperCase();
 
   static String roleLabel(String role) {
     switch (normalizeRole(role)) {
-      case roleAdmin:
-        return 'Admin';
-      case roleSupervisor:
-        return 'Supervisor';
-      case roleBrin:
-        return 'BRIN';
-      case roleOperator:
-        return 'Operator';
       case roleDplAdmin:
         return 'DPL Administrator';
       case roleDplManager:
@@ -143,16 +118,6 @@ class AppConstants {
       default:
         return normalizeRole(role);
     }
-  }
-
-  static bool isSupervisorRole(String role) =>
-      normalizeRole(role) == roleSupervisor;
-
-  static bool isBrinRole(String role) => normalizeRole(role) == roleBrin;
-
-  static bool isAdminDashboardRole(String role) {
-    final normalized = normalizeRole(role);
-    return normalized == roleAdmin || normalized == roleSupervisor;
   }
 
   static bool isDplAdminRole(String role) =>
@@ -205,4 +170,15 @@ class AppConstants {
       isDplSecurityRole(role) ||
       isDplQreRole(role) ||
       isDplDriverRole(role);
+
+  /// Whether a stored or freshly issued session belongs to something this
+  /// app can still serve: a Vistar Pulse (DPL) role, or the local Vistar
+  /// Workspace launcher account.
+  ///
+  /// Anything else is a leftover from the retired classic Productivity
+  /// module (`ADMIN`, `SUPERVISOR`, `BRIN`, `OPERATOR`), whose backend now
+  /// answers every request with 410 Gone. Such a session is signed out
+  /// rather than routed anywhere.
+  static bool isSupportedSessionRole(String role) =>
+      isDplRole(role) || isVistarWorkspaceRole(role);
 }

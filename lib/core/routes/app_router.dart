@@ -7,9 +7,6 @@ import '../../features/auth/auth_provider.dart';
 import '../../features/auth/force_password_change_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/dpl/core/dpl_password_gate_provider.dart';
-import '../../features/dashboard/admin_dashboard_screen.dart';
-import '../../features/dashboard/brin_dashboard_screen.dart';
-import '../../features/dashboard/operator_dashboard_screen.dart';
 import '../../features/dpl/admin/admin_shell.dart';
 import '../../features/dpl/journey/screens/driver_home_screen.dart';
 import '../../features/dpl/journey/screens/qre_home_screen.dart';
@@ -41,7 +38,6 @@ import '../../features/dpl/summary/summary_shell.dart';
 import '../../features/dpl/supervisor/screens/machine_plan_screen.dart';
 import '../../features/dpl/supervisor/screens/plan_execution_screen.dart';
 import '../../features/dpl/supervisor/screens/supervisor_shell.dart';
-import '../../features/production_entry/production_entry_screen.dart';
 import '../../features/workspace/workspace_screen.dart';
 import '../constants/app_constants.dart';
 import '../widgets/vistar/vistar_loaders.dart';
@@ -65,10 +61,6 @@ GoRouter appRouter(Ref ref) {
     observers: [VistarRouteLoader.instance],
     redirect: (context, state) {
       const loginPath = '/login';
-      const adminDashboardPath = '/admin-dashboard';
-      const brinDashboardPath = '/brin-dashboard';
-      const operatorDashboardPath = '/operator-dashboard';
-      const newEntryPath = '/new-entry';
       const dplAdminPath = '/dpl/admin';
       const dplManagerPath = '/dpl/manager';
       const dplSupervisorPath = '/dpl/supervisor';
@@ -79,11 +71,14 @@ GoRouter appRouter(Ref ref) {
       const dplDriverPath = '/dpl/driver';
       const workspacePath = '/apps';
 
-      final isAuth = authState.value != null;
-      final isLoggingIn = state.matchedLocation == loginPath;
       final role = authState.value?.role ?? '';
-      final isAdminRole = AppConstants.isAdminDashboardRole(role);
-      final isBrinRole = AppConstants.isBrinRole(role);
+      // A role with no home here — in practice only a session left by the
+      // retired classic Productivity sign-in, which [AuthController] already
+      // signs out on start — is routed as signed out. Treating it as signed
+      // in would leave no dashboard to send it to.
+      final isAuth = authState.value != null &&
+          AppConstants.isSupportedSessionRole(role);
+      final isLoggingIn = state.matchedLocation == loginPath;
       final isDplAdminRole = AppConstants.isDplAdminRole(role);
       final isDplManagerRole = AppConstants.isDplManagerRole(role);
       final isDplSupervisorRole = AppConstants.isDplSupervisorRole(role);
@@ -123,11 +118,9 @@ GoRouter appRouter(Ref ref) {
                               ? dplQrePath
                               : isDplDriverRole
                                   ? dplDriverPath
-                                  : isAdminRole
-                                      ? adminDashboardPath
-                                      : isBrinRole
-                                          ? brinDashboardPath
-                                          : operatorDashboardPath;
+                                  // Unreachable: `isAuth` already excludes
+                                  // every role not matched above.
+                                  : loginPath;
 
       // If still loading init state, don't redirect aggressively
       if (authState.isLoading && !isAuth) return null;
@@ -147,8 +140,8 @@ GoRouter appRouter(Ref ref) {
       //
       // Scoped to DPL roles because the flag and the screen behind it both
       // talk to the DPL backend. A stale flag left over from a previous DPL
-      // session must not strand a Productivity user on a screen whose
-      // endpoint would reject them.
+      // session must not strand the Workspace launcher account on a screen
+      // whose endpoint would reject it.
       const changePasswordPath = '/dpl/change-password';
       final passwordGateApplies =
           mustChangePassword && AppConstants.isDplRole(role);
@@ -166,31 +159,25 @@ GoRouter appRouter(Ref ref) {
         return defaultDashboardPath;
       }
 
+      // Screens of the retired classic Productivity module. They no longer
+      // exist, but a web bookmark or history entry can still point at them;
+      // send it home instead of to a not-found page. Matched on the URI
+      // because no route matches these paths any more.
+      const retiredPaths = {
+        '/admin-dashboard',
+        '/operator-dashboard',
+        '/brin-dashboard',
+        '/new-entry',
+      };
+      if (retiredPaths.contains(state.uri.path)) {
+        return defaultDashboardPath;
+      }
+
       // Keep users in role-appropriate dashboard routes.
-      if (state.matchedLocation == adminDashboardPath && !isAdminRole) {
-        return defaultDashboardPath;
-      }
-      if (state.matchedLocation == brinDashboardPath && !isBrinRole) {
-        return defaultDashboardPath;
-      }
       // The Workspace launcher belongs to the portal role alone — every
       // other role gets bounced to their own dashboard.
       if (state.matchedLocation.startsWith(workspacePath) &&
           !isWorkspaceRole) {
-        return defaultDashboardPath;
-      }
-      if (state.matchedLocation == operatorDashboardPath &&
-          (isAdminRole ||
-              isBrinRole ||
-              isWorkspaceRole ||
-              isDplAdminRole ||
-              isDplManagerRole ||
-              isDplSupervisorRole ||
-              isDplCustomerRole ||
-              isDplSummaryViewerRole ||
-              isDplSecurityRole ||
-              isDplQreRole ||
-              isDplDriverRole)) {
         return defaultDashboardPath;
       }
       // The Administration panel belongs to the Administrator alone. The
@@ -216,9 +203,6 @@ GoRouter appRouter(Ref ref) {
       if (state.matchedLocation.startsWith(dplQaPath) &&
           !(isDplQaRole || isDplManagerRole)) {
         return defaultDashboardPath;
-      }
-      if (state.matchedLocation == newEntryPath && isBrinRole) {
-        return brinDashboardPath;
       }
 
       // Sandbox DPL routes to DPL roles only.
@@ -256,22 +240,6 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/admin-dashboard',
-        builder: (context, state) => const AdminDashboardScreen(),
-      ),
-      GoRoute(
-        path: '/operator-dashboard',
-        builder: (context, state) => const OperatorDashboardScreen(),
-      ),
-      GoRoute(
-        path: '/brin-dashboard',
-        builder: (context, state) => const BrinDashboardScreen(),
-      ),
-      GoRoute(
-        path: '/new-entry',
-        builder: (context, state) => const ProductionEntryScreen(),
       ),
       // Vistar Workspace — the launcher for the wider Vistar app family.
       GoRoute(

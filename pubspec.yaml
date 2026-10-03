@@ -49,7 +49,6 @@ dependencies:
   # so the analyzer is happy.
   archive: ^3.6.1
   pdf: ^3.11.3
-  share_plus: ^10.0.2
   # Added by the DPL Manager module — Excel picker for the Upload Plan screen.
   file_picker: ^8.1.4
   # Added by the DPL Supervisor module — keep screen awake during active
