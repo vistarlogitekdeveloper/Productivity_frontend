@@ -28,12 +28,11 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('lands on Vistar Pulse, not the classic flow', (tester) async {
+  testWidgets('signs in to Vistar Pulse only', (tester) async {
     await pumpLogin(tester);
 
     expect(find.text('Vistar Pulse'), findsWidgets);
     expect(find.text('Sign in to Vistar Pulse'), findsOneWidget);
-    expect(find.text('Sign in to Productivity'), findsNothing);
   });
 
   testWidgets('shows the Pulse fields on first paint', (tester) async {
@@ -45,16 +44,15 @@ void main() {
     expect(find.text('Organization'), findsWidgets);
   });
 
-  testWidgets('classic Productivity flow is still one tap away', (
+  testWidgets('offers no classic Productivity flow or flow picker', (
     tester,
   ) async {
     await pumpLogin(tester);
 
-    await tester.tap(find.text('Productivity').last);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Sign in to Productivity'), findsOneWidget);
-    expect(find.text('Username'), findsOneWidget);
-    expect(find.text('Organization'), findsNothing);
+    // The classic Productivity module is retired: no chip to switch to it,
+    // and no picker at all now that only one flow remains.
+    expect(find.text('Productivity'), findsNothing);
+    expect(find.text('Sign in to Productivity'), findsNothing);
+    expect(find.text('SIGN IN WITH'), findsNothing);
   });
 }

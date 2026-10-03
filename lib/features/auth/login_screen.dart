@@ -10,14 +10,14 @@ import '../../core/widgets/vistar/vistar_brand.dart';
 import '../../core/widgets/vistar/vistar_buttons.dart';
 import '../dpl/core/dpl_organization_provider.dart';
 import '../dpl/models/dpl_organization.dart';
-import 'auth_repository.dart';
+import '../workspace/workspace_account.dart';
+import 'auth_exception.dart';
 import 'auth_provider.dart';
 
-/// Which login backend the form should authenticate against.
-/// - [productivity]: classic Productivity flow (`/auth/login`, username + password)
-/// - [vistarPulse]:  DPL flow (`/dpl/auth/login`, email + password)
-enum _LoginFlow { productivity, vistarPulse }
-
+/// Vistar Pulse sign-in (`/dpl/auth/login`: organization, email, password).
+///
+/// The only sign-in this app has: the classic Productivity flow and its
+/// backend are retired.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -35,17 +35,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _submittedOnce = false;
   String? _inlineError;
 
-  /// Active login flow — drives field labels, validator, and which
-  /// backend method gets called on Sign In.
-  ///
-  /// Defaults to Vistar Pulse: it is the primary flow, so the classic
-  /// Productivity form (and the Vistar Workspace launcher reachable from
-  /// it) is one tap away rather than the landing state.
-  _LoginFlow _flow = _LoginFlow.vistarPulse;
-
-  /// Selected organization for the Vistar Pulse flow. Required before
-  /// Sign In is enabled; cleared when the flow toggles back to classic
-  /// Productivity (which has no per-tenant scoping at login).
+  /// Selected organization. Required before Sign In goes through, except
+  /// for the Vistar Workspace launcher account, which belongs to no tenant.
   int? _selectedOrgId;
 
   @override
@@ -61,59 +52,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _submittedOnce = true);
 
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    final identifier = _usernameController.text.trim();
+    final password = _passwordController.text;
 
-    if (_flow == _LoginFlow.vistarPulse && _selectedOrgId == null) {
-      setState(() => _inlineError = 'Select an organization to continue.');
-      return;
+    // The Vistar Workspace launcher account used to sign in on the classic
+    // Productivity form, which had no organization picker. It belongs to no
+    // tenant and never reaches the backend, so it skips the organization
+    // requirement; [AuthController.loginDpl] recognises it before any
+    // network call.
+    final isWorkspaceAccount =
+        VistarWorkspaceAccount.matches(identifier, password);
+
+    if (!isWorkspaceAccount) {
+      if (!_formKey.currentState!.validate()) {
+        return;
+      }
+
+      if (_selectedOrgId == null) {
+        setState(() => _inlineError = 'Select an organization to continue.');
+        return;
+      }
     }
 
     setState(() => _inlineError = null);
-    final identifier = _usernameController.text.trim();
-    final password = _passwordController.text;
-    final auth = ref.read(authControllerProvider.notifier);
-
-    switch (_flow) {
-      case _LoginFlow.productivity:
-        auth.login(identifier, password);
-        break;
-      case _LoginFlow.vistarPulse:
-        auth.loginDpl(identifier, password, organizationId: _selectedOrgId);
-        break;
-    }
-  }
-
-  void _onFlowChanged(_LoginFlow next) {
-    if (next == _flow) return;
-    setState(() {
-      _flow = next;
-      _inlineError = null;
-      _submittedOnce = false;
-      _selectedOrgId = null;
-    });
-    // Username/email validation rules differ — re-run validation so any
-    // stale error messages disappear once the user starts typing.
-    _formKey.currentState?.reset();
-    _usernameController.clear();
-    _passwordController.clear();
+    ref
+        .read(authControllerProvider.notifier)
+        .loginDpl(identifier, password, organizationId: _selectedOrgId);
   }
 
   String? _validateUsername(String? value) {
     final v = value?.trim() ?? '';
-    if (_flow == _LoginFlow.vistarPulse) {
-      if (v.isEmpty) return 'Email is required.';
-      if (v.length > 254) return 'Email is too long.';
-      // Pragmatic email shape — must contain `@` and a `.` in the domain.
-      final emailRe = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-      if (!emailRe.hasMatch(v)) return 'Enter a valid email address.';
-      return null;
-    }
-    if (v.isEmpty) return 'Username is required.';
-    if (v.length < 3) return 'Username must be at least 3 characters.';
-    if (v.length > 40) return 'Username must be under 40 characters.';
-    if (v.contains(' ')) return 'Username cannot contain spaces.';
+    if (v.isEmpty) return 'Email is required.';
+    if (v.length > 254) return 'Email is too long.';
+    // Pragmatic email shape — must contain `@` and a `.` in the domain.
+    final emailRe = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (!emailRe.hasMatch(v)) return 'Enter a valid email address.';
     return null;
   }
 
@@ -125,7 +98,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return null;
   }
 
-  /// Org picker shown above the email field on the Vistar Pulse flow.
+  /// Org picker shown above the email field.
   /// Reads [dplOrganizationListProvider]; handles loading/error/empty
   /// states inline so the form layout stays stable.
   Widget _buildOrgSelector(bool submitting) {
@@ -372,8 +345,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     bool isLoading, {
     required bool isWide,
   }) {
-    final isPulse = _flow == _LoginFlow.vistarPulse;
-
     return AutofillGroup(
       child: Form(
         key: _formKey,
@@ -389,7 +360,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    isPulse ? 'Vistar Pulse' : 'Productivity',
+                    'Vistar Pulse',
                     style: GoogleFonts.bricolageGrotesque(
                       fontSize: isWide ? 30 : 26,
                       fontWeight: FontWeight.w800,
@@ -403,52 +374,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              isPulse
-                  ? 'Sign in to manage daily production loading, shifts, and downtime on the shop floor.'
-                  : 'Sign in to track classic production entries, quality, and operator activity.',
+              'Sign in to manage daily production loading, shifts, and downtime on the shop floor.',
               style: GoogleFonts.manrope(
                 fontSize: 14,
                 height: 1.45,
                 color: VistarPalette.txt2,
               ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'SIGN IN WITH',
-              style: GoogleFonts.manrope(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.6,
-                color: VistarPalette.txt3,
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Flow toggle — Productivity (classic) vs Vistar Pulse (DPL),
-            // as a role-chip grid; the active chip carries the ribbon.
-            Row(
-              children: [
-                Expanded(
-                  child: _FlowChip(
-                    label: 'Productivity',
-                    icon: Icons.bar_chart_outlined,
-                    selected: !isPulse,
-                    onTap: isLoading
-                        ? null
-                        : () => _onFlowChanged(_LoginFlow.productivity),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _FlowChip(
-                    label: 'Vistar Pulse',
-                    icon: Icons.factory_outlined,
-                    selected: isPulse,
-                    onTap: isLoading
-                        ? null
-                        : () => _onFlowChanged(_LoginFlow.vistarPulse),
-                  ),
-                ),
-              ],
             ),
             const SizedBox(height: 22),
             if (_inlineError != null) ...[
@@ -480,19 +411,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            if (isPulse) ...[
-              _buildOrgSelector(isLoading),
-              const SizedBox(height: 14),
-            ],
+            _buildOrgSelector(isLoading),
+            const SizedBox(height: 14),
             TextFormField(
               controller: _usernameController,
               focusNode: _usernameFocusNode,
-              autofillHints: [
-                isPulse ? AutofillHints.email : AutofillHints.username,
-              ],
-              keyboardType: isPulse
-                  ? TextInputType.emailAddress
-                  : TextInputType.text,
+              autofillHints: const [AutofillHints.email],
+              keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
               enabled: !isLoading,
@@ -501,14 +426,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   setState(() => _inlineError = null);
                 }
               },
-              decoration: InputDecoration(
-                labelText: isPulse ? 'Email' : 'Username',
-                hintText: isPulse
-                    ? 'name@vistarlogitek.com'
-                    : 'Enter your username',
-                prefixIcon: Icon(
-                  isPulse ? Icons.alternate_email : Icons.person_outline,
-                ),
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                hintText: 'name@vistarlogitek.com',
+                prefixIcon: Icon(Icons.alternate_email),
               ),
               validator: _validateUsername,
             ),
@@ -554,11 +475,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: ShimmerButtonDots(size: 7, spacing: 3.5),
                       ),
                     )
-                  : Text(
-                      isPulse
-                          ? 'Sign in to Vistar Pulse'
-                          : 'Sign in to Productivity',
-                      style: const TextStyle(
+                  : const Text(
+                      'Sign in to Vistar Pulse',
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                       ),
@@ -574,78 +493,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// `.role-chip` — one of the two sign-in flows. The active chip wears the
-/// ribbon; the other sits quietly on the surface scale.
-class _FlowChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  const _FlowChip({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(VistarPalette.rSm);
-    final fg = selected ? Colors.white : VistarPalette.txt2;
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 46,
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          gradient: selected ? VistarPalette.ribbon : null,
-          color: selected ? null : VistarPalette.surface2,
-          border: selected ? null : Border.all(color: VistarPalette.line2),
-          boxShadow: selected
-              ? const [
-                  BoxShadow(
-                    color: Color(0x66E0218A),
-                    blurRadius: 22,
-                    spreadRadius: -10,
-                    offset: Offset(0, 10),
-                  ),
-                ]
-              : null,
-        ),
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            borderRadius: radius,
-            onTap: onTap,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 18, color: fg),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.manrope(
-                      color: fg,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );
