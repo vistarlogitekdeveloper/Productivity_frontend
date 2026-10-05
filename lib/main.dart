@@ -5,11 +5,16 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'core/theme/vistar_theme_sync.dart';
 import 'core/routes/app_router.dart';
+import 'core/telemetry/telemetry.dart';
 import 'core/widgets/vistar/vistar_loaders.dart';
 import 'data/repositories/local_storage_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Usage analytics: off unless the build carries ET_APP_ID + ET_WRITE_KEY
+  // (lib/core/telemetry/telemetry.dart). Never blocks or breaks start-up.
+  await Telemetry.init();
 
   // Await shared preferences to prevent provider lookup errors
   final sharedPrefs = await SharedPreferences.getInstance();

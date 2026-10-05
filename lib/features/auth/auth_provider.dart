@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/telemetry/telemetry.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/local_storage_repository.dart';
 import '../dpl/core/dpl_api_service.dart';
@@ -40,6 +41,7 @@ class AuthController extends _$AuthController {
       final id = prefs.getUserId() ?? '';
       final username = prefs.getUsername() ?? '';
       final name = prefs.getUserName() ?? '';
+      Telemetry.signedIn(userId: id, role: role, orgCode: prefs.getDplOrganization()?.code);
 
       return UserModel(
         id: id,
@@ -85,6 +87,9 @@ class AuthController extends _$AuthController {
   }
 
   Future<void> logout() async {
+    // Before the session is cleared: the sign-out belongs to this user, and
+    // the next one starts a fresh anonymous identity. Not awaited.
+    Telemetry.signedOut();
     state = const AsyncValue.loading();
     // Drop the launcher's in-memory credentials first — nothing should
     // outlive the session that could still sign the user into a
@@ -191,6 +196,8 @@ class AuthController extends _$AuthController {
       await ref
           .read(dplMustChangePasswordProvider.notifier)
           .set(profile?.mustChangePassword ?? false);
+
+      Telemetry.signedIn(userId: userId, role: role, orgCode: prefs.getDplOrganization()?.code);
 
       state = AsyncValue.data(UserModel(
         id: userId,

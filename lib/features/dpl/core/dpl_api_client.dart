@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/telemetry/telemetry.dart';
 import '../../../data/repositories/local_storage_repository.dart';
 import '../../auth/auth_provider.dart';
 import 'dpl_language_provider.dart';
@@ -95,6 +96,10 @@ final dplDioProvider = Provider<Dio>((ref) {
       },
     ),
   );
+
+  // Named business actions and failed calls, for usage analytics. Last, so
+  // it sees the outcome after the auth handling above.
+  dio.interceptors.add(TelemetryInterceptor());
 
   return dio;
 });

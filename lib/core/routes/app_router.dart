@@ -41,6 +41,7 @@ import '../../features/dpl/supervisor/screens/plan_execution_screen.dart';
 import '../../features/dpl/supervisor/screens/supervisor_shell.dart';
 import '../../features/workspace/workspace_screen.dart';
 import '../constants/app_constants.dart';
+import '../telemetry/telemetry.dart';
 import '../widgets/vistar/vistar_loaders.dart';
 
 part 'app_router.g.dart';
@@ -55,7 +56,7 @@ GoRouter appRouter(Ref ref) {
   // just satisfied.
   final mustChangePassword = ref.watch(dplMustChangePasswordProvider);
 
-  return GoRouter(
+  return _withScreenViews(ref, GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/login',
     // Visual only — flashes the breathing-S loader on screen switches.
@@ -480,7 +481,21 @@ GoRouter appRouter(Ref ref) {
         ],
       ),
     ],
-  );
+  ));
+}
+
+/// Reports each screen the router shows to usage analytics (by route pattern;
+/// see Telemetry.screen). The router is rebuilt when the session changes, so
+/// the listener goes with the instance it was added to.
+GoRouter _withScreenViews(Ref ref, GoRouter router) {
+  if (!Telemetry.enabled) return router;
+  void report() => Telemetry.screen(router.routeInformationProvider.value.uri.toString());
+  router.routeInformationProvider.addListener(report);
+  ref.onDispose(() => router.routeInformationProvider.removeListener(report));
+  // The listener only hears changes: report the screen it starts on too
+  // (after this frame, once the redirect has settled the location).
+  WidgetsBinding.instance.addPostFrameCallback((_) => report());
+  return router;
 }
 
 /// `pallet.view` enforced at the route, not just on the tile that links to it.
