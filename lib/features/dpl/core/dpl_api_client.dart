@@ -9,10 +9,8 @@ import 'dpl_password_gate_provider.dart';
 
 /// A dedicated Dio instance for the DPL module.
 ///
-/// The existing app Dio is hard-bound to the productivity base URL,
-/// so DPL gets its own client. It still reads the **same JWT** written
-/// by the existing login flow (via [LocalStorageRepository]), which is
-/// the whole reason we don't need a separate DPL login screen.
+/// The app's only HTTP client. It reads the JWT the login flow writes
+/// (via [LocalStorageRepository]).
 final dplDioProvider = Provider<Dio>((ref) {
   final prefs = ref.watch(localStorageRepositoryProvider);
 

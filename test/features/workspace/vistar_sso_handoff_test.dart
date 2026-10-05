@@ -264,14 +264,15 @@ void main() {
       );
     });
 
-    test('satisfies the classic login form\'s username rules', () {
-      // `_validateUsername` on the Productivity flow rejects anything
-      // under 3 chars, over 40, or containing a space. The portal
-      // username has to clear all three or the credentials never reach
-      // `AuthController.login`.
-      expect(VistarWorkspaceAccount.username.length, greaterThanOrEqualTo(3));
-      expect(VistarWorkspaceAccount.username.length, lessThanOrEqualTo(40));
-      expect(VistarWorkspaceAccount.username, isNot(contains(' ')));
+    test('is shaped like an email, as the login form expects', () {
+      // The login form's field is an email field. The portal account skips
+      // its validators, but the username must still look like what a person
+      // would type there.
+      expect(
+        RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+            .hasMatch(VistarWorkspaceAccount.username),
+        isTrue,
+      );
     });
 
     test('rejects a wrong password or a different user', () {

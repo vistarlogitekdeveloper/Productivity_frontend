@@ -1,8 +1,8 @@
 /// The Vistar Workspace portal account.
 ///
-/// Signing in on the classic **Productivity** flow with these credentials
-/// skips the backend and opens the app launcher (`/apps`) instead of a
-/// production dashboard. The account exists purely to reach the launcher;
+/// Signing in on the login form with these credentials skips the backend
+/// (and the organization picker) and opens the app launcher (`/apps`)
+/// instead of a production dashboard. The account exists purely to reach the launcher;
 /// it has no production data access and makes no authenticated API calls.
 ///
 /// ## Security caveat
@@ -13,12 +13,12 @@
 /// any real permission to it.
 ///
 /// The moment the backend can issue a `VISTAR_WORKSPACE` role, delete
-/// [matches] and let the normal `/auth/login` path return that role; the
+/// [matches] and let the normal `/dpl/auth/login` path return that role; the
 /// router and launcher already key off the role, not off this class.
 class VistarWorkspaceAccount {
   const VistarWorkspaceAccount._();
 
-  /// Username typed on the Productivity login form.
+  /// Email typed on the login form.
   static const String username = 'prashant.tamhankar@vistarlogitek.com';
 
   /// Name shown on the launcher's user chip.

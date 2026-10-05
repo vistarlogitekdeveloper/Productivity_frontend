@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/vistar_palette.dart';
 import '../../core/widgets/shimmer_skeleton.dart';
 import '../dpl/core/dpl_api_service.dart';
-import 'auth_provider.dart';
-import 'auth_repository.dart';
+import 'auth_exception.dart';
 
 Future<void> showChangePasswordDialog(BuildContext context, WidgetRef ref) async {
   final changed = await showDialog<bool>(
@@ -78,22 +76,13 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
     });
 
     try {
-      final role = ref.read(authControllerProvider).asData?.value?.role ?? '';
-      if (AppConstants.isDplRole(role)) {
-        // DPL backend: POST /api/v1/dpl/auth/change-password with
-        // snake_case body. Distinct from the productivity endpoint,
-        // which is PATCH /auth/change-password with camelCase.
-        final res = await ref
-            .read(dplApiServiceProvider)
-            .changePassword(_oldCtrl.text.trim(), _newCtrl.text.trim());
-        if (res.isError) {
-          throw AuthException(_mapDplChangePasswordError(res.code, res.error));
-        }
-      } else {
-        await ref.read(authRepositoryProvider).changePassword(
-              oldPassword: _oldCtrl.text.trim(),
-              newPassword: _newCtrl.text.trim(),
-            );
+      // DPL backend: POST /api/v1/dpl/auth/change-password with a
+      // snake_case body. Only the DPL shells open this dialog.
+      final res = await ref
+          .read(dplApiServiceProvider)
+          .changePassword(_oldCtrl.text.trim(), _newCtrl.text.trim());
+      if (res.isError) {
+        throw AuthException(_mapDplChangePasswordError(res.code, res.error));
       }
 
       if (!mounted) return;
