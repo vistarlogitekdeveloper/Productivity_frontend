@@ -489,11 +489,20 @@ GoRouter appRouter(Ref ref) {
 /// the listener goes with the instance it was added to.
 GoRouter _withScreenViews(Ref ref, GoRouter router) {
   if (!Telemetry.enabled) return router;
-  void report() => Telemetry.screen(router.routeInformationProvider.value.uri.toString());
-  router.routeInformationProvider.addListener(report);
-  ref.onDispose(() => router.routeInformationProvider.removeListener(report));
-  // The listener only hears changes: report the screen it starts on too
-  // (after this frame, once the redirect has settled the location).
+  // The delegate, not the route-information provider: it also hears the
+  // location changes a redirect makes (sign-in landing on the role's
+  // dashboard), which the provider does not report.
+  void report() {
+    try {
+      Telemetry.screen(router.routerDelegate.currentConfiguration.uri.toString());
+    } catch (_) {
+      // No configuration yet; the next change reports.
+    }
+  }
+
+  router.routerDelegate.addListener(report);
+  ref.onDispose(() => router.routerDelegate.removeListener(report));
+  // The listener only hears changes: report the screen it starts on too.
   WidgetsBinding.instance.addPostFrameCallback((_) => report());
   return router;
 }
