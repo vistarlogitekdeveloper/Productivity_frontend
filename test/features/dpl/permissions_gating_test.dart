@@ -200,6 +200,8 @@ void main() {
       // with nothing to point at.
       const known = <String>{
         DplPermission.labelsPrintBatch,
+        // The PDF417 label layout (backend migration 195), granted to Sanand JIT.
+        DplPermission.labelsPrintPdf417,
         DplPermission.palletView,
         DplPermission.palletBuild,
         DplPermission.palletClose,

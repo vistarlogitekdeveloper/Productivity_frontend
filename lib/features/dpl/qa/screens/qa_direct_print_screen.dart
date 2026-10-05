@@ -19,7 +19,8 @@ import '../../models/dpl_part_sticker.dart';
 import '../../models/dpl_shift.dart';
 import '../providers/qa_production_provider.dart' show qaCurrentShiftProvider;
 import '../services/batch_quantity.dart';
-import '../services/part_sticker_label_pdf.dart';
+import '../services/sticker_label_format.dart';
+import '../widgets/label_format_picker.dart';
 
 /// Every active machine, regardless of whether anything is planned on it.
 ///
@@ -167,6 +168,7 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
         const SizedBox(height: 12),
         _partCard(),
         const SizedBox(height: 12),
+        LabelFormatPicker(enabled: !_busy),
         _qtyCard(),
       ],
     );
@@ -647,7 +649,7 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
     // the plan-driven flow: a cancel after a successful spool is
     // indistinguishable from a cancel before one, so recording first is what
     // keeps the database from being short of what is physically on the floor.
-    await _print(issued.stickers);
+    await _print(issued.stickers, part);
     if (!mounted) return;
     DplSnacks.success(
       context,
@@ -657,18 +659,19 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
     );
   }
 
-  Future<void> _print(List<DplPartSticker> stickers) async {
+  Future<void> _print(List<DplPartSticker> stickers, DplPart part) async {
+    final layout = ref.read(effectiveStickerLabelFormatProvider);
     setState(() => _busy = true);
     try {
       await Printing.layoutPdf(
-        name: 'Labels-${_part?.partNumber ?? 'direct'}',
+        name: 'Labels-${part.partNumber}',
         // Both the page box AND the layout format must be the die-cut, and
         // dynamicLayout must be off: left on, picking A4 in the print dialog
-        // silently rescales a 50x25 mm label.
-        format: PartStickerLabelPdf.rollFormat,
+        // silently rescales the label.
+        format: layout.rollFormat,
         dynamicLayout: false,
         onLayout: (PdfPageFormat _) =>
-            PartStickerLabelPdf.buildRoll(stickers),
+            layout.buildRoll(stickers, part: part),
       );
     } catch (e) {
       if (mounted) {

@@ -18,6 +18,8 @@ import '../../models/dpl_part_sticker.dart';
 import '../providers/qa_production_provider.dart';
 import '../services/batch_quantity.dart';
 import '../services/part_sticker_label_pdf.dart';
+import '../services/sticker_label_format.dart';
+import '../widgets/label_format_picker.dart';
 
 /// Choose how many stickers to print, issue them, print them.
 ///
@@ -132,6 +134,9 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
             const SizedBox(height: 12),
             _allowanceCard(issued.summary),
             const SizedBox(height: 12),
+            // Here too, so a batch that came out on the wrong stock can be
+            // reprinted in the other layout without issuing new serials.
+            LabelFormatPicker(enabled: !_busy),
             _printedCard(issued),
           ],
         ),
@@ -172,6 +177,7 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
         const SizedBox(height: 12),
         _allowanceCard(summary),
         const SizedBox(height: 12),
+        LabelFormatPicker(enabled: !_busy),
         _issueCard(summary),
       ],
     );
@@ -667,19 +673,20 @@ class _QaStickerPrintScreenState extends ConsumerState<QaStickerPrintScreen> {
 
   Future<void> _print(DplStickerIssueResult issued, {required bool roll}) async {
     if (issued.stickers.isEmpty) return;
+    // Read once, before the sheet opens, so the layout cannot change under a
+    // print that is already being spooled.
+    final layout = ref.read(effectiveStickerLabelFormatProvider);
     setState(() => _busy = true);
     try {
       await Printing.layoutPdf(
         name: 'Labels-${widget.part.partNumber}-${issued.batchId}',
         // Both the page box AND the layout format must be the die-cut, and
         // dynamicLayout must be off: left on, the operator picking A4 in the
-        // print dialog silently rescales a 50x25 mm label.
-        format: roll
-            ? PartStickerLabelPdf.rollFormat
-            : PdfPageFormat.a4.landscape,
+        // print dialog silently rescales the label.
+        format: roll ? layout.rollFormat : PdfPageFormat.a4.landscape,
         dynamicLayout: !roll,
         onLayout: (_) => roll
-            ? PartStickerLabelPdf.buildRoll(issued.stickers)
+            ? layout.buildRoll(issued.stickers, part: widget.part)
             : PartStickerLabelPdf.buildSheet(issued.stickers),
       );
     } on MissingPluginException {

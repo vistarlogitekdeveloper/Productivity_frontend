@@ -158,6 +158,14 @@ class DplPermission {
   /// re-checks this on every issue, so hiding the field is presentation only.
   static const String labelsPrintBatch = 'labels.print_batch';
 
+  /// Offer the PDF417 barcode label (part name, PDF417, short part code — the
+  /// Antolin/TML layout) as well as the QR sticker on the print screens.
+  ///
+  /// Off for every role by default and granted per ORGANIZATION (backend
+  /// migration 195 grants it to Sanand JIT). Presentation only: both layouts
+  /// print the same server-issued serials under the same cap.
+  static const String labelsPrintPdf417 = 'labels.print_pdf417';
+
   /// Pallet build and close (Maxion SSR Module 4). Granted by default to the
   /// roles that print labels, because the SSR gives the wheel QR and the
   /// pallet to the same pack point operator.
@@ -306,6 +314,8 @@ class DplPermission {
   static const Set<String> optInOnly = <String>{
     // Maxion SSR §5.2 — a quantity field instead of one label per press.
     labelsPrintBatch,
+    // Migration 195 — the PDF417 label layout, a per-organization choice.
+    labelsPrintPdf417,
     // Maxion SSR Module 4 and 5 — the pack point, the register, the sticker.
     palletView,
     palletBuild,
