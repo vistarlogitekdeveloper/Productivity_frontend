@@ -1,0 +1,27 @@
+name: vistar_event_tracker
+description: >-
+  Official Vistar in-house analytics SDK for Flutter (mobile + web). Batches,
+  persists offline, and ships events to the Vistar EventTracker API with
+  auto-capture of screen views, app lifecycle, and errors.
+version: 0.1.0
+publish_to: 'none'
+repository: https://github.com/vistarlogitekdeveloper/vistar_event_tracker
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Cross-platform HTTP (mobile + Flutter web). No dart:io, so it works on web.
+  http: ^1.2.0
+  # Durable offline queue + stable anonymous_id across restarts (mobile + web).
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:

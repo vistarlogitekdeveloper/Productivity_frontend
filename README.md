@@ -27,3 +27,24 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## Usage analytics (event tracker)
+
+`lib/core/telemetry/telemetry.dart`, using the in-house `vistar_event_tracker`
+SDK (vendored in `packages/`, see its `VENDORED.md`). Read in the Platform
+Console under Analytics > Event tracker.
+
+Off unless the build gets both `ET_APP_ID` and `ET_WRITE_KEY` (Cloudflare
+build variables; `cloudflare-build.sh` passes them on). For an APK:
+`flutter build apk --dart-define=ET_APP_ID=dpl_app --dart-define=ET_WRITE_KEY=wk_...`.
+Optional `ET_BASE_URL` sends a test build's events elsewhere (UAT, local).
+Register the app and get its write key in the Platform Console, Settings >
+Event tracker (the key only allows adding events).
+
+Sent: screen views by route pattern (ids replaced), sign-in / sign-out (the
+user as `dpl:<id>` with role and organisation code), named actions from
+successful API writes (`plan_created`, `item_started`, `label_printed`,
+`pallet_closed`, `trip_created`, `dispatch_slip_created`, `slip_pdi_approved`,
+... see `_actions`), failed API calls (5xx / no connection) and client errors.
+Never sent: request or response bodies, names, emails, part numbers,
+quantities. Events are queued offline and sent in batches.

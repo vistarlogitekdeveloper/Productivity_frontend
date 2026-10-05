@@ -92,6 +92,12 @@ dependencies:
   # signed SSO hand-off appended. See
   # `lib/features/workspace/services/vistar_sso_handoff.dart`.
   url_launcher: ^6.3.1
+  # In-house usage analytics (Platform Console > Analytics > Event tracker).
+  # Vendored: the SDK repository is private, so the Cloudflare build cannot
+  # fetch it (packages/vistar_event_tracker/VENDORED.md). Off unless the build
+  # gets ET_APP_ID + ET_WRITE_KEY (lib/core/telemetry/telemetry.dart).
+  vistar_event_tracker:
+    path: packages/vistar_event_tracker
 
 dev_dependencies:
   flutter_test:
