@@ -88,8 +88,8 @@ class AuthController extends _$AuthController {
 
   Future<void> logout() async {
     // Before the session is cleared: the sign-out belongs to this user, and
-    // the next one starts a fresh anonymous identity.
-    await Telemetry.signedOut();
+    // the next one starts a fresh anonymous identity. Not awaited.
+    Telemetry.signedOut();
     state = const AsyncValue.loading();
     // Drop the launcher's in-memory credentials first — nothing should
     // outlive the session that could still sign the user into a
@@ -197,7 +197,7 @@ class AuthController extends _$AuthController {
           .read(dplMustChangePasswordProvider.notifier)
           .set(profile?.mustChangePassword ?? false);
 
-      await Telemetry.signedIn(userId: userId, role: role, orgCode: prefs.getDplOrganization()?.code);
+      Telemetry.signedIn(userId: userId, role: role, orgCode: prefs.getDplOrganization()?.code);
 
       state = AsyncValue.data(UserModel(
         id: userId,

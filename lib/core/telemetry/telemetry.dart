@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:vistar_event_tracker/vistar_event_tracker.dart';
 
@@ -22,7 +24,16 @@ import '../constants/app_constants.dart';
 ///   * failed API calls (5xx or no connection) and client errors
 /// Never sent: request or response bodies, names, emails, part numbers,
 /// quantities or any other record content.
+///
+/// NEVER IN THE WAY OF WORK. Nothing here is awaited by a screen, a sign-in or
+/// a sign-out; start-up waits at most [_initBudget]; every call swallows its
+/// own failures; the offline queue is capped at [_maxQueue] events (oldest
+/// dropped), so it cannot crowd the sync outbox out of browser storage; and
+/// sending happens in the background with the SDK's own backoff.
 abstract final class Telemetry {
+  static const _initBudget = Duration(seconds: 2);
+  static const _maxQueue = 200;
+
   static const _appId = String.fromEnvironment('ET_APP_ID');
   static const _writeKey = String.fromEnvironment('ET_WRITE_KEY');
   static const _appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '');
@@ -48,12 +59,15 @@ abstract final class Telemetry {
   static Future<void> init() async {
     if (!enabled) return;
     try {
-      await _t.init(TrackerConfig(
-        appId: _appId,
-        writeKey: _writeKey,
-        baseUrl: _origin,
-        appVersion: _appVersion.isEmpty ? null : _appVersion,
-      ));
+      await _t
+          .init(TrackerConfig(
+            appId: _appId,
+            writeKey: _writeKey,
+            baseUrl: _origin,
+            appVersion: _appVersion.isEmpty ? null : _appVersion,
+            maxQueueSize: _maxQueue,
+          ))
+          .timeout(_initBudget);
     } catch (_) {
       // Analytics must never stop the app from starting.
     }
@@ -66,26 +80,48 @@ abstract final class Telemetry {
     final name = routePattern(location);
     if (name == _lastScreen) return;
     _lastScreen = name;
-    _t.screen(name);
+    _guard(() => _t.screen(name));
   }
 
   static void track(String name, [Map<String, dynamic>? properties]) {
-    if (_on) _t.track(name, properties: properties);
+    if (_on) _guard(() => _t.track(name, properties: properties));
   }
 
   /// A failure worth counting (shows under Errors in the dashboard).
   static void error(String name, Map<String, dynamic> properties) {
-    if (_on) _t.track(name, properties: properties, type: EventType.error);
+    if (_on) _guard(() => _t.track(name, properties: properties, type: EventType.error));
   }
 
-  static Future<void> signedIn({required String userId, required String role, String? orgCode}) async {
+  static void _guard(void Function() fn) {
+    try {
+      fn();
+    } catch (_) {
+      // Analytics never surfaces as an app error.
+    }
+  }
+
+  /// The sign-out in flight: its reset sends what is queued first, which can
+  /// take a while on a poor connection, so nobody waits for it.
+  static Future<void>? _resetting;
+
+  /// Fire and forget: the sign-in never waits for analytics.
+  static void signedIn({required String userId, required String role, String? orgCode}) {
     if (!_on || userId.isEmpty) return;
-    await _t.identify('dpl:$userId', traits: {'role': role, 'org': ?orgCode});
+    unawaited(() async {
+      try {
+        // A sign-out just before (a user change on a shared device) resets
+        // the identity; let it finish so this one is not wiped by it.
+        await _resetting?.timeout(const Duration(seconds: 5), onTimeout: () {});
+        await _t.identify('dpl:$userId', traits: {'role': role, 'org': ?orgCode});
+      } catch (_) {}
+    }());
   }
 
-  static Future<void> signedOut() async {
+  /// Fire and forget: the sign-out never waits for analytics.
+  static void signedOut() {
     _lastScreen = null;
-    if (_on) await _t.reset();
+    if (!_on) return;
+    _resetting = _t.reset().catchError((Object _) {});
   }
 
   /// `/dpl/trips/123/journey?tab=map` -> `/dpl/trips/:id/journey`.
@@ -147,7 +183,10 @@ class TelemetryInterceptor extends Interceptor {
   void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
     if (Telemetry.enabled) {
       final o = response.requestOptions;
-      final name = Telemetry.actionFor(o.method, o.path);
+      String? name;
+      try {
+        name = Telemetry.actionFor(o.method, o.path);
+      } catch (_) {}
       if (name != null) Telemetry.track(name);
     }
     handler.next(response);
