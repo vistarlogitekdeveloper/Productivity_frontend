@@ -23,6 +23,15 @@ class DplPart {
   /// from the parts master would let a save there overwrite it.
   final int? packagingQty;
 
+  /// What the SPD master sticker calls the item, e.g. "ALLOY WHEEL FOR Z101"
+  /// (backend migration 198).
+  ///
+  /// NULL MEANS "NOT SENT", not "blank": a backend that predates the column
+  /// refuses any part save that mentions it, so [toJsonForWrite] includes it
+  /// only when it is known — read from a server that has it, or typed in the
+  /// form. An empty string clears it.
+  final String? spdDescription;
+
   const DplPart({
     required this.id,
     required this.partNumber,
@@ -33,6 +42,7 @@ class DplPart {
     this.machineName = '',
     this.isActive = true,
     this.packagingQty,
+    this.spdDescription,
   });
 
   factory DplPart.fromJson(Map<String, dynamic> json) {
@@ -64,6 +74,9 @@ class DplPart {
       packagingQty: _positiveOrNull(
         json['packaging_qty'] ?? json['packagingQty'],
       ),
+      spdDescription: json.containsKey('spd_description')
+          ? parseStringOr(json['spd_description'])
+          : null,
     );
   }
 
@@ -103,6 +116,9 @@ class DplPart {
         'material_code': materialCode.isEmpty ? null : materialCode,
         if (machineName.isNotEmpty) 'machine_name': machineName,
         'is_active': isActive,
+        if (spdDescription != null)
+          'spd_description':
+              spdDescription!.trim().isEmpty ? null : spdDescription!.trim(),
       };
 
   DplPart copyWith({
@@ -125,6 +141,7 @@ class DplPart {
       machineName: machineName ?? this.machineName,
       isActive: isActive ?? this.isActive,
       packagingQty: packagingQty,
+      spdDescription: spdDescription,
     );
   }
 }

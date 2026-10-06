@@ -436,6 +436,7 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _substrateCtrl;
   late final TextEditingController _materialCtrl;
+  late final TextEditingController _spdCtrl;
   String? _machineName;
   bool _isActive = true;
   String? _error;
@@ -449,6 +450,7 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
     _nameCtrl = TextEditingController(text: e?.name ?? '');
     _substrateCtrl = TextEditingController(text: e?.substratePartNo ?? '');
     _materialCtrl = TextEditingController(text: e?.materialCode ?? '');
+    _spdCtrl = TextEditingController(text: e?.spdDescription ?? '');
     _machineName = (e?.machineName ?? '').isEmpty ? null : e!.machineName;
     _isActive = e?.isActive ?? true;
   }
@@ -460,6 +462,7 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
     _nameCtrl.dispose();
     _substrateCtrl.dispose();
     _materialCtrl.dispose();
+    _spdCtrl.dispose();
     super.dispose();
   }
 
@@ -489,6 +492,13 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
       materialCode: _materialCtrl.text.trim(),
       machineName: _machineName!.trim(),
       isActive: _isActive,
+      // Sent only when it is known or typed — see DplPart.spdDescription.
+      // Untouched and unknown stays null, so a save against a backend that
+      // has no such column still works.
+      spdDescription: (widget.existing?.spdDescription != null ||
+              _spdCtrl.text.trim().isNotEmpty)
+          ? _spdCtrl.text.trim()
+          : null,
     ));
   }
 
@@ -578,6 +588,23 @@ class _PartDialogState extends ConsumerState<_PartDialog> {
                   labelText: 'Material Code (optional)',
                   hintText: '587136190-083',
                   prefixIcon: Icon(Icons.science_outlined),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Line 3 of the SPD master sticker. Only matters to a plant
+              // that ships spare-parts packs; harmless to leave blank.
+              TextField(
+                controller: _spdCtrl,
+                textCapitalization: TextCapitalization.characters,
+                maxLength: 100,
+                decoration: const InputDecoration(
+                  labelText: 'SPD Description (optional)',
+                  hintText: 'ALLOY WHEEL FOR Z101',
+                  prefixIcon: Icon(Icons.local_offer_outlined),
+                  helperText:
+                      'Printed on the SPD master sticker. Blank uses the '
+                      'description above.',
+                  helperMaxLines: 2,
                 ),
               ),
               const SizedBox(height: 10),

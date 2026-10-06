@@ -15,6 +15,7 @@ import '../../core/widgets/dpl_snack.dart';
 import '../../models/dpl_spd.dart';
 import '../services/pallet_label_pdf.dart';
 import '../services/spd_label_pdf.dart';
+import '../services/spd_master_sticker_pdf.dart';
 import '../services/wheel_scan_match.dart';
 import 'dpl_qr_scan_sheet.dart';
 
@@ -22,6 +23,18 @@ final spdPacksProvider =
     FutureProvider.autoDispose<DplApiResponse<DplSpdPage>>((ref) async {
   return ref.watch(dplApiServiceProvider).listSpdPacks();
 });
+
+/// "Also print the SPD master sticker", remembered for the session so an
+/// operator packing an order does not have to switch it on for every pallet.
+class SpdMasterStickerChoice extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool on) => state = on;
+}
+
+final spdMasterStickerProvider =
+    NotifierProvider<SpdMasterStickerChoice, bool>(SpdMasterStickerChoice.new);
 
 /// SPD conversion — Maxion SSR §8, Module 12.
 ///
@@ -442,6 +455,24 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                 ),
                 const SizedBox(height: 12),
               ],
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                value: ref.watch(spdMasterStickerProvider),
+                onChanged: _busy
+                    ? null
+                    : (on) => ref.read(spdMasterStickerProvider.notifier).set(on),
+                title: const Text(
+                  'Also print the SPD master sticker',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                ),
+                subtitle: const Text(
+                  'One per pack, for its box — 100 × 75 mm, the pallet label '
+                  'stock.',
+                  style: TextStyle(fontSize: 11.5),
+                ),
+              ),
+              const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -512,6 +543,13 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     await _printPacks(out.packs);
     if (!mounted) return;
 
+    // Then each pack's box sticker, when asked for. A separate print because
+    // it is a different stock (100 x 75 mm, not the 50 x 25 mm pack label).
+    if (ref.read(spdMasterStickerProvider)) {
+      await _printMasterStickers(out.packs);
+      if (!mounted) return;
+    }
+
     // Then the pallet's new master sticker, if it still exists. Its count
     // changed, so the old one is now wrong (§5).
     if (out.reprintSource != null) {
@@ -542,6 +580,31 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
           context,
           'The packs were created but the print sheet failed to open. '
           'Reprint them from the SPD list rather than converting again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _printMasterStickers(List<DplSpdPack> packs) async {
+    if (packs.isEmpty) return;
+    setState(() => _busy = true);
+    try {
+      await Printing.layoutPdf(
+        name: 'SPD-master-${packs.first.packNo}',
+        // Die-cut page box with dynamicLayout off, so picking A4 in the
+        // print dialog cannot silently rescale the sticker.
+        format: SpdMasterStickerPdf.rollFormat,
+        dynamicLayout: false,
+        onLayout: (PdfPageFormat _) => SpdMasterStickerPdf.buildRoll(packs),
+      );
+    } catch (_) {
+      if (mounted) {
+        DplSnacks.error(
+          context,
+          'The packs were created but the master sticker failed to print. '
+          'Reprint it from the SPD list.',
         );
       }
     } finally {
@@ -676,10 +739,22 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 11.5),
                       ),
-                      trailing: TextButton.icon(
-                        onPressed: _busy ? null : () => _printPacks([pack]),
-                        icon: const Icon(Icons.print_outlined, size: 16),
-                        label: const Text('Label'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton.icon(
+                            onPressed: _busy ? null : () => _printPacks([pack]),
+                            icon: const Icon(Icons.print_outlined, size: 16),
+                            label: const Text('Label'),
+                          ),
+                          TextButton.icon(
+                            onPressed: _busy
+                                ? null
+                                : () => _printMasterStickers([pack]),
+                            icon: const Icon(Icons.inventory_2_outlined, size: 16),
+                            label: const Text('Master'),
+                          ),
+                        ],
                       ),
                     ),
                 ],

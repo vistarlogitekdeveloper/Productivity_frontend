@@ -90,6 +90,11 @@ class DplSpdPack {
 
   final String customerPartNo;
   final String partDescription;
+
+  /// What the SPD master sticker calls the item, e.g. "ALLOY WHEEL FOR Z101"
+  /// (item master, backend migration 198). Empty when not set.
+  final String spdDescription;
+
   final String status;
   final DateTime? closedAt;
 
@@ -100,6 +105,7 @@ class DplSpdPack {
     this.serialNo = '',
     this.customerPartNo = '',
     this.partDescription = '',
+    this.spdDescription = '',
     this.status = '',
     this.closedAt,
   });
@@ -119,6 +125,7 @@ class DplSpdPack {
       serialNo: parseStringOr(json['serial_no']),
       customerPartNo: parseStringOr(partMap['customer_part_no']),
       partDescription: parseStringOr(partMap['description']),
+      spdDescription: parseStringOr(partMap['spd_description']),
       status: parseStringOr(json['status']),
       closedAt: parseDateTimeOrNull(json['closed_at']),
     );
