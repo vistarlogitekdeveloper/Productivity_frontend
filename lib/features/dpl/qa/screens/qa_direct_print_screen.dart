@@ -398,6 +398,30 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
     );
   }
 
+  /// "Pallet size: 16 wheels" — the item master's packaging_qty, which is
+  /// also the standard quantity a pallet of this item closes at.
+  Widget _palletSize(DplPart part) {
+    final size = part.packagingQty;
+    return Row(
+      children: [
+        Icon(Icons.pallet, size: 15, color: DplColors.textSecondary),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            size == null
+                ? 'Pallet size not set in the item master'
+                : 'Pallet size: $size wheel${size == 1 ? '' : 's'}',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: size == null ? FontWeight.w500 : FontWeight.w700,
+              color: size == null ? DplColors.textSecondary : DplColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _partCard() {
     final async = ref.watch(qaDirectPartsProvider);
     final selected = _part;
@@ -447,6 +471,8 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                             ),
                           ),
                         ],
+                        const SizedBox(height: 6),
+                        _palletSize(selected),
                       ],
                     ),
                   ),
@@ -519,6 +545,16 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: 11.5),
+                              ),
+                        trailing: p.packagingQty == null
+                            ? null
+                            : Text(
+                                '${p.packagingQty} / pallet',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: DplColors.textSecondary,
+                                ),
                               ),
                         onTap: _busy ? null : () => setState(() => _part = p),
                       );

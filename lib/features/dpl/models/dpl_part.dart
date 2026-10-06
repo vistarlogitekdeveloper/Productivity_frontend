@@ -16,6 +16,13 @@ class DplPart {
   final String machineName;
   final bool isActive;
 
+  /// Wheels per full pallet (`packaging_qty`). Null when the master has none.
+  ///
+  /// READ-ONLY here, and deliberately absent from [toJsonForWrite]: it is
+  /// edited on its own screen (`/manager/packaging-qtys`), and sending it back
+  /// from the parts master would let a save there overwrite it.
+  final int? packagingQty;
+
   const DplPart({
     required this.id,
     required this.partNumber,
@@ -25,6 +32,7 @@ class DplPart {
     this.materialCode = '',
     this.machineName = '',
     this.isActive = true,
+    this.packagingQty,
   });
 
   factory DplPart.fromJson(Map<String, dynamic> json) {
@@ -53,7 +61,16 @@ class DplPart {
           : json['isActive'] is bool
               ? json['isActive'] as bool
               : true,
+      packagingQty: _positiveOrNull(
+        json['packaging_qty'] ?? json['packagingQty'],
+      ),
     );
+  }
+
+  /// A pallet size of 0 or below is no pallet size at all.
+  static int? _positiveOrNull(dynamic value) {
+    final n = parseIntOrNull(value);
+    return (n == null || n <= 0) ? null : n;
   }
 
   /// Convenience label for dropdowns/autocomplete:
@@ -107,6 +124,7 @@ class DplPart {
       materialCode: materialCode ?? this.materialCode,
       machineName: machineName ?? this.machineName,
       isActive: isActive ?? this.isActive,
+      packagingQty: packagingQty,
     );
   }
 }
