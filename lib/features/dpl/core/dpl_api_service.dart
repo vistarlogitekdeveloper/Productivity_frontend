@@ -3821,6 +3821,21 @@ class DplApiService {
     );
   }
 
+  /// `GET /warehouse/lookup?code=` — whatever was scanned, a pallet sticker or
+  /// a wheel label, answered with the pallet and every wheel on it.
+  Future<DplApiResponse<DplScanLookup>> lookupScan(String code) {
+    return _send<DplScanLookup>(
+      () => _dio.get(
+        DplPaths.warehouseLookup,
+        queryParameters: {'code': code.trim()},
+      ),
+      fallback: 'Could not look that label up.',
+      fromJson: (data) => DplScanLookup.fromJson(
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{},
+      ),
+    );
+  }
+
   /// Record which rack a closed pallet is standing on.
   ///
   /// Capacity, the row lock and releasing a previous placement all happen

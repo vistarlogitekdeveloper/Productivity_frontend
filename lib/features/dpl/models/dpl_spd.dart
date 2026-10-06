@@ -275,3 +275,52 @@ class DplWheelResolution {
   /// True when this wheel is currently parked on a cart.
   bool get isOnTrolley => trolleyNo.isNotEmpty;
 }
+
+/// What `GET /warehouse/lookup` answers for a scanned label.
+///
+/// A pallet sticker gives the pallet and every wheel on it ([isPallet]); a
+/// wheel label gives the pallet that wheel is on, with [wheel] naming the one
+/// scanned. A wheel that is on no pallet comes back with a null [pallet] and a
+/// [note] saying where it is instead.
+class DplScanLookup {
+  /// `pallet` or `wheel` — what the scanned label turned out to be.
+  final String kind;
+  final DplPallet? pallet;
+  final List<DplWheel> wheels;
+  final DplWheel? wheel;
+
+  /// Set when an out-of-date pallet number was scanned: the pallet it named
+  /// now carries [pallet]'s number.
+  final String renamedFrom;
+  final String note;
+
+  const DplScanLookup({
+    this.kind = '',
+    this.pallet,
+    this.wheels = const [],
+    this.wheel,
+    this.renamedFrom = '',
+    this.note = '',
+  });
+
+  factory DplScanLookup.fromJson(Map<String, dynamic> json) {
+    final p = json['pallet'];
+    final w = json['wheel'];
+    final raw = json['wheels'];
+    return DplScanLookup(
+      kind: parseStringOr(json['kind']),
+      pallet: p is Map ? DplPallet.fromJson(Map<String, dynamic>.from(p)) : null,
+      wheels: raw is List
+          ? raw
+              .whereType<Map>()
+              .map((e) => DplWheel.fromJson(Map<String, dynamic>.from(e)))
+              .toList()
+          : const [],
+      wheel: w is Map ? DplWheel.fromJson(Map<String, dynamic>.from(w)) : null,
+      renamedFrom: parseStringOr(json['renamed_from']),
+      note: parseStringOr(json['note']),
+    );
+  }
+
+  bool get isPallet => kind == 'pallet';
+}

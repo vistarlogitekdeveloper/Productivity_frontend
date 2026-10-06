@@ -8,6 +8,7 @@ import '../core/dpl_permissions_provider.dart';
 import '../core/widgets/dpl_app_bar.dart';
 import '../core/widgets/dpl_bottom_nav.dart';
 import '../core/widgets/dpl_snack.dart';
+import '../qa/screens/pallet_lookup_screen.dart';
 import 'auditor_providers.dart';
 import 'screens/audit_register_screen.dart';
 import 'screens/audit_scan_screen.dart';
@@ -97,6 +98,16 @@ class _DplAuditorShellState extends ConsumerState<DplAuditorShell> {
         appBar: DplAppBar(
           title: tabs[tab].title,
           actions: [
+            // Scan anything to see where it belongs: a pallet shows its
+            // wheels, a wheel shows its pallet. On every tab, because "which
+            // pallet is this wheel on?" comes up mid-audit as often as before.
+            IconButton(
+              tooltip: 'Scan to find',
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PalletLookupScreen()),
+              ),
+            ),
             IconButton(
               tooltip: 'Refresh',
               icon: const Icon(Icons.refresh),
@@ -116,7 +127,17 @@ class _DplAuditorShellState extends ConsumerState<DplAuditorShell> {
         ),
         bottomNavigationBar: DplBottomNav(
           currentIndex: tab,
-          onTap: (i) => setState(() => _tab = i),
+          onTap: (i) {
+            // The tabs live in an IndexedStack and are built once, so without
+            // this a pallet audited on one tab was missing from the others
+            // until Refresh. Riverpod keeps the old list on screen while the
+            // new one loads, so there is no spinner flash.
+            if (i != _tab) {
+              ref.invalidate(dplAuditPalletsProvider);
+              ref.invalidate(dplAuditRegisterProvider);
+            }
+            setState(() => _tab = i);
+          },
           items: [for (final t in tabs) t.item],
         ),
       ),

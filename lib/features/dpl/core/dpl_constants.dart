@@ -385,6 +385,9 @@ class DplPaths {
   // alone, which is what makes "who racks a pallet" a setting.
   static const String warehouseLocations = '/warehouse/locations';
   static const String warehousePalletResolve = '/warehouse/pallets/resolve';
+  // "What is this?" for any scanned label — a pallet sticker or a wheel label.
+  // Readable with pallet.view or audit.view, so the auditor reaches it too.
+  static const String warehouseLookup = '/warehouse/lookup';
 
   // --- Pallet audit (migration 167) ---
   //

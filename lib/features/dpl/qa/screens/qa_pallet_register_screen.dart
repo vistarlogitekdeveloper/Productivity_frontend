@@ -16,6 +16,7 @@ import '../../models/dpl_machine.dart';
 import '../../models/dpl_pallet.dart';
 import '../../models/dpl_part.dart';
 import '../services/pallet_label_pdf.dart';
+import 'pallet_lookup_screen.dart';
 import 'qa_direct_print_screen.dart'
     show qaDirectPartsProvider, qaDirectPartSearchProvider, qaMachinesProvider;
 
@@ -144,6 +145,17 @@ class _QaPalletRegisterScreenState
                 ),
               ),
               const SizedBox(width: 6),
+              // Scan anything — a pallet shows its wheels, a wheel shows its
+              // pallet. A page of its own rather than a filter on this list,
+              // because the answer to "which pallet is this wheel on?" is one
+              // pallet, not a narrowed register.
+              FilledButton.tonalIcon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PalletLookupScreen()),
+                ),
+                icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
+                label: const Text('Scan'),
+              ),
               IconButton(
                 tooltip: 'Refresh',
                 icon: const Icon(Icons.refresh),
