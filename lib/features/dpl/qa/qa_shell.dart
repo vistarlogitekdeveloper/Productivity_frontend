@@ -60,7 +60,42 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
   /// field in the visible tab whether or not anything holds focus — see
   /// `activeArea`. The keyboard now appears only when somebody taps a field,
   /// which is the only time anyone wants it.
-  void _showTab(int i) => setState(() => _tab = i);
+  void _showTab(int i) {
+    if (i != _tab) _reloadTab(i);
+    setState(() => _tab = i);
+  }
+
+  /// The tab titles as of the last build, so [_showTab] knows which screen an
+  /// index is. The tab set depends on permissions, so an index alone is not.
+  List<String> _titles = const [];
+
+  /// Re-read the data of the tab being opened.
+  ///
+  /// The tabs live in an IndexedStack: every one is built once, when the QA
+  /// screen opens, and stays alive. So without this, Pallets built showed
+  /// the list as it was when the shell opened — a pallet closed a minute ago
+  /// on the Pallet tab was missing until the operator pressed Refresh.
+  ///
+  /// The old list stays on screen while the new one loads (Riverpod keeps
+  /// the previous value during a refresh), so switching tabs does not flash
+  /// a spinner.
+  void _reloadTab(int i) {
+    if (i < 0 || i >= _titles.length) return;
+    final title = _titles[i];
+    if (title.endsWith('Pallets built')) {
+      ref.invalidate(palletRegisterProvider);
+    } else if (title.endsWith('— Pallet')) {
+      ref.invalidate(qaOpenPalletProvider);
+      ref.invalidate(qaHalfPalletsProvider);
+    } else if (title.endsWith('Merge pallets')) {
+      ref.invalidate(qaHalfPalletsProvider);
+      ref.invalidate(qaTrolleyPlansProvider);
+    } else if (title.endsWith('SPD')) {
+      ref.invalidate(spdPacksProvider);
+    } else if (title.endsWith('Dispatch Slips')) {
+      ref.invalidate(dplDispatchSlipsProvider);
+    }
+  }
 
   @override
   void initState() {
@@ -144,6 +179,7 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
       if (canViewPallets) 'QA — Pallets built',
       if (canSlips) 'QA — Dispatch Slips',
     ];
+    _titles = titles;
     final tab = _tab.clamp(0, titles.length - 1);
 
     // Mounted ONCE, here, rather than on each tab.
