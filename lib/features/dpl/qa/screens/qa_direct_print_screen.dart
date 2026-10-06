@@ -43,7 +43,9 @@ final qaMachinesProvider =
 /// can correct afterwards.
 final qaShiftsProvider =
     FutureProvider.autoDispose<DplApiResponse<List<DplShift>>>((ref) async {
-  return ref.watch(dplApiServiceProvider).getShifts();
+  // /qa/shifts, NOT /manager/shifts: the manager list is role-locked, and
+  // reading it from here answered every QA operator with a 403.
+  return ref.watch(dplApiServiceProvider).getQaShifts();
 });
 /// The part-search term, shared by the direct-print tab and the pallet
 /// screen's "start a pallet" picker. Public because both read it — the search
@@ -329,18 +331,12 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
             ),
             // A shift master that will not load must not block a print. The
             // server still resolves one from the clock, which is what this
-            // screen did before the picker existed.
-            error: (e, _) => DplInlineErrorRetry(
-              message: e.toString(),
-              onRetry: () => ref.invalidate(qaShiftsProvider),
-            ),
+            // screen did before the picker existed — so say that in one
+            // line, rather than a full-card "Something went wrong" that
+            // reads as though printing itself is broken.
+            error: (e, _) => _shiftsUnavailable(),
             data: (res) {
-              if (res.isError) {
-                return DplInlineErrorRetry(
-                  message: res.error ?? 'Failed to load shifts.',
-                  onRetry: () => ref.invalidate(qaShiftsProvider),
-                );
-              }
+              if (res.isError) return _shiftsUnavailable();
               final shifts = (res.data ?? const <DplShift>[])
                   .where((s) => s.isActive)
                   .toList(growable: false);
@@ -381,6 +377,24 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _shiftsUnavailable() {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'Could not load the shift list. You can still print — the '
+            'shift shown above is used.',
+            style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
+          ),
+        ),
+        TextButton(
+          onPressed: _busy ? null : () => ref.invalidate(qaShiftsProvider),
+          child: const Text('Retry'),
+        ),
+      ],
     );
   }
 

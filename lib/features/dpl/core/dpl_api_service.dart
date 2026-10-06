@@ -3632,6 +3632,25 @@ class DplApiService {
     );
   }
 
+  /// `GET /qa/shifts` — active shifts for the direct-print shift picker.
+  ///
+  /// QA cannot read `/manager/shifts` (manager-only): reading it here is what
+  /// put "dpl_manager role required" on every QA operator's print screen.
+  ///
+  /// Falls back to `/manager/shifts` on a 404, so this build still works for a
+  /// manager against a backend that predates `/qa/shifts`. A QA operator on
+  /// such a backend still gets the 403, which the screen shows as a quiet
+  /// "the clock decides" note rather than a failure.
+  Future<DplApiResponse<List<DplShift>>> getQaShifts() async {
+    final res = await _send<List<DplShift>>(
+      () => _dio.get(DplPaths.qaShifts),
+      fallback: 'Failed to load shifts.',
+      fromJson: _listFrom<DplShift>(DplShift.fromJson),
+    );
+    if (res.isError && res.statusCode == 404) return getShifts();
+    return res;
+  }
+
   /// `GET /qa/machines` — every active machine, for the direct-print picker.
   ///
   /// Distinct from the plan-driven Production tab, which shows only machines

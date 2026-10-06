@@ -331,6 +331,8 @@ class DplPaths {
   static const String qaStickersDirect = '/qa/stickers/direct';
   static const String qaMachines = '/qa/machines';
   static const String qaParts = '/qa/parts';
+  // The production-shift picker. QA cannot read /manager/shifts.
+  static const String qaShifts = '/qa/shifts';
 
   // Pallet build and close (backend migration 151, Maxion SSR Module 4).
   // The operator opens a pallet, scans printed wheel labels onto it, and
