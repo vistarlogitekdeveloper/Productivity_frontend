@@ -11,8 +11,8 @@ import '../../core/widgets/dpl_snack.dart';
 import '../../models/dpl_pallet.dart';
 import '../../models/dpl_spd.dart';
 import '../../models/dpl_wheel_trolley.dart';
-import '../widgets/wheel_transfer_board.dart';
 import '../services/pallet_label_pdf.dart';
+import '../services/wheel_scan_match.dart';
 import 'dpl_qr_scan_sheet.dart';
 import 'qa_trolley_merge_screen.dart';
 
@@ -47,23 +47,31 @@ final qaTrolleyPlansProvider =
   return plans;
 });
 
-/// Combining two part-filled pallets — SSR Module 5.
+/// Combining two part-filled pallets — SSR Module 5 — BY SCANNING.
 ///
-/// Scan one pallet, scan another, and the app fills the first to its standard
-/// quantity from the second. Four wheels and three, against a standard of five,
-/// come out as a FULL pallet of five and a half pallet of two — which is what
-/// physically happens on the floor, because six wheels do not fit on a shroud
-/// built for five.
+///   1. Scan both pallet stickers.
+///   2. Choose which pallet to merge INTO.
+///   3. Scan wheel labels off the other pallet, one at a time. Every scan
+///      moves that wheel onto the chosen pallet there and then.
+///   4. Finish: the labels of whatever changed are printed.
 ///
-/// The existing "combine" operation empties the source whatever the size. That
-/// is right while two halves fit inside one standard quantity and wrong the
-/// moment they do not, so this is a separate operation rather than a change to
-/// that one.
+/// Scanning is the gesture because it is the physical act: the operator lifts
+/// a wheel off one pallet and puts it on the other, and the scan is the record
+/// that THAT wheel moved. An earlier version showed both pallets' wheel lists
+/// and moved rows by dragging, which records a decision made on a screen, not
+/// what was carried — the list said a wheel moved whether or not anyone
+/// picked it up.
 ///
-/// BOTH LABELS ARE REPRINTED. §5: the pallet QR "is reprinted when the pallet
-/// changes, for example on a merge", and here both pallets changed. The server
-/// decides which — when the source is emptied it stops being a pallet, and a
-/// label for something that no longer exists is worse than no label.
+/// Each scan is its own server move (`/qa/pallets/redistribute` with one
+/// wheel), so a scan that is refused — wrong pallet, pallet full — changes
+/// nothing, and an operator called away mid-merge leaves both pallets
+/// correct, just not finished.
+///
+/// LABELS ARE PRINTED AT THE END, not per scan. Both pallets' counts (and the
+/// filled pallet's number, renumbered as merged) change with every wheel, so
+/// a label per scan would be a stack of stale labels. The server says which
+/// pallets still exist to be labelled: a pallet that gave every wheel away
+/// stops being a pallet and gets none.
 class QaPalletMergeScreen extends ConsumerStatefulWidget {
   const QaPalletMergeScreen({super.key, this.showAppBar = true});
 
@@ -78,37 +86,62 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
   final _scanCtrl = TextEditingController();
   final _scanFocus = FocusNode();
 
+  /// Step 3's field: wheel labels, not pallet stickers. A separate field so a
+  /// pallet sticker scanned by mistake at this point is read as a wheel and
+  /// refused, instead of restarting the pallet scan.
+  final _wheelCtrl = TextEditingController();
+  final _wheelFocus = FocusNode();
+
   bool _busy = false;
 
-  /// The pallets, in the order they were scanned. Neither is "the target" any
-  /// more — the operator decides which wheels go where, in either direction.
-  DplPallet? _target;
-  DplPallet? _source;
+  /// The two pallets, in the order they were scanned. Kept current: every
+  /// move replaces them with the server's answer, because a merge renumbers
+  /// the pallet being filled.
+  DplPallet? _first;
+  DplPallet? _second;
 
-  /// What is physically on each, loaded once both are scanned.
-  DplPalletWheels? _leftWheels;
-  DplPalletWheels? _rightWheels;
+  /// Which of the two the operator chose to merge INTO. Null until chosen.
+  int? _targetId;
 
-  /// sticker id -> the pallet it is currently assigned to. Starts as where the
-  /// wheels actually are and diverges as the operator drags; the diff against
-  /// [_origin] is what gets sent.
-  final Map<int, int> _assignment = <int, int>{};
-  final Map<int, int> _origin = <int, int>{};
+  /// What is on each pallet right now, keyed by pallet id. Loaded once both
+  /// are scanned and updated locally after every successful move.
+  final Map<int, List<DplWheel>> _wheels = <int, List<DplWheel>>{};
 
-  /// Only the wheels that actually changed side. Sending the whole assignment
-  /// would make the server write every row for a single drag.
-  Map<int, int> get _moves {
-    final out = <int, int>{};
-    for (final e in _assignment.entries) {
-      if (_origin[e.key] != e.value) out[e.key] = e.value;
-    }
-    return out;
+  /// The wheels moved in this session, newest first, for the on-screen tally.
+  final List<String> _moved = <String>[];
+
+  /// The pallets the LAST move said need a label. Every move changes both
+  /// pallets, so the last answer is the current one.
+  List<int> _reprint = const <int>[];
+
+  /// Scans are applied one at a time, in order. A handheld trigger fires
+  /// faster than a round trip, and two moves in flight would each be decided
+  /// against counts the other is about to change.
+  Future<void> _scanChain = Future<void>.value();
+
+  DplPallet? get _target => _targetId == null
+      ? null
+      : (_first?.id == _targetId ? _first : _second);
+
+  DplPallet? get _source => _targetId == null
+      ? null
+      : (_first?.id == _targetId ? _second : _first);
+
+  int _countOn(DplPallet? p) =>
+      p == null ? 0 : (_wheels[p.id] ?? const <DplWheel>[]).length;
+
+  bool get _targetFull {
+    final t = _target;
+    final std = t?.standardQty ?? 0;
+    return t != null && std > 0 && _countOn(t) >= std;
   }
 
   @override
   void dispose() {
     _scanCtrl.dispose();
     _scanFocus.dispose();
+    _wheelCtrl.dispose();
+    _wheelFocus.dispose();
     super.dispose();
   }
 
@@ -126,30 +159,29 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
         // reading a rack of half pallets and doing arithmetic; the plan does
         // it, and prefers the combination that COMPLETES the most pallets
         // rather than the one that empties the cart fastest.
-        if (_target == null) ...[
+        if (_first == null) ...[
           const SizedBox(height: 12),
           _trolleyPlanCard(),
         ],
-        // Only shown while the second pallet is still being scanned. Once the
-        // board is up it repeats the board's own headers, and its old labels
-        // ("filling" / "taking from") contradict a screen where direction is
-        // the operator's to choose.
-        if (_target != null && _source == null) ...[
+        if (_first != null && _second == null) ...[
           const SizedBox(height: 12),
-          _palletCard(_target!, 'First pallet', isTarget: true),
+          _palletCard(_first!, 'First pallet', isTarget: false),
         ],
-        if (_leftWheels != null && _rightWheels != null) ...[
+        // Step 2: both scanned, wheels loaded, direction not yet chosen.
+        if (_second != null && _targetId == null && _wheels.length == 2) ...[
           const SizedBox(height: 12),
-          WheelTransferBoard(
-            left: _leftWheels!,
-            right: _rightWheels!,
-            assignment: _assignment,
-            enabled: !_busy,
-            onMove: (stickerId, toPalletId) =>
-                setState(() => _assignment[stickerId] = toPalletId),
-          ),
+          _chooseTargetCard(),
+        ],
+        // Step 3: scanning wheels across.
+        if (_targetId != null) ...[
           const SizedBox(height: 12),
-          _commitCard(),
+          _progressCard(),
+          const SizedBox(height: 12),
+          _wheelScanCard(),
+          if (_moved.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _movedCard(),
+          ],
         ],
       ],
     );
@@ -167,16 +199,17 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
   // -------------------------------------------------------------------------
 
   String get _prompt {
-    if (_target == null) return 'Scan the pallet you want to FILL';
-    if (_source == null) return 'Now scan the pallet to take wheels FROM';
-    return 'Both scanned';
+    if (_first == null) return 'Scan the first pallet sticker';
+    if (_second == null) return 'Now scan the second pallet sticker';
+    return 'Both pallets scanned';
   }
 
+  /// Step 1: the two pallet stickers.
   Widget _scanCard() {
     final perms = ref.watch(dplPermissionsProvider);
     final canCamera = perms.can(DplPermission.palletScanCamera);
     final canTrolley = perms.can(DplPermission.palletTrolley);
-    final done = _target != null && _source != null;
+    final done = _second != null;
 
     return DplCard(
       child: Column(
@@ -193,7 +226,7 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
                   ),
                 ),
               ),
-              if (_target != null)
+              if (_first != null)
                 TextButton(
                   onPressed: _busy ? null : _startOver,
                   child: const Text('Start over'),
@@ -243,7 +276,7 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
           // are these wheels coming from?" is open. The camera button above is
           // shown at the first scan too, so `!done` alone would put this in
           // front of an operator who has not yet said what they are filling.
-          if (canTrolley && _target != null && _source == null) ...[
+          if (canTrolley && _first != null && _second == null) ...[
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
@@ -403,7 +436,7 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
       return;
     }
 
-    setState(() => _target = res.data!.pallet);
+    setState(() => _first = res.data!.pallet);
     await _fillFromTrolley();
     if (!mounted) return;
     ref.invalidate(qaTrolleyPlansProvider);
@@ -411,25 +444,26 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
 
   void _startOver() {
     setState(() {
-      _target = null;
-      _source = null;
-      _leftWheels = null;
-      _rightWheels = null;
-      _assignment.clear();
-      _origin.clear();
+      _first = null;
+      _second = null;
+      _targetId = null;
+      _wheels.clear();
+      _moved.clear();
+      _reprint = const <int>[];
       _scanCtrl.clear();
+      _wheelCtrl.clear();
     });
     _scanFocus.requestFocus();
   }
 
-  /// Load what is on both pallets and seed the board.
+  /// Load what is on both pallets.
   ///
-  /// Runs once both are scanned, because a board with one column is not a
-  /// board — and because the wheel lists are the expensive part of this screen
-  /// and fetching one that may be discarded is wasted.
+  /// Runs once both are scanned: matching a scanned wheel label to a wheel on
+  /// the source needs the list, and fetching one for a pallet that may be
+  /// discarded at the second scan is wasted.
   Future<void> _loadWheels() async {
-    final a = _target;
-    final b = _source;
+    final a = _first;
+    final b = _second;
     if (a == null || b == null) return;
 
     setState(() => _busy = true);
@@ -448,18 +482,10 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
     }
 
     setState(() {
-      _leftWheels = left.data;
-      _rightWheels = right.data;
-      _assignment.clear();
-      _origin.clear();
-      for (final w in left.data!.sellable) {
-        _assignment[w.id] = a.id;
-        _origin[w.id] = a.id;
-      }
-      for (final w in right.data!.sellable) {
-        _assignment[w.id] = b.id;
-        _origin[w.id] = b.id;
-      }
+      _wheels
+        ..clear()
+        ..[a.id] = List<DplWheel>.of(left.data!.sellable)
+        ..[b.id] = List<DplWheel>.of(right.data!.sellable);
     });
   }
 
@@ -478,7 +504,7 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
   /// board's copy ("Empty — this pallet stops existing", "a full pallet is
   /// N") is wrong for a cart in every particular.
   Future<void> _fillFromTrolley() async {
-    final target = _target;
+    final target = _first;
     if (target == null) return;
 
     final result = await Navigator.of(context).push<DplTrolleyMergeResult>(
@@ -539,16 +565,15 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
 
     // Caught here rather than by the server so the operator is told while the
     // scanner is still in their hand, and the second scan is not wasted.
-    if (_target != null && pallet.id == _target!.id) {
+    if (_first != null && pallet.id == _first!.id) {
       DplSnacks.warning(
         context,
-        '${pallet.palletNo} is already the pallet being filled. Scan the other '
-        'one.',
+        '${pallet.palletNo} is already scanned. Scan the other pallet.',
       );
       _reFocus();
       return;
     }
-    if (_target != null && pallet.partId != _target!.partId) {
+    if (_first != null && pallet.partId != _first!.partId) {
       DplSnacks.error(
         context,
         '${pallet.palletNo} holds a different item. Only pallets of the same '
@@ -559,22 +584,22 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
     }
 
     setState(() {
-      if (_target == null) {
-        _target = pallet;
+      if (_first == null) {
+        _first = pallet;
       } else {
-        _source = pallet;
+        _second = pallet;
       }
       _scanCtrl.clear();
     });
     _reFocus();
 
-    // Both in hand: fetch what is on them so the board has something to show.
-    if (_target != null && _source != null) await _loadWheels();
+    // Both in hand: fetch what is on them, so wheel scans can be matched.
+    if (_first != null && _second != null) await _loadWheels();
   }
 
   void _reFocus() {
     _scanCtrl.clear();
-    if (_target == null || _source == null) _scanFocus.requestFocus();
+    if (_first == null || _second == null) _scanFocus.requestFocus();
   }
 
   // -------------------------------------------------------------------------
@@ -635,95 +660,241 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
   }
 
   // -------------------------------------------------------------------------
-  // Preview and commit
+  // Step 2 — which pallet to merge INTO
   // -------------------------------------------------------------------------
 
-  /// What the press will do, in wheels, before it happens.
-  ///
-  /// Recomputed from the board rather than asked of the server: the operator
-  /// is deciding whether to press at all, and a round trip per drag would make
-  /// the board feel broken. The server re-derives all of it and is the
-  /// authority; this is a promise, not a calculation anyone relies on.
-  Widget _commitCard() {
-    final moves = _moves;
-    final a = _leftWheels!.pallet;
-    final b = _rightWheels!.pallet;
-
-    int countFor(int palletId) =>
-        _assignment.values.where((v) => v == palletId).length;
-
-    final aAfter = countFor(a.id);
-    final bAfter = countFor(b.id);
-    final aStd = a.standardQty ?? 0;
-    final bStd = b.standardQty ?? 0;
-    final over = (aStd > 0 && aAfter > aStd) || (bStd > 0 && bAfter > bStd);
-    final emptied = [
-      if (aAfter < 1) a.palletNo,
-      if (bAfter < 1) b.palletNo,
-    ];
-    final labels = [a.palletNo, b.palletNo].length - emptied.length;
-
+  Widget _chooseTargetCard() {
     return DplCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'What this will do',
+            'Merge into which pallet?',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
-          const SizedBox(height: 8),
-          if (moves.isEmpty)
+          const SizedBox(height: 4),
+          Text(
+            'Then scan the wheels off the OTHER pallet, one at a time, as you '
+            'move them across.',
+            style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          for (final p in [_first!, _second!]) ...[
+            _targetOption(p),
+            const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _targetOption(DplPallet p) {
+    final count = _countOn(p);
+    final std = p.standardQty;
+    final room = std == null || std <= 0 ? null : std - count;
+    return Material(
+      color: DplColors.primaryTint,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: _busy ? null : () => _chooseTarget(p),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.palletNo,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$count${std == null ? '' : ' / $std'} wheels'
+                      '${room == null ? '' : ' · room for $room'}'
+                      '${p.locationCode.isEmpty ? '' : ' · on ${p.locationCode}'}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: DplColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                'Merge into this',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: DplColors.primary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right, color: DplColors.primary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _chooseTarget(DplPallet p) {
+    final std = p.standardQty ?? 0;
+    if (std > 0 && _countOn(p) >= std) {
+      DplSnacks.warning(
+        context,
+        '${p.palletNo} is already full. Choose the other pallet to fill.',
+      );
+      return;
+    }
+    setState(() => _targetId = p.id);
+    // The next thing the operator does is pick a wheel up and scan it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _wheelFocus.requestFocus();
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Step 3 — scanning wheels across
+  // -------------------------------------------------------------------------
+
+  Widget _progressCard() {
+    final t = _target!;
+    final s = _source!;
+    final tCount = _countOn(t);
+    final sCount = _countOn(s);
+    final std = t.standardQty;
+
+    Widget side(String label, DplPallet p, String count, {required bool into}) {
+      return Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text(
-              'Nothing has moved yet. Drag a wheel across, or use the arrow '
-              'on a row.',
-              style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
-            )
-          else if (over)
+              label.toUpperCase(),
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.4,
+                color: into ? DplColors.primary : DplColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 2),
             Text(
-              'One pallet has more wheels than fit on it. Move some back '
-              'before merging.',
+              p.palletNo,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            ),
+            Text(
+              count,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 22),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return DplCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              side('Taking from', s, '$sCount left', into: false),
+              Padding(
+                padding: const EdgeInsets.only(top: 18, right: 12),
+                child: Icon(Icons.arrow_forward_rounded,
+                    color: DplColors.primary),
+              ),
+              side(
+                'Merging into',
+                t,
+                std == null ? '$tCount' : '$tCount / $std',
+                into: true,
+              ),
+            ],
+          ),
+          if (_targetFull || sCount == 0) ...[
+            const SizedBox(height: 10),
+            Text(
+              _targetFull
+                  ? '${t.palletNo} is FULL. Finish to print the labels.'
+                  : '${s.palletNo} is empty — every wheel has moved. Finish to '
+                      'print the label.',
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
-                color: DplColors.error,
-              ),
-            )
-          else ...[
-            Text(
-              '${moves.length} wheel${moves.length == 1 ? '' : 's'} move. '
-              '$labels label${labels == 1 ? '' : 's'} will be printed.',
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: DplColors.textSecondary,
+                color: DplColors.success,
               ),
             ),
-            if (emptied.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                '${emptied.join(' and ')} ends up empty and stops being a '
-                'pallet.',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: DplColors.warning,
-                ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _wheelScanCard() {
+    final canCamera =
+        ref.watch(dplPermissionsProvider).can(DplPermission.palletScanCamera);
+    final s = _source!;
+    final stop = _targetFull || _countOn(s) == 0;
+
+    return DplCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            stop ? 'Done scanning' : 'Scan a wheel from ${s.palletNo}',
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _wheelCtrl,
+            focusNode: _wheelFocus,
+            enabled: !stop,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              hintText: 'Scan the wheel label, or type its serial',
+              prefixIcon: Icon(Icons.qr_code_scanner_rounded),
+              isDense: true,
+            ),
+            onSubmitted: _queueWheelScan,
+          ),
+          if (canCamera && !stop) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _busy ? null : _scanWheelWithCamera,
+                icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                label: const Text('Scan with the camera'),
               ),
-            ],
+            ),
           ],
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: (_busy || moves.isEmpty || over) ? null : _merge,
+              onPressed: _busy ? null : _finish,
               icon: _busy
                   ? const SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.merge_rounded, size: 18),
-              label: Text(_busy ? 'Merging…' : 'Merge & print labels'),
+                  : Icon(
+                      _moved.isEmpty ? Icons.close_rounded : Icons.print_rounded,
+                      size: 18,
+                    ),
+              label: Text(
+                _moved.isEmpty
+                    ? 'Cancel — nothing moved'
+                    : 'Finish & print labels (${_moved.length} moved)',
+              ),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
               ),
@@ -734,43 +905,152 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
     );
   }
 
-  Future<void> _merge() async {
-    final a = _leftWheels!.pallet;
-    final b = _rightWheels!.pallet;
-    final moves = _moves;
-    if (moves.isEmpty) return;
+  Widget _movedCard() {
+    return DplCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Moved (${_moved.length})',
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          ),
+          const SizedBox(height: 6),
+          for (final label in _moved.take(20))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle_rounded,
+                      size: 16, color: DplColors.success),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(fontSize: 12.5),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (_moved.length > 20)
+            Text(
+              '…and ${_moved.length - 20} more',
+              style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _scanWheelWithCamera() async {
+    final code = await DplQrScanSheet.open(context, kind: DplScanKind.wheel);
+    if (code == null || !mounted) return;
+    _queueWheelScan(code);
+  }
+
+  /// Applied strictly one after another — see [_scanChain].
+  void _queueWheelScan(String raw) {
+    _wheelCtrl.clear();
+    _scanChain = _scanChain.then((_) => _moveScannedWheel(raw));
+  }
+
+  /// One scan = one wheel moved onto the chosen pallet, on the server, now.
+  Future<void> _moveScannedWheel(String raw) async {
+    if (!mounted) return;
+    final code = raw.trim();
+    final t = _target;
+    final s = _source;
+    if (code.isEmpty || t == null || s == null) return;
+
+    // Already on the pallet being filled: a repeat trigger, or a wheel the
+    // operator already carried across. Information, not an error.
+    final onTarget = matchScannedWheel(code, _wheels[t.id] ?? const []);
+    if (onTarget != null) {
+      DplSnacks.warning(
+        context,
+        '${onTarget.serialNo} is already on ${t.palletNo}.',
+      );
+      _wheelFocus.requestFocus();
+      return;
+    }
+
+    final wheel = matchScannedWheel(code, _wheels[s.id] ?? const []);
+    if (wheel == null) {
+      DplSnacks.error(
+        context,
+        'That label is not on ${s.palletNo}. Scan a wheel from ${s.palletNo}.',
+      );
+      _wheelFocus.requestFocus();
+      return;
+    }
+    if (_targetFull) {
+      DplSnacks.warning(
+        context,
+        '${t.palletNo} is already full. Finish to print the labels.',
+      );
+      return;
+    }
 
     setState(() => _busy = true);
     final res = await ref.read(dplApiServiceProvider).redistributeWheels(
-          palletAId: a.id,
-          palletBId: b.id,
-          moves: moves,
+          palletAId: t.id,
+          palletBId: s.id,
+          moves: {wheel.id: t.id},
         );
     if (!mounted) return;
     setState(() => _busy = false);
 
     if (res.isError || res.data == null) {
-      // OVER_CAPACITY, PART_MISMATCH, WHEEL_MOVED and the rest each name a
-      // different remedy, and the server words them precisely.
-      DplSnacks.error(context, res.error ?? 'Failed to move those wheels.');
+      // OVER_CAPACITY, WHEEL_MOVED, a rack with no room for one more — the
+      // server names each precisely, and nothing moved.
+      DplSnacks.error(context, res.error ?? 'Could not move that wheel.');
+      _wheelFocus.requestFocus();
       return;
     }
 
     final out = res.data!;
+    setState(() {
+      _wheels[s.id]?.removeWhere((w) => w.id == wheel.id);
+      (_wheels[t.id] ??= <DplWheel>[]).add(wheel);
+      _moved.insert(0, wheel.serialNo);
+      _reprint = out.reprint;
+      // The filled pallet is renumbered as merged, and either may have
+      // changed type — keep showing what the server now says they are.
+      for (final p in out.pallets) {
+        if (p.id == _first?.id) _first = p;
+        if (p.id == _second?.id) _second = p;
+      }
+    });
+    _wheelFocus.requestFocus();
+  }
+
+  /// Print the labels of what changed, then start again.
+  Future<void> _finish() async {
+    // Let any scan still in flight land first, so its label is not missed.
+    await _scanChain;
+    if (!mounted) return;
+
+    if (_moved.isEmpty) {
+      _startOver();
+      return;
+    }
+
+    final t = _target;
+    final s = _source;
     DplSnacks.success(
       context,
-      '${out.moved} wheel${out.moved == 1 ? '' : 's'} moved. '
-      '${out.pallets.map((p) => '${p.palletNo} ${p.qty}').join(', ')}',
+      '${_moved.length} wheel${_moved.length == 1 ? '' : 's'} merged into '
+      '${t?.palletNo ?? 'the pallet'}'
+      '${s == null || _countOn(s) == 0 ? '.' : '. ${s.palletNo} keeps ${_countOn(s)}.'}',
     );
 
-    // Print whatever the server said is stale, in order. Sequential rather
-    // than parallel: two print dialogs racing each other is how an operator
-    // ends up dismissing one without noticing.
-    for (final id in out.reprint) {
+    // Sequential, not parallel: two print sheets racing each other is how an
+    // operator dismisses one without noticing.
+    for (final id in _reprint) {
       if (!mounted) return;
       await _printLabel(id);
     }
-
     if (!mounted) return;
     _startOver();
   }
