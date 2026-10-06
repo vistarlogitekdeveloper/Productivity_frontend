@@ -15,6 +15,7 @@ import '../../core/widgets/dpl_snack.dart';
 import '../../models/dpl_spd.dart';
 import '../services/pallet_label_pdf.dart';
 import '../services/spd_label_pdf.dart';
+import '../services/wheel_scan_match.dart';
 import 'dpl_qr_scan_sheet.dart';
 
 final spdPacksProvider =
@@ -54,14 +55,53 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
   /// The pallet being taken from, once scanned.
   DplPalletWheels? _loaded;
 
-  /// Sticker ids the operator has ticked.
+  /// Sticker ids of the wheels scanned for SPD, and the order they were
+  /// scanned in (for the list on screen).
   final Set<int> _picked = <int>{};
+  final List<int> _pickedOrder = <int>[];
+
+  /// The wheel-label field, once a pallet is loaded.
+  final _wheelCtrl = TextEditingController();
+  final _wheelFocus = FocusNode();
 
   @override
   void dispose() {
     _scanCtrl.dispose();
     _scanFocus.dispose();
+    _wheelCtrl.dispose();
+    _wheelFocus.dispose();
     super.dispose();
+  }
+
+  Future<void> _scanWheelWithCamera(List<DplWheel> wheels) async {
+    final code = await DplQrScanSheet.open(context, kind: DplScanKind.wheel);
+    if (code == null || !mounted) return;
+    _pickScanned(code, wheels);
+  }
+
+  /// One scan adds that wheel to the SPD order.
+  void _pickScanned(String raw, List<DplWheel> wheels) {
+    _wheelCtrl.clear();
+    final code = raw.trim();
+    if (code.isEmpty) return;
+
+    final wheel = matchScannedWheel(code, wheels);
+    if (wheel == null) {
+      DplSnacks.error(
+        context,
+        'That label is not on ${_loaded?.pallet.palletNo ?? 'this pallet'}. '
+        'Scan a wheel from this pallet.',
+      );
+    } else if (_picked.contains(wheel.id)) {
+      // A repeat trigger, not a second wheel.
+      DplSnacks.warning(context, '${wheel.serialNo} is already scanned.');
+    } else {
+      setState(() {
+        _picked.add(wheel.id);
+        _pickedOrder.add(wheel.id);
+      });
+    }
+    _wheelFocus.requestFocus();
   }
 
   @override
@@ -117,7 +157,7 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Scan a pallet, pick the wheels that are leaving, and each one is '
+            'Scan a pallet, then scan each wheel that is leaving. Each one is '
             'labelled as its own pack.',
             style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
           ),
@@ -162,7 +202,9 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     setState(() {
       _loaded = null;
       _picked.clear();
+      _pickedOrder.clear();
       _scanCtrl.clear();
+      _wheelCtrl.clear();
     });
     _scanFocus.requestFocus();
   }
@@ -225,7 +267,12 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     setState(() {
       _loaded = loaded;
       _picked.clear();
+      _pickedOrder.clear();
       _scanCtrl.clear();
+    });
+    // The next thing scanned is a wheel off this pallet.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _wheelFocus.requestFocus();
     });
   }
 
@@ -286,51 +333,58 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Pick wheels for SPD  (${_picked.length} of ${wheels.length})',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _busy
-                        ? null
-                        : () => setState(() {
-                              if (_picked.length == wheels.length) {
-                                _picked.clear();
-                              } else {
-                                _picked
-                                  ..clear()
-                                  ..addAll(wheels.map((w) => w.id));
-                              }
-                            }),
-                    child: Text(
-                      _picked.length == wheels.length ? 'None' : 'All',
-                    ),
-                  ),
-                ],
+              Text(
+                'Scan the wheels going to SPD  '
+                '(${_picked.length} of ${wheels.length})',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
               ),
               const SizedBox(height: 4),
-              for (final w in wheels)
-                CheckboxListTile(
-                  value: _picked.contains(w.id),
-                  onChanged: _busy
-                      ? null
-                      : (on) => setState(() {
-                            if (on == true) {
-                              _picked.add(w.id);
-                            } else {
-                              _picked.remove(w.id);
-                            }
-                          }),
+              Text(
+                // Scanned, not ticked: a wheel joins the order only when its
+                // own label is read, so the list is what is physically in
+                // the operator's hands rather than rows chosen on a screen.
+                'Take each wheel off ${p.palletNo} and scan its label.',
+                style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _wheelCtrl,
+                focusNode: _wheelFocus,
+                enabled: !_busy && _picked.length < wheels.length,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  hintText: 'Scan the wheel label, or type its serial',
+                  prefixIcon: Icon(Icons.qr_code_scanner_rounded),
+                  isDense: true,
+                ),
+                onSubmitted: (v) => _pickScanned(v, wheels),
+              ),
+              if (ref
+                  .watch(dplPermissionsProvider)
+                  .can(DplPermission.palletScanCamera)) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : () => _scanWheelWithCamera(wheels),
+                    icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                    label: const Text('Scan with the camera'),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+              // Newest first, so the wheel just scanned is the row in view.
+              for (final w in _pickedOrder.reversed
+                  .map((id) => wheels.where((x) => x.id == id).firstOrNull)
+                  .whereType<DplWheel>())
+                ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
+                  leading: Icon(Icons.check_circle_rounded,
+                      color: DplColors.success, size: 20),
                   title: Text(
                     w.serialNo,
                     style: const TextStyle(
@@ -345,6 +399,18 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                       if (w.printedAt != null) _d(w.printedAt!),
                     ].join(' · '),
                     style: const TextStyle(fontSize: 11.5),
+                  ),
+                  // A wrong scan is put right by removing it, not by starting
+                  // the whole pallet again.
+                  trailing: IconButton(
+                    tooltip: 'Remove',
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    onPressed: _busy
+                        ? null
+                        : () => setState(() {
+                              _picked.remove(w.id);
+                              _pickedOrder.remove(w.id);
+                            }),
                   ),
                 ),
               const SizedBox(height: 10),
@@ -391,7 +457,7 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                     _busy
                         ? 'Converting…'
                         : _picked.isEmpty
-                            ? 'Pick at least one wheel'
+                            ? 'Scan at least one wheel'
                             : 'Convert ${_picked.length} & print labels',
                   ),
                   style: FilledButton.styleFrom(
