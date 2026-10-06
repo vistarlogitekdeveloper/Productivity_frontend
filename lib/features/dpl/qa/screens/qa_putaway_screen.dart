@@ -262,9 +262,16 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
             freeQty: found.suggestion!.freeQty,
           );
 
+    // ...UNLESS IT IS ALREADY THERE. A closed pallet is now parked at STAGING
+    // the moment it is closed (qa_pallet_screen), so scanning it here means
+    // it is being racked: defaulting to where it already sits would offer a
+    // move the server refuses (ALREADY_ASSIGNED). Recommend a real rack.
+    final alreadyStaged = found.pallet.locationCode.trim().toUpperCase() ==
+        kDplStagingLocationCode;
+
     setState(() {
       _found = found;
-      _default = staging ?? fromSuggestion;
+      _default = alreadyStaged ? fromSuggestion : (staging ?? fromSuggestion);
       _chosen = _default;
     });
   }

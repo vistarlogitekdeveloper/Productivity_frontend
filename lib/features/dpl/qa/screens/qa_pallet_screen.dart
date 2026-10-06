@@ -1398,46 +1398,69 @@ class _QaPalletScreenState extends ConsumerState<QaPalletScreen> {
     await _printPalletLabel(pallet.id);
     if (!mounted) return;
 
-    // Then offer the rack, while the pallet is still in front of them.
+    // Then park it at STAGING — no question asked.
     //
-    // SSR Module 6 is a separate job done by a separate person at Maxion, so
-    // this is an OFFER and not a step: at a plant where the pack operator also
-    // racks the pallet it saves a walk back, and at one where a putaway
-    // operator collects it later, declining costs nothing. Only shown when the
-    // administrator has actually granted putaway to this plant.
+    // This used to be a "Put it on a rack?" dialog after every close. At
+    // Maxion a closed pallet physically goes to the staging area first and a
+    // putaway operator racks it later from the Put away tab, so the dialog
+    // was a tap per pallet whose answer was always "later" — and a pallet
+    // left with no location at all is one dispatch cannot find. Recording it
+    // at the staging bay keeps it findable until it is racked.
+    //
+    // Only when the administrator has granted putaway to this plant: the
+    // endpoint is gated on it, and a plant that does not rack pallets should
+    // not have them quietly given a location.
     final canPutAway =
         ref.read(dplPermissionsProvider).can(DplPermission.palletPutaway);
     final palletNo = closed?.palletNo ?? '';
     if (!canPutAway || palletNo.isEmpty) return;
 
-    final goNow = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Put it on a rack?'),
-        content: Text(
-          '$palletNo is closed and labelled. Recording where it is stored now '
-          'is what lets it be found again at dispatch.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Later'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Put it away'),
-          ),
-        ],
-      ),
-    );
-    if (goNow != true || !mounted) return;
+    await _parkAtStaging(palletId: pallet.id, palletNo: palletNo);
+  }
 
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        // Pre-filled, so they do not scan a label they are already holding.
-        builder: (_) => QaPutawayScreen(initialCode: palletNo),
-      ),
-    );
+  /// Record a just-closed pallet at the STAGING location.
+  ///
+  /// Never blocks and never undoes anything: the pallet is already closed and
+  /// labelled. If there is no STAGING location, or the server refuses, the
+  /// operator is told in one line and the pallet waits in Put away as before.
+  Future<void> _parkAtStaging({
+    required int palletId,
+    required String palletNo,
+  }) async {
+    final staging = await ref
+        .read(dplStagingLocationProvider.future)
+        .catchError((Object _) => null);
+    if (!mounted) return;
+    if (staging == null) {
+      // The provider is kept for the session, so a lookup that failed (or ran
+      // before a manager added STAGING) would otherwise answer "none" for
+      // every pallet until the app restarts. Ask again next close.
+      ref.invalidate(dplStagingLocationProvider);
+      DplSnacks.warning(
+        context,
+        '$palletNo has no location yet — this plant has no STAGING location. '
+        'Put it away from the Put away tab.',
+      );
+      return;
+    }
+
+    final res = await ref.read(dplApiServiceProvider).putPalletAway(
+          palletId: palletId,
+          locationId: staging.id,
+          remarks: 'Placed at staging when the pallet was closed',
+        );
+    if (!mounted) return;
+
+    if (res.isError) {
+      DplSnacks.warning(
+        context,
+        '$palletNo could not be placed at ${staging.code}'
+        '${res.error == null ? '' : ': ${res.error}'}. '
+        'Put it away from the Put away tab.',
+      );
+      return;
+    }
+    DplSnacks.success(context, '$palletNo placed at ${staging.code}.');
   }
 
   /// Fetch and print the master pallet label.
