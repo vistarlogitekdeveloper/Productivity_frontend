@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show FlutterError;
 import 'package:vistar_event_tracker/vistar_event_tracker.dart';
 
 import '../constants/app_constants.dart';
@@ -21,7 +23,8 @@ import '../constants/app_constants.dart';
 ///     organisation code as traits
 ///   * named business actions, from successful API writes (see [_actions]):
 ///     `plan_created`, `label_printed`, `dispatch_slip_created`, ...
-///   * failed API calls (5xx or no connection) and client errors
+///   * failed API calls (5xx or no connection) and client errors (by type
+///     only: never the message or stack, which can quote record content)
 /// Never sent: request or response bodies, names, emails, part numbers,
 /// quantities or any other record content.
 ///
@@ -66,11 +69,48 @@ abstract final class Telemetry {
             baseUrl: _origin,
             appVersion: _appVersion.isEmpty ? null : _appVersion,
             maxQueueSize: _maxQueue,
+            // The SDK's own error capture sends the exception message and
+            // stack, and a message can quote a server reply (a part number, a
+            // slip number). [_captureErrors] sends the type only.
+            autoCaptureErrors: false,
           ))
           .timeout(_initBudget);
+      _captureErrors();
     } catch (_) {
       // Analytics must never stop the app from starting.
     }
+  }
+
+  /// Client errors, by type only. Chains to whatever handled them before, so
+  /// the app's own error handling is unchanged.
+  static void _captureErrors() {
+    if (!_on) return;
+    final previous = FlutterError.onError;
+    FlutterError.onError = (details) {
+      _clientError(details.exception, fatal: false, library: details.library);
+      previous?.call(details);
+    };
+    final dispatcher = PlatformDispatcher.instance;
+    final previousAsync = dispatcher.onError;
+    dispatcher.onError = (error, stack) {
+      _clientError(error, fatal: true);
+      return previousAsync?.call(error, stack) ?? false;
+    };
+  }
+
+  static void _clientError(Object e, {required bool fatal, String? library}) {
+    if (!_on) return;
+    try {
+      _t.track(
+        VistarEvents.clientError,
+        properties: {
+          'error': e.runtimeType.toString(),
+          'library': ?library,
+          'fatal': fatal,
+        },
+        type: EventType.error,
+      );
+    } catch (_) {}
   }
 
   /// A screen, by its route pattern. Repeats of the same screen are dropped
