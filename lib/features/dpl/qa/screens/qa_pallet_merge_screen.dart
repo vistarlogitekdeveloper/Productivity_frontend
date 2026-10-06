@@ -7,6 +7,7 @@ import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
 import '../../core/widgets/dpl_card.dart';
+import '../../core/widgets/dpl_scan_panel.dart';
 import '../../core/widgets/dpl_snack.dart';
 import '../../models/dpl_pallet.dart';
 import '../../models/dpl_spd.dart';
@@ -163,10 +164,6 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
           const SizedBox(height: 12),
           _trolleyPlanCard(),
         ],
-        if (_first != null && _second == null) ...[
-          const SizedBox(height: 12),
-          _palletCard(_first!, 'First pallet', isTarget: false),
-        ],
         // Step 2: both scanned, wheels loaded, direction not yet chosen.
         if (_second != null && _targetId == null && _wheels.length == 2) ...[
           const SizedBox(height: 12),
@@ -198,97 +195,75 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
   // Scanning
   // -------------------------------------------------------------------------
 
-  String get _prompt {
-    if (_first == null) return 'Scan the first pallet sticker';
-    if (_second == null) return 'Now scan the second pallet sticker';
-    return 'Both pallets scanned';
-  }
-
   /// Step 1: the two pallet stickers.
+  ///
+  /// Once both are in, this shrinks to one line with "Start over": the cards
+  /// below already show both pallets, and a scan panel that can no longer
+  /// take a scan is just height pushing the next step off a phone screen.
   Widget _scanCard() {
     final perms = ref.watch(dplPermissionsProvider);
     final canCamera = perms.can(DplPermission.palletScanCamera);
     final canTrolley = perms.can(DplPermission.palletTrolley);
-    final done = _second != null;
 
-    return DplCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _prompt,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
+    if (_second != null) {
+      return DplCard(
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: DplColors.success, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${_first!.palletNo} + ${_second!.palletNo}',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                overflow: TextOverflow.ellipsis,
               ),
-              if (_first != null)
-                TextButton(
-                  onPressed: _busy ? null : _startOver,
-                  child: const Text('Start over'),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _scanCtrl,
-            focusNode: _scanFocus,
-            enabled: !_busy && !done,
-            // NOT autofocused: the handheld delivers here by position, and a
-            // soft keyboard on entry hides the suggestion list this screen
-            // opens on.
-            textInputAction: TextInputAction.done,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              hintText: done
-                  ? 'Both pallets scanned'
-                  : 'Scan, or type the pallet number',
-              prefixIcon: const Icon(Icons.qr_code_scanner_rounded),
-              isDense: true,
-              helperText: done
-                  ? null
-                  : 'The number is printed under the code, so a damaged label '
-                      'can be keyed in by hand.',
-              helperMaxLines: 3,
             ),
-            onSubmitted: _busy ? null : _resolve,
-          ),
-          if (canCamera && !done) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _busy ? null : _scanWithCamera,
-                icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                label: const Text('Scan with the camera'),
-              ),
+            TextButton(
+              onPressed: _busy ? null : _startOver,
+              child: const Text('Start over'),
             ),
           ],
+        ),
+      );
+    }
 
-          // The OTHER way to fill the pallet that has just been scanned.
-          //
-          // Offered only at the SECOND scan — with a target in hand and no
-          // source yet — because that is the one moment the question "where
-          // are these wheels coming from?" is open. The camera button above is
-          // shown at the first scan too, so `!done` alone would put this in
-          // front of an operator who has not yet said what they are filling.
-          if (canTrolley && _first != null && _second == null) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _busy ? null : _fillFromTrolley,
-                icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                label: const Text('Or fill it from a trolley'),
-              ),
+    return DplScanPanel(
+      step: 'Step 1 of 3',
+      title: _first == null
+          ? 'Scan the first pallet sticker'
+          : 'Now scan the second pallet sticker',
+      subtitle: _first == null
+          ? 'Scan both pallets you want to combine. You choose which one to '
+              'fill next.'
+          : 'First: ${_first!.palletNo} (${_first!.countLabel}). Scan the '
+              'other pallet of the same item.',
+      cameraLabel: 'Scan pallet sticker',
+      onCamera: canCamera ? _scanWithCamera : null,
+      controller: _scanCtrl,
+      focusNode: _scanFocus,
+      hint: 'or type the pallet number',
+      onSubmitted: _resolve,
+      busy: _busy,
+      trailing: _first == null
+          ? null
+          : TextButton(
+              onPressed: _busy ? null : _startOver,
+              child: const Text('Start over'),
             ),
-          ],
-        ],
-      ),
+      footer: [
+        // The OTHER way to fill the pallet just scanned — offered only at the
+        // second scan, the one moment "where are these wheels coming from?"
+        // is open.
+        if (canTrolley && _first != null)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _busy ? null : _fillFromTrolley,
+              icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+              label: const Text('Or fill it from a trolley'),
+            ),
+          ),
+      ],
     );
   }
 
@@ -602,62 +577,6 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
     if (_first == null || _second == null) _scanFocus.requestFocus();
   }
 
-  // -------------------------------------------------------------------------
-  // What was scanned
-  // -------------------------------------------------------------------------
-
-  Widget _palletCard(DplPallet p, String label, {required bool isTarget}) {
-    return DplCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w800,
-              color: isTarget ? DplColors.primary : DplColors.textSecondary,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  p.palletNo,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 17,
-                  ),
-                ),
-              ),
-              Text(
-                p.countLabel,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 17,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            '${p.customerPartNo}'
-            '${p.partDescription.isEmpty ? '' : ' · ${p.partDescription}'}',
-            style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
-          ),
-          if (p.locationCode.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              'On ${p.locationCode}',
-              style: TextStyle(fontSize: 11.5, color: DplColors.textSecondary),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   // -------------------------------------------------------------------------
   // Step 2 — which pallet to merge INTO
@@ -668,9 +587,19 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            'STEP 2 OF 3',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+              color: DplColors.primary,
+            ),
+          ),
+          const SizedBox(height: 4),
           const Text(
             'Merge into which pallet?',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
           const SizedBox(height: 4),
           Text(
@@ -843,65 +772,52 @@ class _QaPalletMergeScreenState extends ConsumerState<QaPalletMergeScreen> {
     final s = _source!;
     final stop = _targetFull || _countOn(s) == 0;
 
-    return DplCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            stop ? 'Done scanning' : 'Scan a wheel from ${s.palletNo}',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _wheelCtrl,
-            focusNode: _wheelFocus,
-            enabled: !stop,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              hintText: 'Scan the wheel label, or type its serial',
-              prefixIcon: Icon(Icons.qr_code_scanner_rounded),
-              isDense: true,
-            ),
-            onSubmitted: _queueWheelScan,
-          ),
-          if (canCamera && !stop) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _busy ? null : _scanWheelWithCamera,
-                icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                label: const Text('Scan with the camera'),
-              ),
-            ),
-          ],
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
+    final finish = SizedBox(
+      width: double.infinity,
+      child: _moved.isEmpty
+          ? OutlinedButton.icon(
               onPressed: _busy ? null : _finish,
-              icon: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Icon(
-                      _moved.isEmpty ? Icons.close_rounded : Icons.print_rounded,
-                      size: 18,
-                    ),
-              label: Text(
-                _moved.isEmpty
-                    ? 'Cancel — nothing moved'
-                    : 'Finish & print labels (${_moved.length} moved)',
-              ),
-              style: FilledButton.styleFrom(
+              icon: const Icon(Icons.close_rounded, size: 18),
+              label: const Text('Cancel — nothing moved'),
+              style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(48),
               ),
+            )
+          : FilledButton.icon(
+              onPressed: _busy ? null : _finish,
+              icon: const Icon(Icons.print_rounded, size: 18),
+              label: Text('Finish & print labels (${_moved.length} moved)'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
             ),
-          ),
-        ],
-      ),
+    );
+
+    // Full, or nothing left to take: the scanner has nothing more to do, so
+    // the only thing on screen is the way out.
+    if (stop) return DplCard(child: finish);
+
+    return Column(
+      children: [
+        DplScanPanel(
+          step: 'Step 3 of 3',
+          title: 'Scan wheels from ${s.palletNo}',
+          subtitle: 'Lift each wheel across and scan its label. It moves onto '
+              '${_target!.palletNo} as you scan.',
+          cameraLabel: 'Scan wheel label',
+          onCamera: canCamera ? _scanWheelWithCamera : null,
+          controller: _wheelCtrl,
+          focusNode: _wheelFocus,
+          hint: 'or type the wheel serial',
+          onSubmitted: _queueWheelScan,
+          capitalize: false,
+          // Not disabled while a move is in flight: scans queue up behind it
+          // (_scanChain), and a field that greys out between every wheel
+          // would drop a fast trigger's next read.
+        ),
+        const SizedBox(height: 12),
+        DplCard(child: finish),
+      ],
     );
   }
 

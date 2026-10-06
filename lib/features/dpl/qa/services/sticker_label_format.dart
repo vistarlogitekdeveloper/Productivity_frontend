@@ -19,7 +19,9 @@ enum StickerLabelFormat {
   qr('QR sticker', '50 × 25 mm'),
 
   /// The 75 x 25 mm Antolin/TML PDF417 label (`labels.print_pdf417`).
-  pdf417('PDF417 barcode', '75 × 25 mm');
+  // 'PDF417', not 'PDF417 barcode': the segment wrapped onto two lines on a
+  // phone, and the barcode icon beside it already says what it is.
+  pdf417('PDF417', '75 × 25 mm');
 
   const StickerLabelFormat(this.label, this.stock);
 

@@ -30,9 +30,8 @@ import '../widgets/label_format_picker.dart';
 /// what somebody scheduled.
 final qaMachinesProvider =
     FutureProvider.autoDispose<DplApiResponse<List<DplMachine>>>((ref) async {
-  return ref.watch(dplApiServiceProvider).getQaMachines();
-});
-
+      return ref.watch(dplApiServiceProvider).getQaMachines();
+    });
 
 /// The shift master, for the direct-print shift picker.
 ///
@@ -43,18 +42,19 @@ final qaMachinesProvider =
 /// can correct afterwards.
 final qaShiftsProvider =
     FutureProvider.autoDispose<DplApiResponse<List<DplShift>>>((ref) async {
-  // /qa/shifts, NOT /manager/shifts: the manager list is role-locked, and
-  // reading it from here answered every QA operator with a 403.
-  return ref.watch(dplApiServiceProvider).getQaShifts();
-});
+      // /qa/shifts, NOT /manager/shifts: the manager list is role-locked, and
+      // reading it from here answered every QA operator with a 403.
+      return ref.watch(dplApiServiceProvider).getQaShifts();
+    });
+
 /// The part-search term, shared by the direct-print tab and the pallet
 /// screen's "start a pallet" picker. Public because both read it — the search
 /// runs SERVER-side, so filtering has to go through one provider rather than
 /// each screen sifting whatever page it happens to hold.
 final qaDirectPartSearchProvider =
     NotifierProvider.autoDispose<QaDirectPartSearch, String>(
-  QaDirectPartSearch.new,
-);
+      QaDirectPartSearch.new,
+    );
 
 class QaDirectPartSearch extends Notifier<String> {
   @override
@@ -64,9 +64,9 @@ class QaDirectPartSearch extends Notifier<String> {
 
 final qaDirectPartsProvider =
     FutureProvider.autoDispose<DplApiResponse<List<DplPart>>>((ref) async {
-  final q = ref.watch(qaDirectPartSearchProvider);
-  return ref.watch(dplApiServiceProvider).getQaParts(q: q);
-});
+      final q = ref.watch(qaDirectPartSearchProvider);
+      return ref.watch(dplApiServiceProvider).getQaParts(q: q);
+    });
 
 /// Print labels with no production plan behind them.
 ///
@@ -100,6 +100,19 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
   Timer? _debounce;
 
   int? _machineId;
+
+  /// The machine the labels will name: the one tapped, or the ONLY one when
+  /// the plant has a single station.
+  ///
+  /// Without the second half nothing was sent unless somebody tapped a chip
+  /// that already looked like the only choice, and every label came out with
+  /// an empty station field (`8619///1/...`).
+  int? get _effectiveMachineId {
+    if (_machineId != null) return _machineId;
+    final machines = ref.read(qaMachinesProvider).value?.data ?? const [];
+    return machines.length == 1 ? machines.first.id : null;
+  }
+
   /// Null means "let the server read the clock", which is what this screen
   /// did before the picker existed.
   String? _shiftCode;
@@ -152,26 +165,33 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
   /// resolver the plan-driven screen uses rather than duplicating the parsing
   /// and the floor-of-one.
   int get _count => BatchQuantity.resolve(
-        typed: _qtyCtrl.text,
-        remainingQty: BatchQuantity.maxPerBatch,
-        batch: true,
-      );
+    typed: _qtyCtrl.text,
+    remainingQty: BatchQuantity.maxPerBatch,
+    batch: true,
+  );
 
   @override
   Widget build(BuildContext context) {
-    final body = ListView(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
+    final body = Column(
       children: [
-        _noticeCard(),
-        const SizedBox(height: 12),
-        _machineCard(),
-        const SizedBox(height: 12),
-        _shiftCard(),
-        const SizedBox(height: 12),
-        _partCard(),
-        const SizedBox(height: 12),
-        LabelFormatPicker(enabled: !_busy),
-        _qtyCard(),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 20),
+            children: [
+              _noticeCard(),
+              const SizedBox(height: 12),
+              _machineCard(),
+              const SizedBox(height: 12),
+              _shiftCard(),
+              const SizedBox(height: 12),
+              _partCard(),
+              const SizedBox(height: 12),
+              LabelFormatPicker(enabled: !_busy),
+              _qtyCard(),
+            ],
+          ),
+        ),
+        _printBar(),
       ],
     );
 
@@ -204,9 +224,8 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'These labels are not checked against recorded production. '
-              'Whatever quantity you enter is what gets printed, so print only '
-              'what you are actually packing.',
+              'Not checked against production — print only what you are '
+              'packing.',
               style: TextStyle(
                 fontSize: 12,
                 height: 1.4,
@@ -253,7 +272,10 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                 return Text(
                   'No machines are set up for this organization yet. A manager '
                   'adds them under Masters.',
-                  style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: DplColors.textSecondary,
+                  ),
                 );
               }
               return Wrap(
@@ -262,13 +284,11 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                 children: [
                   for (final m in machines)
                     ChoiceChip(
-                      selected: _machineId == m.id,
+                      selected: _effectiveMachineId == m.id,
                       onSelected: _busy
                           ? null
                           : (_) => setState(() => _machineId = m.id),
-                      label: Text(m.name.isEmpty
-                          ? m.code
-                          : m.name),
+                      label: Text(m.name.isEmpty ? m.code : m.name),
                     ),
                 ],
               );
@@ -291,6 +311,58 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
     ref.watch(qaCurrentShiftProvider);
     final async = ref.watch(qaShiftsProvider);
 
+    // No shift master yet: there is nothing to choose, so say in ONE line what
+    // the labels will carry. Two lines — "every label will say shift B" over
+    // "no shifts are set up, the clock decides" — read as a contradiction.
+    final loaded = async.value;
+    final noShifts =
+        loaded != null &&
+        !loaded.isError &&
+        (loaded.data ?? const <DplShift>[]).every((s) => !s.isActive);
+    if (noShifts) {
+      final running = _effectiveShift;
+      return DplCard(
+        child: Row(
+          children: [
+            Icon(
+              Icons.schedule_rounded,
+              size: 20,
+              color: DplColors.textSecondary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: running == null
+                          ? 'Shift: from the clock'
+                          : 'Shift $running',
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    TextSpan(
+                      text: running == null
+                          ? ' — stamped when you print.'
+                          : ' (from the clock).',
+                    ),
+                    const TextSpan(
+                      text:
+                          '\nA manager can add shifts under Masters to choose '
+                          'one here.',
+                    ),
+                  ],
+                ),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: DplColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return DplCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,9 +380,9 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                   onPressed: _busy
                       ? null
                       : () => setState(() {
-                            _shiftTouched = true;
-                            _shiftCode = null;
-                          }),
+                          _shiftTouched = true;
+                          _shiftCode = null;
+                        }),
                   child: const Text('Use the clock'),
                 ),
             ],
@@ -319,7 +391,7 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
           Text(
             _effectiveShift == null
                 ? 'Left to the clock — the server stamps whichever shift is '
-                    'running when you press print.'
+                      'running when you press print.'
                 : 'Every label in this run will say shift $_effectiveShift.',
             style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
           ),
@@ -344,7 +416,10 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                 return Text(
                   'No shifts are set up for this organization yet. A manager '
                   'adds them under Masters; until then the clock decides.',
-                  style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: DplColors.textSecondary,
+                  ),
                 );
               }
               return Wrap(
@@ -414,7 +489,9 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: size == null ? FontWeight.w500 : FontWeight.w700,
-              color: size == null ? DplColors.textSecondary : DplColors.textPrimary,
+              color: size == null
+                  ? DplColors.textSecondary
+                  : DplColors.textPrimary,
             ),
           ),
         ),
@@ -477,8 +554,9 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed:
-                        _busy ? null : () => setState(() => _part = null),
+                    onPressed: _busy
+                        ? null
+                        : () => setState(() => _part = null),
                     child: const Text('Change'),
                   ),
                 ],
@@ -515,50 +593,60 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
                 if (parts.isEmpty) {
                   return Text(
                     'No parts match.',
-                    style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: DplColors.textSecondary,
+                    ),
                   );
                 }
                 return ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 260),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: parts.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
-                    itemBuilder: (_, i) {
-                      final p = parts[i];
-                      return ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          p.partNumber.isNotEmpty
-                              ? p.partNumber
-                              : p.description,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13.5,
+                  // Its own Material layer, so a tap on an item shows its
+                  // ripple. Painted on the card's white box instead, the
+                  // ripple was hidden — and on a phone a tap with no visible
+                  // response reads as a tap that did not register.
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: parts.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (_, i) {
+                        final p = parts[i];
+                        return ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            p.partNumber.isNotEmpty
+                                ? p.partNumber
+                                : p.description,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                            ),
                           ),
-                        ),
-                        subtitle: p.name.isEmpty
-                            ? null
-                            : Text(
-                                p.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 11.5),
-                              ),
-                        trailing: p.packagingQty == null
-                            ? null
-                            : Text(
-                                '${p.packagingQty} / pallet',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: DplColors.textSecondary,
+                          subtitle: p.name.isEmpty
+                              ? null
+                              : Text(
+                                  p.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11.5),
                                 ),
-                              ),
-                        onTap: _busy ? null : () => setState(() => _part = p),
-                      );
-                    },
+                          trailing: p.packagingQty == null
+                              ? null
+                              : Text(
+                                  '${p.packagingQty} / pallet',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: DplColors.textSecondary,
+                                  ),
+                                ),
+                          onTap: _busy ? null : () => setState(() => _part = p),
+                        );
+                      },
+                    ),
                   ),
                 );
               },
@@ -570,61 +658,55 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
   }
 
   Widget _qtyCard() {
-    final ready = _part != null && !_busy;
-    final count = _count;
+    final palletQty = _part?.packagingQty;
+    final presets = <(String, int)>[
+      // A pallet's worth first — that is what a pack point prints most.
+      if (palletQty != null) ('1 pallet · $palletQty', palletQty),
+      for (final p in BatchQuantity.presets(BatchQuantity.maxPerBatch))
+        if (p != palletQty) ('$p', p),
+    ];
 
     return DplCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '4. Sticker qty',
+            '4. How many labels',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
           const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(
+            width: 140,
+            child: TextField(
+              controller: _qtyCtrl,
+              enabled: !_busy,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              decoration: const InputDecoration(
+                labelText: 'Quantity',
+                isDense: true,
+                prefixIcon: Icon(Icons.tag, size: 18),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Full-size touch targets. The old presets were shrink-wrapped
+          // outlined buttons well under the 48 px a gloved thumb needs.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              SizedBox(
-                width: 130,
-                child: TextField(
-                  controller: _qtyCtrl,
-                  enabled: !_busy,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                    isDense: true,
-                    prefixIcon: Icon(Icons.tag, size: 18),
-                  ),
-                  onChanged: (_) => setState(() {}),
+              for (final (label, value) in presets)
+                ChoiceChip(
+                  label: Text(label),
+                  selected: _qtyCtrl.text.trim() == '$value',
+                  onSelected: _busy
+                      ? null
+                      : (_) => setState(() => _qtyCtrl.text = '$value'),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    for (final preset
-                        in BatchQuantity.presets(BatchQuantity.maxPerBatch))
-                      OutlinedButton(
-                        onPressed: _busy
-                            ? null
-                            : () => setState(() => _qtyCtrl.text = '$preset'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text('$preset'),
-                      ),
-                  ],
-                ),
-              ),
             ],
           ),
           if ((int.tryParse(_qtyCtrl.text.trim()) ?? 1) >
@@ -640,28 +722,91 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: ready ? _printNow : null,
-              icon: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.print_outlined, size: 18),
-              label: Text(
-                _busy
-                    ? 'Printing…'
-                    : _part == null
-                        ? 'Pick a part first'
-                        : 'Print $count label${count == 1 ? '' : 's'}',
-              ),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  /// The print button, pinned to the bottom of the screen.
+  ///
+  /// On a phone the four steps run well past one screen, and the button used
+  /// to sit at the very end of them. Pinned, it is always in reach, and the
+  /// line beside it says exactly what the press will print.
+  Widget _printBar() {
+    final part = _part;
+    final count = _count;
+    final ready = part != null && !_busy;
+    final shift = _effectiveShift;
+
+    // A hairline and the bottom nav's own soft shadow, so the two bars read
+    // as one family. Material elevation drew a hard dark band here.
+    return Container(
+      decoration: BoxDecoration(
+        color: DplColors.cardBg,
+        border: Border(top: BorderSide(color: DplColors.divider)),
+        boxShadow: DplShadows.bottomNav,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      part == null
+                          ? 'No item chosen'
+                          : (part.partNumber.isNotEmpty
+                                ? part.partNumber
+                                : part.description),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      part == null
+                          ? 'Pick the item in step 3'
+                          : '$count label${count == 1 ? '' : 's'} · '
+                                '${shift == null ? 'shift from clock' : 'shift $shift'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: DplColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: ready ? _printNow : null,
+                icon: _busy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.print_rounded, size: 18),
+                label: Text(_busy ? 'Printing…' : 'Print $count'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(120, 48),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -671,9 +816,11 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
     if (part == null) return;
 
     setState(() => _busy = true);
-    final res = await ref.read(dplApiServiceProvider).issueDirectQaStickers(
+    final res = await ref
+        .read(dplApiServiceProvider)
+        .issueDirectQaStickers(
           partId: part.id,
-          machineId: _machineId,
+          machineId: _effectiveMachineId,
           shiftCode: _effectiveShift,
           count: _count,
         );
@@ -720,8 +867,7 @@ class _QaDirectPrintScreenState extends ConsumerState<QaDirectPrintScreen> {
         // silently rescales the label.
         format: layout.rollFormat,
         dynamicLayout: false,
-        onLayout: (PdfPageFormat _) =>
-            layout.buildRoll(stickers, part: part),
+        onLayout: (PdfPageFormat _) => layout.buildRoll(stickers, part: part),
       );
     } catch (e) {
       if (mounted) {

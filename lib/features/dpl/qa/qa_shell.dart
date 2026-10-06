@@ -8,6 +8,7 @@ import '../core/design/dpl_theme.dart';
 import '../core/dpl_permissions_provider.dart';
 import '../core/widgets/dpl_app_bar.dart';
 import '../core/widgets/dpl_bottom_nav.dart';
+import '../core/widgets/dpl_content_width.dart';
 import '../core/widgets/dpl_refresh_icon_button.dart';
 import '../summary/providers/dispatch_slips_provider.dart';
 import '../summary/screens/dispatch_slips_inbox_screen.dart';
@@ -81,21 +82,34 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
   /// a spinner.
   void _reloadTab(int i) {
     if (i < 0 || i >= _titles.length) return;
-    final title = _titles[i];
-    if (title.endsWith('Pallets built')) {
-      ref.invalidate(palletRegisterProvider);
-    } else if (title.endsWith('— Pallet')) {
-      ref.invalidate(qaOpenPalletProvider);
-      ref.invalidate(qaHalfPalletsProvider);
-    } else if (title.endsWith('Merge pallets')) {
-      ref.invalidate(qaHalfPalletsProvider);
-      ref.invalidate(qaTrolleyPlansProvider);
-    } else if (title.endsWith('SPD')) {
-      ref.invalidate(spdPacksProvider);
-    } else if (title.endsWith('Dispatch Slips')) {
-      ref.invalidate(dplDispatchSlipsProvider);
+    switch (_titles[i]) {
+      case _tRegister:
+        ref.invalidate(palletRegisterProvider);
+      case _tPack:
+        ref.invalidate(qaOpenPalletProvider);
+        ref.invalidate(qaHalfPalletsProvider);
+      case _tMerge:
+        ref.invalidate(qaHalfPalletsProvider);
+        ref.invalidate(qaTrolleyPlansProvider);
+      case _tSpd:
+        ref.invalidate(spdPacksProvider);
+      case _tSlips:
+        ref.invalidate(dplDispatchSlipsProvider);
     }
   }
+
+  // Screen titles. Compared by value (see _reloadTab), so each is a constant
+  // rather than a string typed twice. No "QA — " prefix: on a phone the title
+  // shares the bar with the organization pill, and the prefix was the part
+  // that pushed the real name into an ellipsis.
+  static const _tPrint = 'Print labels';
+  static const _tProduction = 'Production';
+  static const _tPack = 'Pack a pallet';
+  static const _tMerge = 'Merge pallets';
+  static const _tPutAway = 'Put away';
+  static const _tSpd = 'SPD packs';
+  static const _tRegister = 'Pallets built';
+  static const _tSlips = 'Dispatch slips';
 
   @override
   void initState() {
@@ -171,13 +185,13 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
     final pendingCount = canSlips ? _pendingQaCount() : 0;
 
     final titles = <String>[
-      if (canDirectPrint) 'QA — Print labels' else 'QA — Production',
-      if (canBuildPallets) 'QA — Pallet',
-      if (canMerge) 'QA — Merge pallets',
-      if (canPutAway) 'QA — Put away',
-      if (canSpd) 'QA — SPD',
-      if (canViewPallets) 'QA — Pallets built',
-      if (canSlips) 'QA — Dispatch Slips',
+      if (canDirectPrint) _tPrint else _tProduction,
+      if (canBuildPallets) _tPack,
+      if (canMerge) _tMerge,
+      if (canPutAway) _tPutAway,
+      if (canSpd) _tSpd,
+      if (canViewPallets) _tRegister,
+      if (canSlips) _tSlips,
     ];
     _titles = titles;
     final tab = _tab.clamp(0, titles.length - 1);
@@ -196,9 +210,20 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
       // every tab is mounted at once and, on a freshly-opened one, none of
       // them holds focus.
       activeArea: _tabKeys[tab],
-      child: _buildShell(context, tab, perms, canDirectPrint, canBuildPallets,
-          canMerge, canPutAway, canSpd, canViewPallets, canSlips, titles,
-          pendingCount),
+      child: _buildShell(
+        context,
+        tab,
+        perms,
+        canDirectPrint,
+        canBuildPallets,
+        canMerge,
+        canPutAway,
+        canSpd,
+        canViewPallets,
+        canSlips,
+        titles,
+        pendingCount,
+      ),
     );
   }
 
@@ -235,8 +260,9 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
             IconButton(
               tooltip: 'Tools',
               icon: const Icon(Icons.handyman_outlined),
-              onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => const DplMaxionToolsScreen())),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DplMaxionToolsScreen()),
+              ),
             ),
           DplRefreshIconButton(
             onRefresh: () async {
@@ -258,7 +284,7 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
                   // Surfaced inline by the screen's own error state; the
                   // refresh spinner must still settle.
                 }
-              } else if (titles[tab].endsWith('Dispatch Slips')) {
+              } else if (titles[tab] == _tSlips) {
                 ref.invalidate(dplDispatchSlipsProvider);
                 try {
                   await ref.read(dplDispatchSlipsProvider.future);
@@ -279,27 +305,30 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
           ),
         ],
       ),
-      body: IndexedStack(
-        index: tab,
-        children: [
-          for (final (i, screen) in <Widget>[
-            if (canDirectPrint)
-              const QaDirectPrintScreen(showAppBar: false)
-            else
-              const QaProductionScreen(showAppBar: false),
-            if (canBuildPallets) const QaPalletScreen(showAppBar: false),
-            if (canMerge) const QaPalletMergeScreen(showAppBar: false),
-            if (canPutAway) const QaPutawayScreen(showAppBar: false),
-            if (canSpd) const QaSpdScreen(showAppBar: false),
-            if (canViewPallets)
-              const QaPalletRegisterScreen(showAppBar: false),
-            if (canSlips) const DispatchSlipsInboxScreen(showAppBar: false),
-          ].indexed)
-            // Keyed so the tab switch below can reach INTO the newly visible
-            // screen and put focus on its scan field. Without that, a handheld
-            // is dead on every tab after the first — see _showTab.
-            KeyedSubtree(key: _tabKey(i), child: screen),
-        ],
+      // A phone-to-tablet column on wide screens; no effect on a phone.
+      body: DplContentWidth(
+        child: IndexedStack(
+          index: tab,
+          children: [
+            for (final (i, screen) in <Widget>[
+              if (canDirectPrint)
+                const QaDirectPrintScreen(showAppBar: false)
+              else
+                const QaProductionScreen(showAppBar: false),
+              if (canBuildPallets) const QaPalletScreen(showAppBar: false),
+              if (canMerge) const QaPalletMergeScreen(showAppBar: false),
+              if (canPutAway) const QaPutawayScreen(showAppBar: false),
+              if (canSpd) const QaSpdScreen(showAppBar: false),
+              if (canViewPallets)
+                const QaPalletRegisterScreen(showAppBar: false),
+              if (canSlips) const DispatchSlipsInboxScreen(showAppBar: false),
+            ].indexed)
+              // Keyed so the tab switch below can reach INTO the newly visible
+              // screen and put focus on its scan field. Without that, a handheld
+              // is dead on every tab after the first — see _showTab.
+              KeyedSubtree(key: _tabKey(i), child: screen),
+          ],
+        ),
       ),
       bottomNavigationBar: DplBottomNav(
         currentIndex: tab,
@@ -309,7 +338,7 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
             const DplNavItem(
               icon: Icons.print_outlined,
               selectedIcon: Icons.print,
-              label: 'Print labels',
+              label: 'Print',
             )
           else
             const DplNavItem(
@@ -321,7 +350,7 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
             const DplNavItem(
               icon: Icons.inventory_2_outlined,
               selectedIcon: Icons.inventory_2,
-              label: 'Pallet',
+              label: 'Pack',
             ),
           if (canMerge)
             const DplNavItem(
@@ -345,7 +374,7 @@ class _DplQaShellState extends ConsumerState<DplQaShell> {
             const DplNavItem(
               icon: Icons.grid_view_outlined,
               selectedIcon: Icons.grid_view,
-              label: 'Pallets built',
+              label: 'Pallets',
             ),
           if (canSlips)
             DplNavItem(

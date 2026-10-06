@@ -156,11 +156,9 @@ class _QaPalletRegisterScreenState
                 icon: const Icon(Icons.qr_code_scanner_rounded, size: 18),
                 label: const Text('Scan'),
               ),
-              IconButton(
-                tooltip: 'Refresh',
-                icon: const Icon(Icons.refresh),
-                onPressed: () => ref.invalidate(palletRegisterProvider),
-              ),
+              // No second Refresh here: the app bar has one and the list
+              // pulls to refresh. On a phone this icon was what squeezed the
+              // search box down to "Pallet number…".
             ],
           ),
           const SizedBox(height: 8),
@@ -533,6 +531,16 @@ class _QaPalletRegisterScreenState
     final stale = (p.ageDays ?? 0) >= 7 && p.palletType == 'H';
 
     return DplCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
+      // Tap a pallet to see every wheel on it — the same view a scan of its
+      // sticker opens, without needing the sticker in hand.
+      onTap: p.palletNo.isEmpty
+          ? null
+          : () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PalletLookupScreen(initialCode: p.palletNo),
+                ),
+              ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -570,6 +578,9 @@ class _QaPalletRegisterScreenState
                 ),
               ),
               _typeBadge(p),
+              // Says the card opens: tapping shows every wheel on it.
+              if (p.palletNo.isNotEmpty)
+                Icon(Icons.chevron_right_rounded, color: DplColors.textSecondary),
             ],
           ),
           const SizedBox(height: 8),

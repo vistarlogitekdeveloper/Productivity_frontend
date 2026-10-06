@@ -5,7 +5,10 @@ import '../../../../core/scanner/hardware_scanner.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
+import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_card.dart';
+import '../../core/widgets/dpl_content_width.dart';
+import '../../core/widgets/dpl_scan_panel.dart';
 import '../../models/dpl_pallet.dart';
 import '../../models/dpl_spd.dart';
 import 'dpl_qr_scan_sheet.dart';
@@ -21,7 +24,11 @@ import 'dpl_qr_scan_sheet.dart';
 /// moves nothing, so it is safe to scan anything at all here. The field stays
 /// focused after every answer, so the next scan simply replaces the result.
 class PalletLookupScreen extends ConsumerStatefulWidget {
-  const PalletLookupScreen({super.key});
+  const PalletLookupScreen({super.key, this.initialCode});
+
+  /// Look this up straight away — a pallet number tapped in Pallets built
+  /// opens here already showing its wheels.
+  final String? initialCode;
 
   @override
   ConsumerState<PalletLookupScreen> createState() => _PalletLookupScreenState();
@@ -45,6 +52,13 @@ class _PalletLookupScreenState extends ConsumerState<PalletLookupScreen> {
   void initState() {
     super.initState();
     HardwareScanScope.claimArea(_scanArea);
+    final code = widget.initialCode?.trim() ?? '';
+    if (code.isNotEmpty) {
+      // After the first frame: the lookup calls setState.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _lookup(code);
+      });
+    }
   }
 
   @override
@@ -82,97 +96,62 @@ class _PalletLookupScreenState extends ConsumerState<PalletLookupScreen> {
   Future<void> _scanWithCamera() async {
     // Either kind of label is a valid answer here, so the sheet is opened for
     // a wheel (the looser of the two) and the server decides what it was.
-    final code = await DplQrScanSheet.open(context, kind: DplScanKind.wheel);
+    final code = await DplQrScanSheet.open(context, kind: DplScanKind.any);
     if (code == null || !mounted) return;
     await _lookup(code);
   }
 
   @override
   Widget build(BuildContext context) {
-    final canCamera =
-        ref.watch(dplPermissionsProvider).can(DplPermission.palletScanCamera);
+    final canCamera = ref
+        .watch(dplPermissionsProvider)
+        .can(DplPermission.palletScanCamera);
     final r = _result;
 
     return Scaffold(
       backgroundColor: DplColors.pageBg,
-      appBar: AppBar(title: const Text('Scan to find')),
-      body: ListView(
-        key: _scanArea,
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
-        children: [
-          DplCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Scan a pallet sticker or a wheel label',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'A pallet shows every wheel on it. A wheel shows which pallet '
-                  'it is on.',
-                  style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _ctrl,
-                  focusNode: _focus,
-                  // A dedicated scan page: the scanner needs somewhere to type.
-                  autofocus: true,
-                  enabled: !_busy,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: 'Scan, or type a pallet number or wheel serial',
-                    prefixIcon: const Icon(Icons.qr_code_scanner_rounded),
-                    isDense: true,
-                    suffixIcon: _busy
-                        ? const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : null,
-                  ),
-                  onSubmitted: _lookup,
-                ),
-                if (canCamera) ...[
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _busy ? null : _scanWithCamera,
-                      icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                      label: const Text('Scan with the camera'),
-                    ),
-                  ),
-                ],
-              ],
+      appBar: const DplAppBar(title: 'Scan to find'),
+      body: DplContentWidth(
+        child: ListView(
+          key: _scanArea,
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
+          children: [
+            DplScanPanel(
+              title: 'Scan a pallet sticker or a wheel label',
+              subtitle:
+                  'A pallet shows every wheel on it. A wheel shows which '
+                  'pallet it is on. Nothing is changed by scanning here.',
+              cameraLabel: 'Scan a label',
+              onCamera: canCamera ? _scanWithCamera : null,
+              controller: _ctrl,
+              focusNode: _focus,
+              hint: 'or type a pallet number or wheel serial',
+              onSubmitted: _lookup,
+              busy: _busy,
+              // Old Maxion labels are mixed case and matched exactly.
+              capitalize: false,
             ),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            _message(Icons.search_off_rounded, DplColors.error, _error!),
-          ],
-          if (r != null) ...[
-            const SizedBox(height: 12),
-            if (r.pallet == null)
-              _message(
-                Icons.info_outline_rounded,
-                DplColors.warning,
-                '${r.wheel?.serialNo ?? _scanned}: '
-                '${r.note.isEmpty ? 'not on any pallet.' : r.note}',
-              )
-            else ...[
-              _palletCard(r),
+            if (_error != null) ...[
               const SizedBox(height: 12),
-              _wheelsCard(r),
+              _message(Icons.search_off_rounded, DplColors.error, _error!),
+            ],
+            if (r != null) ...[
+              const SizedBox(height: 12),
+              if (r.pallet == null)
+                _message(
+                  Icons.info_outline_rounded,
+                  DplColors.warning,
+                  '${r.wheel?.serialNo ?? _scanned}: '
+                  '${r.note.isEmpty ? 'not on any pallet.' : r.note}',
+                )
+              else ...[
+                _palletCard(r),
+                const SizedBox(height: 12),
+                _wheelsCard(r),
+              ],
             ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -227,18 +206,27 @@ class _PalletLookupScreenState extends ConsumerState<PalletLookupScreen> {
               Expanded(
                 child: Text(
                   p.palletNo,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                  ),
                 ),
               ),
               Text(
                 p.countLabel,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                ),
               ),
             ],
           ),
           for (final l in lines.where((l) => l.isNotEmpty)) ...[
             const SizedBox(height: 2),
-            Text(l, style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary)),
+            Text(
+              l,
+              style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
+            ),
           ],
           if (r.renamedFrom.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -293,8 +281,8 @@ class _PalletLookupScreenState extends ConsumerState<PalletLookupScreen> {
                     w.id == scannedId
                         ? Icons.my_location_rounded
                         : w.isVoided
-                            ? Icons.block_rounded
-                            : Icons.circle_outlined,
+                        ? Icons.block_rounded
+                        : Icons.circle_outlined,
                     size: 16,
                     color: w.id == scannedId
                         ? DplColors.primary
@@ -312,8 +300,9 @@ class _PalletLookupScreenState extends ConsumerState<PalletLookupScreen> {
                             fontWeight: w.id == scannedId
                                 ? FontWeight.w800
                                 : FontWeight.w600,
-                            decoration:
-                                w.isVoided ? TextDecoration.lineThrough : null,
+                            decoration: w.isVoided
+                                ? TextDecoration.lineThrough
+                                : null,
                           ),
                         ),
                         Text(

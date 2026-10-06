@@ -7,6 +7,7 @@ import '../core/dpl_api_service.dart';
 import '../core/dpl_permissions_provider.dart';
 import '../core/widgets/dpl_app_bar.dart';
 import '../core/widgets/dpl_bottom_nav.dart';
+import '../core/widgets/dpl_content_width.dart';
 import '../core/widgets/dpl_snack.dart';
 import '../qa/screens/pallet_lookup_screen.dart';
 import 'auditor_providers.dart';
@@ -118,12 +119,14 @@ class _DplAuditorShellState extends ConsumerState<DplAuditorShell> {
             ),
           ],
         ),
-        body: IndexedStack(
-          index: tab,
-          children: [
-            for (var i = 0; i < pages.length; i++)
-              KeyedSubtree(key: _tabKeys[i], child: pages[i]),
-          ],
+        body: DplContentWidth(
+          child: IndexedStack(
+            index: tab,
+            children: [
+              for (var i = 0; i < pages.length; i++)
+                KeyedSubtree(key: _tabKeys[i], child: pages[i]),
+            ],
+          ),
         ),
         bottomNavigationBar: DplBottomNav(
           currentIndex: tab,

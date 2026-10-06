@@ -10,6 +10,7 @@ import '../../core/dpl_api_response.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
 import '../../core/widgets/dpl_card.dart';
+import '../../core/widgets/dpl_scan_panel.dart';
 import '../../core/widgets/dpl_error_retry.dart';
 import '../../core/widgets/dpl_snack.dart';
 import '../../models/dpl_spd.dart';
@@ -148,66 +149,75 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
   Widget _scanCard() {
     final canCamera =
         ref.watch(dplPermissionsProvider).can(DplPermission.palletScanCamera);
+    final loaded = _loaded;
 
-    return DplCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Take wheels for a spare-parts order',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+    // Once a pallet is in, the scan panel becomes the pallet it scanned: one
+    // card that says what is being taken from, with the way back out.
+    if (loaded != null) {
+      final p = loaded.pallet;
+      return DplCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'TAKING FROM',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                      color: DplColors.primary,
+                    ),
+                  ),
                 ),
-              ),
-              if (_loaded != null)
                 TextButton(
                   onPressed: _busy ? null : _clear,
                   child: const Text('Start over'),
                 ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Scan a pallet, then scan each wheel that is leaving. Each one is '
-            'labelled as its own pack.',
-            style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _scanCtrl,
-            focusNode: _scanFocus,
-            enabled: !_busy && _loaded == null,
-            textInputAction: TextInputAction.done,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              hintText: _loaded == null
-                  ? 'Scan, or type the pallet number'
-                  : 'Pallet loaded',
-              prefixIcon: const Icon(Icons.qr_code_scanner_rounded),
-              isDense: true,
-              helperText: _loaded == null
-                  ? 'The number is printed under the code, so a damaged label '
-                      'can be keyed in by hand.'
-                  : null,
-              helperMaxLines: 3,
+              ],
             ),
-            onSubmitted: _busy ? null : _resolve,
-          ),
-          if (canCamera && _loaded == null) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _busy ? null : _scanWithCamera,
-                icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                label: const Text('Scan with the camera'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    p.palletNo,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                  ),
+                ),
+                Text(
+                  p.countLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              [
+                '${p.customerPartNo}'
+                    '${p.partDescription.isEmpty ? '' : ' · ${p.partDescription}'}',
+                if (p.locationCode.isNotEmpty) 'On ${p.locationCode}',
+              ].join('\n'),
+              style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
             ),
           ],
-        ],
-      ),
+        ),
+      );
+    }
+
+    return DplScanPanel(
+      step: 'Step 1 of 2',
+      title: 'Take wheels for a spare-parts order',
+      subtitle: 'Scan the pallet the wheels are coming off. Next you scan each '
+          'wheel that is leaving, and each one becomes its own pack.',
+      cameraLabel: 'Scan pallet sticker',
+      onCamera: canCamera ? _scanWithCamera : null,
+      controller: _scanCtrl,
+      focusNode: _scanFocus,
+      hint: 'or type the pallet number',
+      onSubmitted: _resolve,
+      busy: _busy,
     );
   }
 
@@ -298,97 +308,47 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     final wheels = loaded.sellable;
     final standard = p.standardQty ?? 0;
     final remaining = wheels.length - _picked.length;
+    final canCamera =
+        ref.watch(dplPermissionsProvider).can(DplPermission.palletScanCamera);
+    final allScanned = _picked.length >= wheels.length;
 
     return Column(
       children: [
-        DplCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      p.palletNo,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 17,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    p.countLabel,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 17,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${p.customerPartNo}'
-                '${p.partDescription.isEmpty ? '' : ' · ${p.partDescription}'}',
-                style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
-              ),
-              if (p.locationCode.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'On ${p.locationCode}',
-                  style: TextStyle(fontSize: 11.5, color: DplColors.textSecondary),
-                ),
-              ],
-            ],
+        if (!allScanned)
+          DplScanPanel(
+            step: 'Step 2 of 2',
+            // Scanned, not ticked: a wheel joins the order only when its own
+            // label is read, so the list is what is physically in the
+            // operator's hands rather than rows chosen on a screen.
+            title: 'Scan the wheels going to SPD',
+            subtitle: 'Take each wheel off ${p.palletNo} and scan its label. '
+                '${_picked.length} of ${wheels.length} scanned.',
+            cameraLabel: 'Scan wheel label',
+            onCamera: canCamera ? () => _scanWheelWithCamera(wheels) : null,
+            controller: _wheelCtrl,
+            focusNode: _wheelFocus,
+            hint: 'or type the wheel serial',
+            onSubmitted: (v) => _pickScanned(v, wheels),
+            busy: _busy,
+            capitalize: false,
           ),
-        ),
         const SizedBox(height: 12),
         DplCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Scan the wheels going to SPD  '
-                '(${_picked.length} of ${wheels.length})',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                ),
+                'Scanned (${_picked.length})',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
               ),
-              const SizedBox(height: 4),
-              Text(
-                // Scanned, not ticked: a wheel joins the order only when its
-                // own label is read, so the list is what is physically in
-                // the operator's hands rather than rows chosen on a screen.
-                'Take each wheel off ${p.palletNo} and scan its label.',
-                style: TextStyle(fontSize: 12, color: DplColors.textSecondary),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _wheelCtrl,
-                focusNode: _wheelFocus,
-                enabled: !_busy && _picked.length < wheels.length,
-                textInputAction: TextInputAction.done,
-                decoration: const InputDecoration(
-                  hintText: 'Scan the wheel label, or type its serial',
-                  prefixIcon: Icon(Icons.qr_code_scanner_rounded),
-                  isDense: true,
-                ),
-                onSubmitted: (v) => _pickScanned(v, wheels),
-              ),
-              if (ref
-                  .watch(dplPermissionsProvider)
-                  .can(DplPermission.palletScanCamera)) ...[
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _busy ? null : () => _scanWheelWithCamera(wheels),
-                    icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                    label: const Text('Scan with the camera'),
-                  ),
+              if (_picked.isEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Nothing yet. Each wheel you scan appears here.',
+                  style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
                 ),
               ],
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               // Newest first, so the wheel just scanned is the row in view.
               for (final w in _pickedOrder.reversed
                   .map((id) => wheels.where((x) => x.id == id).firstOrNull)
@@ -400,6 +360,8 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                       color: DplColors.success, size: 20),
                   title: Text(
                     w.serialNo,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13.5,
@@ -426,8 +388,8 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                             }),
                   ),
                 ),
-              const SizedBox(height: 10),
               if (_picked.isNotEmpty) ...[
+                const SizedBox(height: 8),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
@@ -453,8 +415,8 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
               ],
+              const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 dense: true,
@@ -492,7 +454,7 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                             : 'Convert ${_picked.length} & print labels',
                   ),
                   style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
+                    minimumSize: const Size.fromHeight(52),
                   ),
                 ),
               ),
@@ -739,21 +701,24 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 11.5),
                       ),
+                      // Text only, and tight: on a phone two icon buttons
+                      // left the pack number a third of the row.
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          TextButton.icon(
-                            onPressed: _busy ? null : () => _printPacks([pack]),
-                            icon: const Icon(Icons.print_outlined, size: 16),
-                            label: const Text('Label'),
-                          ),
-                          TextButton.icon(
-                            onPressed: _busy
-                                ? null
-                                : () => _printMasterStickers([pack]),
-                            icon: const Icon(Icons.inventory_2_outlined, size: 16),
-                            label: const Text('Master'),
-                          ),
+                          for (final (label, onTap) in [
+                            ('Label', () => _printPacks([pack])),
+                            ('Master', () => _printMasterStickers([pack])),
+                          ])
+                            TextButton(
+                              onPressed: _busy ? null : onTap,
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                minimumSize: const Size(44, 40),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(label),
+                            ),
                         ],
                       ),
                     ),

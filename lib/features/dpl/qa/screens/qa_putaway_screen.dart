@@ -6,6 +6,7 @@ import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
 import '../../core/widgets/dpl_card.dart';
+import '../../core/widgets/dpl_scan_panel.dart';
 import '../../core/widgets/dpl_snack.dart';
 import '../../models/dpl_location.dart';
 import '../../models/dpl_pallet.dart';
@@ -151,49 +152,17 @@ class _QaPutawayScreenState extends ConsumerState<QaPutawayScreen> {
     final canCamera =
         ref.watch(dplPermissionsProvider).can(DplPermission.palletScanCamera);
 
-    return DplCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Scan the pallet label',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _scanCtrl,
-            focusNode: _scanFocus,
-            enabled: !_busy,
-            // NOT autofocused: the handheld delivers here by position, and a
-            // soft keyboard on entry is pure obstruction on a rugged device.
-            textInputAction: TextInputAction.done,
-            textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(
-              hintText: 'Scan, or type the pallet number',
-              prefixIcon: Icon(Icons.qr_code_scanner_rounded),
-              isDense: true,
-              // Names the fallback, because the number is printed in plain text
-              // under the QR precisely so a scuffed label can still be used.
-              helperText:
-                  'The pallet number is printed under the code, so a damaged '
-                  'label can be keyed in by hand.',
-              helperMaxLines: 3,
-            ),
-            onSubmitted: _busy ? null : _resolve,
-          ),
-          if (canCamera) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _busy ? null : _scanWithCamera,
-                icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                label: const Text('Scan with the camera'),
-              ),
-            ),
-          ],
-        ],
-      ),
+    return DplScanPanel(
+      title: _found == null ? 'Put a pallet on a rack' : 'Scan the next pallet',
+      subtitle: 'Scan the pallet sticker, then choose the rack it is going on. '
+          'A damaged sticker? Type the number printed under the code.',
+      cameraLabel: 'Scan pallet sticker',
+      onCamera: canCamera ? _scanWithCamera : null,
+      controller: _scanCtrl,
+      focusNode: _scanFocus,
+      hint: 'or type the pallet number',
+      onSubmitted: _resolve,
+      busy: _busy,
     );
   }
 
