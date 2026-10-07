@@ -20,10 +20,11 @@ import '../services/spd_master_sticker_pdf.dart';
 import '../services/wheel_scan_match.dart';
 import 'dpl_qr_scan_sheet.dart';
 
-final spdPacksProvider =
-    FutureProvider.autoDispose<DplApiResponse<DplSpdPage>>((ref) async {
-  return ref.watch(dplApiServiceProvider).listSpdPacks();
-});
+final spdPacksProvider = FutureProvider.autoDispose<DplApiResponse<DplSpdPage>>(
+  (ref) async {
+    return ref.watch(dplApiServiceProvider).listSpdPacks();
+  },
+);
 
 /// "Also print the SPD master sticker", remembered for the session so an
 /// operator packing an order does not have to switch it on for every pallet.
@@ -34,8 +35,9 @@ class SpdMasterStickerChoice extends Notifier<bool> {
   void set(bool on) => state = on;
 }
 
-final spdMasterStickerProvider =
-    NotifierProvider<SpdMasterStickerChoice, bool>(SpdMasterStickerChoice.new);
+final spdMasterStickerProvider = NotifierProvider<SpdMasterStickerChoice, bool>(
+  SpdMasterStickerChoice.new,
+);
 
 /// SPD conversion — Maxion SSR §8, Module 12.
 ///
@@ -65,6 +67,11 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
   final _scanFocus = FocusNode();
 
   bool _busy = false;
+
+  /// The register's select mode: packs ticked to go in one box under one
+  /// master sticker, whichever conversions they came from. Keyed by pack id.
+  bool _selecting = false;
+  final Map<int, DplSpdPack> _boxPicks = <int, DplSpdPack>{};
 
   /// The pallet being taken from, once scanned.
   DplPalletWheels? _loaded;
@@ -147,8 +154,9 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
   // -------------------------------------------------------------------------
 
   Widget _scanCard() {
-    final canCamera =
-        ref.watch(dplPermissionsProvider).can(DplPermission.palletScanCamera);
+    final canCamera = ref
+        .watch(dplPermissionsProvider)
+        .can(DplPermission.palletScanCamera);
     final loaded = _loaded;
 
     // Once a pallet is in, the scan panel becomes the pallet it scanned: one
@@ -183,12 +191,18 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                 Expanded(
                   child: Text(
                     p.palletNo,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
                 Text(
                   p.countLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
                 ),
               ],
             ),
@@ -209,7 +223,8 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     return DplScanPanel(
       step: 'Step 1 of 2',
       title: 'Take wheels for a spare-parts order',
-      subtitle: 'Scan the pallet the wheels are coming off. Next you scan each '
+      subtitle:
+          'Scan the pallet the wheels are coming off. Next you scan each '
           'wheel that is leaving, and each one becomes its own pack.',
       cameraLabel: 'Scan pallet sticker',
       onCamera: canCamera ? _scanWithCamera : null,
@@ -253,7 +268,10 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
 
     if (found.isError || found.data == null) {
       setState(() => _busy = false);
-      DplSnacks.error(context, found.error ?? 'Could not read that pallet label.');
+      DplSnacks.error(
+        context,
+        found.error ?? 'Could not read that pallet label.',
+      );
       _scanFocus.requestFocus();
       return;
     }
@@ -308,8 +326,9 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     final wheels = loaded.sellable;
     final standard = p.standardQty ?? 0;
     final remaining = wheels.length - _picked.length;
-    final canCamera =
-        ref.watch(dplPermissionsProvider).can(DplPermission.palletScanCamera);
+    final canCamera = ref
+        .watch(dplPermissionsProvider)
+        .can(DplPermission.palletScanCamera);
     final allScanned = _picked.length >= wheels.length;
 
     return Column(
@@ -321,7 +340,8 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
             // label is read, so the list is what is physically in the
             // operator's hands rather than rows chosen on a screen.
             title: 'Scan the wheels going to SPD',
-            subtitle: 'Take each wheel off ${p.palletNo} and scan its label. '
+            subtitle:
+                'Take each wheel off ${p.palletNo} and scan its label. '
                 '${_picked.length} of ${wheels.length} scanned.',
             cameraLabel: 'Scan wheel label',
             onCamera: canCamera ? () => _scanWheelWithCamera(wheels) : null,
@@ -339,25 +359,35 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
             children: [
               Text(
                 'Scanned (${_picked.length})',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
               ),
               if (_picked.isEmpty) ...[
                 const SizedBox(height: 6),
                 Text(
                   'Nothing yet. Each wheel you scan appears here.',
-                  style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: DplColors.textSecondary,
+                  ),
                 ),
               ],
               const SizedBox(height: 4),
               // Newest first, so the wheel just scanned is the row in view.
-              for (final w in _pickedOrder.reversed
-                  .map((id) => wheels.where((x) => x.id == id).firstOrNull)
-                  .whereType<DplWheel>())
+              for (final w
+                  in _pickedOrder.reversed
+                      .map((id) => wheels.where((x) => x.id == id).firstOrNull)
+                      .whereType<DplWheel>())
                 ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.check_circle_rounded,
-                      color: DplColors.success, size: 20),
+                  leading: Icon(
+                    Icons.check_circle_rounded,
+                    color: DplColors.success,
+                    size: 20,
+                  ),
                   title: Text(
                     w.serialNo,
                     maxLines: 2,
@@ -383,9 +413,9 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                     onPressed: _busy
                         ? null
                         : () => setState(() {
-                              _picked.remove(w.id);
-                              _pickedOrder.remove(w.id);
-                            }),
+                            _picked.remove(w.id);
+                            _pickedOrder.remove(w.id);
+                          }),
                   ),
                 ),
               if (_picked.isNotEmpty) ...[
@@ -403,12 +433,12 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                   child: Text(
                     remaining < 1
                         ? '${_picked.length} SPD label'
-                            '${_picked.length == 1 ? '' : 's'} will print. '
-                            '${p.palletNo} will then hold nothing and is closed out.'
+                              '${_picked.length == 1 ? '' : 's'} will print. '
+                              '${p.palletNo} will then hold nothing and is closed out.'
                         : '${_picked.length} SPD label'
-                            '${_picked.length == 1 ? '' : 's'} will print. '
-                            '$remaining stay on ${p.palletNo}'
-                            '${standard > 0 && remaining < standard ? ', which becomes a HALF pallet and gets a new master sticker' : ''}.',
+                              '${_picked.length == 1 ? '' : 's'} will print. '
+                              '$remaining stay on ${p.palletNo}'
+                              '${standard > 0 && remaining < standard ? ', which becomes a HALF pallet and gets a new master sticker' : ''}.',
                     style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
@@ -423,7 +453,8 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                 value: ref.watch(spdMasterStickerProvider),
                 onChanged: _busy
                     ? null
-                    : (on) => ref.read(spdMasterStickerProvider.notifier).set(on),
+                    : (on) =>
+                          ref.read(spdMasterStickerProvider.notifier).set(on),
                 title: const Text(
                   'Also print the SPD master sticker',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
@@ -431,10 +462,10 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                 subtitle: Text(
                   _picked.length > 1
                       ? 'One sticker for the box, listing all '
-                          '${_picked.length} packs — 100 × 75 mm, the pallet '
-                          'label stock.'
+                            '${_picked.length} packs — 100 × 75 mm, the pallet '
+                            'label stock.'
                       : 'One sticker for the box, listing its packs — '
-                          '100 × 75 mm, the pallet label stock.',
+                            '100 × 75 mm, the pallet label stock.',
                   style: const TextStyle(fontSize: 11.5),
                 ),
               ),
@@ -454,8 +485,8 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                     _busy
                         ? 'Converting…'
                         : _picked.isEmpty
-                            ? 'Scan at least one wheel'
-                            : 'Convert ${_picked.length} & print labels',
+                        ? 'Scan at least one wheel'
+                        : 'Convert ${_picked.length} & print labels',
                   ),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
@@ -484,10 +515,9 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     final ids = _picked.toList();
 
     setState(() => _busy = true);
-    final res = await ref.read(dplApiServiceProvider).convertToSpd(
-          palletId: loaded.pallet.id,
-          stickerIds: ids,
-        );
+    final res = await ref
+        .read(dplApiServiceProvider)
+        .convertToSpd(palletId: loaded.pallet.id, stickerIds: ids);
     if (!mounted) return;
     setState(() => _busy = false);
 
@@ -553,7 +583,10 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     }
   }
 
-  Future<void> _printMasterStickers(List<DplSpdPack> packs) async {
+  Future<void> _printMasterStickers(
+    List<DplSpdPack> packs, {
+    bool oneBox = false,
+  }) async {
     if (packs.isEmpty) return;
     setState(() => _busy = true);
     try {
@@ -563,14 +596,15 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
         // print dialog cannot silently rescale the sticker.
         format: SpdMasterStickerPdf.rollFormat,
         dynamicLayout: false,
-        onLayout: (PdfPageFormat _) => SpdMasterStickerPdf.buildRoll(packs),
+        onLayout: (PdfPageFormat _) =>
+            SpdMasterStickerPdf.buildRoll(packs, oneBox: oneBox),
       );
     } catch (_) {
       if (mounted) {
         DplSnacks.error(
           context,
-          'The packs were created but the master sticker failed to print. '
-          'Reprint it from the SPD list.',
+          'The master sticker failed to print. The packs are saved — '
+          'reprint it from the SPD list.',
         );
       }
     } finally {
@@ -591,13 +625,47 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
 
     final batch = res.data?.packs ?? const <DplSpdPack>[];
     if (res.isError) {
-      DplSnacks.error(context, res.error ?? 'Could not load the packs of this box.');
+      DplSnacks.error(
+        context,
+        res.error ?? 'Could not load the packs of this box.',
+      );
       return;
     }
     // A server that predates batches ignores the filter and answers with
     // the whole register; keep only this batch, and never print nothing.
     final mine = batch.where((p) => p.batchNo == pack.batchNo).toList();
     await _printMasterStickers(mine.isEmpty ? [pack] : mine);
+  }
+
+  /// Tick or untick a pack for the box. One box holds one item: the sticker
+  /// has one part code, so a pack of another item is refused, not mixed in.
+  void _toggleBoxPick(DplSpdPack pack) {
+    if (_boxPicks.containsKey(pack.id)) {
+      setState(() => _boxPicks.remove(pack.id));
+      return;
+    }
+    final other = _boxPicks.values.firstOrNull;
+    if (other != null && other.customerPartNo != pack.customerPartNo) {
+      DplSnacks.warning(
+        context,
+        '${pack.packNo} is item ${pack.customerPartNo}, the box is '
+        '${other.customerPartNo}. One master sticker holds one item.',
+      );
+      return;
+    }
+    setState(() => _boxPicks[pack.id] = pack);
+  }
+
+  void _endSelecting() => setState(() {
+    _selecting = false;
+    _boxPicks.clear();
+  });
+
+  Future<void> _printBoxMaster() async {
+    final packs = _boxPicks.values.toList();
+    if (packs.isEmpty) return;
+    await _printMasterStickers(packs, oneBox: true);
+    if (mounted) _endSelecting();
   }
 
   Future<void> _printPalletLabel(int palletId) async {
@@ -656,6 +724,16 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
               ),
+              // Select packs for one box: one master sticker over packs
+              // from any conversion.
+              TextButton(
+                onPressed: _busy
+                    ? null
+                    : _selecting
+                    ? _endSelecting
+                    : () => setState(() => _selecting = true),
+                child: Text(_selecting ? 'Cancel' : 'Select'),
+              ),
               IconButton(
                 icon: const Icon(Icons.refresh, size: 18),
                 tooltip: 'Refresh',
@@ -686,69 +764,118 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                   child: Text(
                     'None yet. Scan a pallet above to take wheels for a '
                     'spare-parts order.',
-                    style: TextStyle(fontSize: 12.5, color: DplColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: DplColors.textSecondary,
+                    ),
                   ),
                 );
               }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      page.total <= page.packs.length
-                          ? '${page.total} pack${page.total == 1 ? '' : 's'}'
-                          : 'Showing ${page.packs.length} of ${page.total}',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: DplColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  for (final pack in page.packs)
-                    ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        pack.packNo,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13.5,
+              // Transparent Material: the rows are ListTiles on a coloured card,
+              // and their ink needs a Material of their own to land on.
+              return Material(
+                type: MaterialType.transparency,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        _selecting
+                            ? 'Tick the packs going in one box — '
+                                  '${_boxPicks.length} ticked'
+                            : page.total <= page.packs.length
+                            ? '${page.total} pack${page.total == 1 ? '' : 's'}'
+                            : 'Showing ${page.packs.length} of ${page.total}',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: DplColors.textSecondary,
                         ),
                       ),
-                      subtitle: Text(
-                        [
-                          if (pack.serialNo.isNotEmpty) pack.serialNo,
-                          if (pack.customerPartNo.isNotEmpty) pack.customerPartNo,
-                          if (pack.closedAt != null) _d(pack.closedAt!),
-                        ].join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11.5),
-                      ),
-                      // Text only, and tight: on a phone two icon buttons
-                      // left the pack number a third of the row.
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          for (final (label, onTap) in [
-                            ('Label', () => _printPacks([pack])),
-                            ('Master', () => _reprintMaster(pack)),
-                          ])
-                            TextButton(
-                              onPressed: _busy ? null : onTap,
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                minimumSize: const Size(44, 40),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(label),
-                            ),
-                        ],
-                      ),
                     ),
-                ],
+                    for (final pack in page.packs)
+                      ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        onTap: _selecting && !_busy
+                            ? () => _toggleBoxPick(pack)
+                            : null,
+                        leading: _selecting
+                            ? Checkbox(
+                                value: _boxPicks.containsKey(pack.id),
+                                onChanged: _busy
+                                    ? null
+                                    : (_) => _toggleBoxPick(pack),
+                              )
+                            : null,
+                        title: Text(
+                          pack.packNo,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                        subtitle: Text(
+                          [
+                            if (pack.serialNo.isNotEmpty) pack.serialNo,
+                            if (pack.customerPartNo.isNotEmpty)
+                              pack.customerPartNo,
+                            if (pack.closedAt != null) _d(pack.closedAt!),
+                          ].join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11.5),
+                        ),
+                        // Text only, and tight: on a phone two icon buttons
+                        // left the pack number a third of the row.
+                        trailing: _selecting
+                            ? null
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  for (final (label, onTap) in [
+                                    ('Label', () => _printPacks([pack])),
+                                    ('Master', () => _reprintMaster(pack)),
+                                  ])
+                                    TextButton(
+                                      onPressed: _busy ? null : onTap,
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
+                                        minimumSize: const Size(44, 40),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: Text(label),
+                                    ),
+                                ],
+                              ),
+                      ),
+                    if (_selecting) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: (_busy || _boxPicks.isEmpty)
+                              ? null
+                              : _printBoxMaster,
+                          icon: const Icon(Icons.print_outlined, size: 18),
+                          label: Text(
+                            _boxPicks.isEmpty
+                                ? 'Tick at least one pack'
+                                : 'Print one master for ${_boxPicks.length} '
+                                      'pack${_boxPicks.length == 1 ? '' : 's'}',
+                          ),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               );
             },
           ),

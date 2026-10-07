@@ -42,6 +42,20 @@ class SpdMasterStickerPdf {
   static const int rowsPerColumn = 6;
   static const int perSticker = rowsPerColumn * 2;
 
+  /// Long serials — an external code like `9313BM/std 2//53/26Sep2~b0511732`
+  /// — do not fit two to a row at a readable size, so those print one column
+  /// the full width, eight to a sticker.
+  static const int perStickerLong = 8;
+  static const double _rowLongMm = 4.3;
+  static const int _longSerial = 14;
+
+  static bool _hasLongSerials(List<DplSpdPack> packs) =>
+      packs.any((p) => p.serialNo.length > _longSerial);
+
+  /// How many packs one sticker holds for this group.
+  static int capacityFor(List<DplSpdPack> packs) =>
+      _hasLongSerials(packs) ? perStickerLong : perSticker;
+
   static const PdfColor _ink = PdfColor.fromInt(0xFF000000);
   static const PdfColor _paper = PdfColor.fromInt(0xFFFFFFFF);
 
@@ -57,7 +71,9 @@ class SpdMasterStickerPdf {
   /// built rather than stored. Spaces in an item code (the master has
   /// "9345 Silver") are dropped: they cannot appear in a part code.
   static String partCode(DplSpdPack pack) {
-    final item = pack.customerPartNo.replaceAll(RegExp(r'\s+'), '').toUpperCase();
+    final item = pack.customerPartNo
+        .replaceAll(RegExp(r'\s+'), '')
+        .toUpperCase();
     return item.isEmpty ? '' : 'PNAF${item}A00B0';
   }
 
@@ -78,45 +94,58 @@ class SpdMasterStickerPdf {
   /// The stickers a set of packs prints as: one per batch (and per item, so a
   /// mixed reprint can never put two items under one part code), split into
   /// [perSticker]-pack sheets. Packs keep their number order.
-  static List<List<DplSpdPack>> sheets(List<DplSpdPack> packs) {
+  ///
+  /// [oneBox]: the operator picked these packs for one box, so batches are
+  /// ignored — only the item still splits them.
+  static List<List<DplSpdPack>> sheets(
+    List<DplSpdPack> packs, {
+    bool oneBox = false,
+  }) {
     final groups = <String, List<DplSpdPack>>{};
     for (final p in packs) {
-      groups.putIfAbsent(_key(p), () => []).add(p);
+      groups.putIfAbsent(_key(p, oneBox), () => []).add(p);
     }
     final out = <List<DplSpdPack>>[];
     for (final g in groups.values) {
       g.sort((a, b) => a.packNo.compareTo(b.packNo));
-      for (var i = 0; i < g.length; i += perSticker) {
-        final end = i + perSticker < g.length ? i + perSticker : g.length;
+      final cap = capacityFor(g);
+      for (var i = 0; i < g.length; i += cap) {
+        final end = i + cap < g.length ? i + cap : g.length;
         out.add(g.sublist(i, end));
       }
     }
     return out;
   }
 
-  static String _key(DplSpdPack p) =>
-      '${p.batchNo.isNotEmpty ? p.batchNo : p.packNo}|${p.customerPartNo}';
+  static String _key(DplSpdPack p, bool oneBox) => oneBox
+      ? p.customerPartNo
+      : '${p.batchNo.isNotEmpty ? p.batchNo : p.packNo}|${p.customerPartNo}';
 
-  static Future<Uint8List> buildRoll(List<DplSpdPack> packs) async =>
-      buildRollDocument(packs).save();
+  static Future<Uint8List> buildRoll(
+    List<DplSpdPack> packs, {
+    bool oneBox = false,
+  }) async => buildRollDocument(packs, oneBox: oneBox).save();
 
-  static pw.Document buildRollDocument(List<DplSpdPack> packs) {
+  static pw.Document buildRollDocument(
+    List<DplSpdPack> packs, {
+    bool oneBox = false,
+  }) {
     final doc = pw.Document(title: 'SPD master stickers');
     final bold = pw.Font.helveticaBold();
     final regular = pw.Font.helvetica();
     // An empty run still yields a valid one-page document; some print
     // pipelines reject a zero-page PDF outright.
-    final list = sheets(packs);
+    final list = sheets(packs, oneBox: oneBox);
     if (list.isEmpty) list.add(const [DplSpdPack()]);
 
     // "1/2" only within a batch that ran over one sticker.
     final perBatch = <String, int>{};
     for (final s in list) {
-      perBatch.update(_key(s.first), (n) => n + 1, ifAbsent: () => 1);
+      perBatch.update(_key(s.first, oneBox), (n) => n + 1, ifAbsent: () => 1);
     }
     final seen = <String, int>{};
     for (final sheet in list) {
-      final key = _key(sheet.first);
+      final key = _key(sheet.first, oneBox);
       final n = seen.update(key, (v) => v + 1, ifAbsent: () => 1);
       final total = perBatch[key] ?? 1;
       doc.addPage(
@@ -149,13 +178,21 @@ class SpdMasterStickerPdf {
         pw.Container(
           height: heightMm * PdfPageFormat.mm,
           alignment: pw.Alignment.center,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 2.5 * PdfPageFormat.mm),
-          decoration: ruled ? pw.BoxDecoration(border: pw.Border(top: side)) : null,
+          padding: const pw.EdgeInsets.symmetric(
+            horizontal: 2.5 * PdfPageFormat.mm,
+          ),
+          decoration: ruled
+              ? pw.BoxDecoration(border: pw.Border(top: side))
+              : null,
           child: child,
         );
 
-    final left = packs.take(rowsPerColumn).toList();
-    final right = packs.skip(rowsPerColumn).toList();
+    final long = _hasLongSerials(packs);
+    final left = long ? packs : packs.take(rowsPerColumn).toList();
+    final right = long
+        ? const <DplSpdPack>[]
+        : packs.skip(rowsPerColumn).toList();
+    final rowMm = long ? _rowLongMm : _rowMm;
 
     return pw.Container(
       width: labelWidthMm * PdfPageFormat.mm,
@@ -193,19 +230,22 @@ class SpdMasterStickerPdf {
                 child: pw.Row(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Expanded(child: _column(left, bold, regular)),
+                    pw.Expanded(child: _column(left, bold, regular, rowMm)),
                     if (right.isNotEmpty) ...[
                       pw.Container(
                         width: 0,
-                        height: rowsPerColumn * _rowMm * PdfPageFormat.mm,
+                        height: rowsPerColumn * rowMm * PdfPageFormat.mm,
                         margin: const pw.EdgeInsets.symmetric(
                           horizontal: 1.5 * PdfPageFormat.mm,
                         ),
-                        decoration: pw.BoxDecoration(border: pw.Border(left: thin)),
+                        decoration: pw.BoxDecoration(
+                          border: pw.Border(left: thin),
+                        ),
                       ),
-                      pw.Expanded(child: _column(right, bold, regular)),
-                    ] else
-                      pw.Expanded(child: pw.SizedBox()),
+                      pw.Expanded(child: _column(right, bold, regular, rowMm)),
+                    ],
+                    // Six or fewer: one column the full width, so a long
+                    // serial (9313BM/std 2//53/26Sep2~b0511732) stays legible.
                   ],
                 ),
               ),
@@ -216,13 +256,18 @@ class SpdMasterStickerPdf {
     );
   }
 
-  static pw.Widget _column(List<DplSpdPack> packs, pw.Font bold, pw.Font regular) {
+  static pw.Widget _column(
+    List<DplSpdPack> packs,
+    pw.Font bold,
+    pw.Font regular,
+    double rowMm,
+  ) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         for (final p in packs)
           pw.Container(
-            height: _rowMm * PdfPageFormat.mm,
+            height: rowMm * PdfPageFormat.mm,
             alignment: pw.Alignment.centerLeft,
             child: pw.FittedBox(
               fit: pw.BoxFit.scaleDown,
@@ -238,7 +283,11 @@ class SpdMasterStickerPdf {
                     pw.SizedBox(width: 2 * PdfPageFormat.mm),
                     pw.Text(
                       p.serialNo,
-                      style: pw.TextStyle(font: regular, fontSize: 9, color: _ink),
+                      style: pw.TextStyle(
+                        font: regular,
+                        fontSize: 9,
+                        color: _ink,
+                      ),
                     ),
                   ],
                 ],
@@ -251,7 +300,12 @@ class SpdMasterStickerPdf {
 
   /// One line, shrunk to fit rather than wrapped over the rule below. Never
   /// empty: pdf's FittedBox asserts on a zero-width child.
-  static pw.Widget _line(String text, pw.Font font, double size, {bool left = false}) {
+  static pw.Widget _line(
+    String text,
+    pw.Font font,
+    double size, {
+    bool left = false,
+  }) {
     return pw.FittedBox(
       fit: pw.BoxFit.scaleDown,
       alignment: left ? pw.Alignment.centerLeft : pw.Alignment.center,
