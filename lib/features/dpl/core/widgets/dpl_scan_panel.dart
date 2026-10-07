@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design/dpl_theme.dart';
+import '../scan_code.dart';
 import 'dpl_card.dart';
 
 /// The one way every scanning screen asks for a scan.
@@ -70,10 +71,15 @@ class DplScanPanel extends StatelessWidget {
   /// (`06Oct26`) and are matched exactly.
   final bool capitalize;
 
-  void _submit() {
-    final v = controller.text;
+  /// [value] is what the field submitted, and it must win over the
+  /// controller: an RF gun in intent mode (HardwareScanScope) hands the decode
+  /// straight to onSubmitted and never types it, so the controller is empty.
+  /// Reading the controller dropped every pallet sticker scanned on these
+  /// panels, while the wheel fields — which use the value — worked.
+  void _submit([String? value]) {
+    final v = (value == null || value.trim().isEmpty) ? controller.text : value;
     if (v.trim().isEmpty) return;
-    onSubmitted(v);
+    onSubmitted(repairStickerPayload(v));
   }
 
   @override
@@ -165,7 +171,7 @@ class DplScanPanel extends StatelessWidget {
               isDense: true,
               border: const OutlineInputBorder(),
             ),
-            onSubmitted: live ? (_) => _submit() : null,
+            onSubmitted: live ? _submit : null,
           ),
           if (footer.isNotEmpty) ...[
             const SizedBox(height: 10),

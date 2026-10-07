@@ -5,6 +5,7 @@ import '../../../../core/scanner/hardware_scanner.dart';
 import '../../core/design/dpl_theme.dart';
 import '../../core/dpl_api_service.dart';
 import '../../core/dpl_permissions_provider.dart';
+import '../../core/scan_code.dart';
 import '../../core/widgets/dpl_app_bar.dart';
 import '../../core/widgets/dpl_card.dart';
 import '../../core/widgets/dpl_content_width.dart';
@@ -70,7 +71,7 @@ class _PalletLookupScreenState extends ConsumerState<PalletLookupScreen> {
   }
 
   Future<void> _lookup(String raw) async {
-    final code = raw.trim();
+    final code = repairStickerPayload(raw);
     _ctrl.clear();
     if (code.isEmpty || _busy) return;
 

@@ -7,6 +7,7 @@ import '../../core/design/dpl_theme.dart';
 import '../../core/widgets/dpl_card.dart';
 import '../../core/widgets/dpl_error_retry.dart';
 import '../../models/dpl_pallet.dart';
+import '../../qa/screens/pallet_lookup_screen.dart';
 import '../auditor_providers.dart';
 import '../auditor_shell.dart' show startAuditFor;
 
@@ -129,6 +130,17 @@ class _DplPalletsToAuditScreenState
                   : null,
             ),
             onChanged: _onSearch,
+            // A trigger pull lands here first. A sticker payload is no search
+            // term, so a scan opens Scan to find, like the scan icon does.
+            onSubmitted: (v) {
+              final code = v.trim();
+              if (code.isEmpty) return;
+              _searchCtrl.clear();
+              _onSearch('');
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => PalletLookupScreen(initialCode: code),
+              ));
+            },
           ),
           const SizedBox(height: 8),
           SingleChildScrollView(

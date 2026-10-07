@@ -88,6 +88,24 @@ class _QaPalletRegisterScreenState
     });
   }
 
+  /// A trigger pull on this tab lands in the search box (HardwareScanScope
+  /// delivers to the first field), and a whole sticker payload is no search
+  /// term — `MWP|PM26000012` matches no pallet number. So a scan opens Scan
+  /// to find, exactly as the Scan button does, and leaves the list as it was.
+  void _openScanned(String raw) {
+    final code = raw.trim();
+    if (code.isEmpty) return;
+    _debounce?.cancel();
+    _searchCtrl.clear();
+    final f = ref.read(palletFilterProvider);
+    if (f.search.isNotEmpty) {
+      ref.read(palletFilterProvider.notifier).set(f.copyWith(search: ''));
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => PalletLookupScreen(initialCode: code)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final body = Column(
@@ -124,6 +142,8 @@ class _QaPalletRegisterScreenState
                 child: TextField(
                   controller: _searchCtrl,
                   onChanged: _onSearchChanged,
+                  onSubmitted: _openScanned,
+                  textInputAction: TextInputAction.search,
                   textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
                     isDense: true,
