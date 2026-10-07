@@ -98,6 +98,12 @@ class DplSpdPack {
   final String status;
   final DateTime? closedAt;
 
+  /// The conversion this pack was made in, named by its first pack number
+  /// (backend migration 199). Every pack of one conversion shares it, and the
+  /// SPD master sticker lists them all. A server that predates it sends
+  /// nothing, and the pack is then a batch of its own.
+  final String batchNo;
+
   const DplSpdPack({
     this.id = 0,
     this.packNo = '',
@@ -108,6 +114,7 @@ class DplSpdPack {
     this.spdDescription = '',
     this.status = '',
     this.closedAt,
+    this.batchNo = '',
   });
 
   factory DplSpdPack.fromJson(Map<String, dynamic> json) {
@@ -128,6 +135,9 @@ class DplSpdPack {
       spdDescription: parseStringOr(partMap['spd_description']),
       status: parseStringOr(json['status']),
       closedAt: parseDateTimeOrNull(json['closed_at']),
+      batchNo: parseStringOr(json['spd_batch_no']).isNotEmpty
+          ? parseStringOr(json['spd_batch_no'])
+          : no,
     );
   }
 }

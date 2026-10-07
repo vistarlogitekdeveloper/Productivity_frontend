@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../models/dpl_spd.dart';
+import 'spd_master_sticker_pdf.dart';
 
 /// The individual SPD pack label — Maxion SSR §8, Module 12.
 ///
@@ -19,6 +20,12 @@ import '../../models/dpl_spd.dart';
 ///   MW  / GA  — a wheel
 ///   MWP       — a pallet
 ///   MWS       — an SPD pack
+///
+/// WHAT IS ON IT: the pack number and the wheel inside, plus the box-sticker
+/// lines the plant asked for on the pack itself — the part code
+/// (`PNAF` + item + `A00B0`), the SPD description and `QTY - 01 NOS` — so
+/// one label carries everything and the 100 x 75 mm master is only needed for
+/// the box.
 ///
 /// One page per pack. They are printed as a run straight after conversion, and
 /// a roll that stops between labels is a roll somebody has to re-align.
@@ -113,21 +120,34 @@ class SpdLabelPdf {
                     ),
                   ),
                 ),
-                _fit(p.packNo, 10),
-                if (p.customerPartNo.isNotEmpty) _fit(p.customerPartNo, 7),
+                _fit(p.packNo, 9.5),
+                // The master sticker's lines, on the pack itself.
+                _fit(SpdMasterStickerPdf.partCode(p), 6.5),
+                if (SpdMasterStickerPdf.itemLine(p).isNotEmpty)
+                  pw.Text(
+                    SpdMasterStickerPdf.itemLine(p),
+                    maxLines: 2,
+                    style: pw.TextStyle(
+                      fontSize: 4.8,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                pw.Text(
+                  SpdMasterStickerPdf.qtyLine,
+                  style: pw.TextStyle(
+                    fontSize: 5.2,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
                 // The wheel inside. A customer query arrives quoting a wheel
-                // serial far more often than a pack number.
+                // serial far more often than a pack number. (The QR payload is
+                // not repeated in text: it is MWS| + the pack number above,
+                // which types in just the same.)
                 if (p.serialNo.isNotEmpty)
                   pw.Text(
                     p.serialNo,
-                    style: const pw.TextStyle(fontSize: 5.6),
+                    style: const pw.TextStyle(fontSize: 5),
                   ),
-                // The payload in plain text, so a dead scanner never stops the
-                // bench — the same rule §5 sets for the pallet label.
-                pw.Text(
-                  p.qrPayload,
-                  style: const pw.TextStyle(fontSize: 4.6),
-                ),
               ],
             ),
           ),

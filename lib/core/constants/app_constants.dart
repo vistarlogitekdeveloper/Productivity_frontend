@@ -5,7 +5,7 @@ class AppConstants {
   // backend this app signs in to and talks to.
   static const String dplApiBaseUrl =
       'https://api.vistarlogitek.com/api/v1/dpl';
-
+  // https://uat-api.vistarlogitek.com
   // Shared Preferences Keys
   static const String tokenKey = 'AUTH_TOKEN';
   static const String userRoleKey = 'USER_ROLE';

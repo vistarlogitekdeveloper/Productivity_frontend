@@ -428,10 +428,14 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                   'Also print the SPD master sticker',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
                 ),
-                subtitle: const Text(
-                  'One per pack, for its box — 100 × 75 mm, the pallet label '
-                  'stock.',
-                  style: TextStyle(fontSize: 11.5),
+                subtitle: Text(
+                  _picked.length > 1
+                      ? 'One sticker for the box, listing all '
+                          '${_picked.length} packs — 100 × 75 mm, the pallet '
+                          'label stock.'
+                      : 'One sticker for the box, listing its packs — '
+                          '100 × 75 mm, the pallet label stock.',
+                  style: const TextStyle(fontSize: 11.5),
                 ),
               ),
               const SizedBox(height: 8),
@@ -505,8 +509,8 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     await _printPacks(out.packs);
     if (!mounted) return;
 
-    // Then each pack's box sticker, when asked for. A separate print because
-    // it is a different stock (100 x 75 mm, not the 50 x 25 mm pack label).
+    // Then the box sticker listing every pack, when asked for. A separate
+    // print because it is a different stock (100 x 75 mm, not 50 x 25 mm).
     if (ref.read(spdMasterStickerProvider)) {
       await _printMasterStickers(out.packs);
       if (!mounted) return;
@@ -572,6 +576,28 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// The master sticker lists every pack of the conversion, so a reprint
+  /// fetches the whole batch rather than trusting whatever page of the
+  /// register happens to be loaded.
+  Future<void> _reprintMaster(DplSpdPack pack) async {
+    setState(() => _busy = true);
+    final res = await ref
+        .read(dplApiServiceProvider)
+        .listSpdPacks(batch: pack.batchNo, limit: 200);
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    final batch = res.data?.packs ?? const <DplSpdPack>[];
+    if (res.isError) {
+      DplSnacks.error(context, res.error ?? 'Could not load the packs of this box.');
+      return;
+    }
+    // A server that predates batches ignores the filter and answers with
+    // the whole register; keep only this batch, and never print nothing.
+    final mine = batch.where((p) => p.batchNo == pack.batchNo).toList();
+    await _printMasterStickers(mine.isEmpty ? [pack] : mine);
   }
 
   Future<void> _printPalletLabel(int palletId) async {
@@ -708,7 +734,7 @@ class _QaSpdScreenState extends ConsumerState<QaSpdScreen> {
                         children: [
                           for (final (label, onTap) in [
                             ('Label', () => _printPacks([pack])),
-                            ('Master', () => _printMasterStickers([pack])),
+                            ('Master', () => _reprintMaster(pack)),
                           ])
                             TextButton(
                               onPressed: _busy ? null : onTap,

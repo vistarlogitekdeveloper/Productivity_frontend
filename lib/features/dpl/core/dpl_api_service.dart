@@ -3953,6 +3953,7 @@ class DplApiService {
   /// The SPD pack register.
   Future<DplApiResponse<DplSpdPage>> listSpdPacks({
     String? search,
+    String? batch,
     int? partId,
     String? status,
     int limit = 50,
@@ -3963,6 +3964,8 @@ class DplApiService {
         DplPaths.qaSpdPacks,
         queryParameters: _cleanQuery({
           'search': (search ?? '').trim().isEmpty ? null : search!.trim(),
+          // One conversion's packs, all of them, for its master sticker.
+          'batch': (batch ?? '').trim().isEmpty ? null : batch!.trim(),
           'part_id': partId,
           'status': (status ?? '').isEmpty ? null : status,
           'limit': limit,
