@@ -240,6 +240,7 @@ class DplPaths {
   // pipeline with an HMAC-signed QR payload printed on the slip. Roles
   // are gated server-side; the verify endpoint is public.
   static const String dispatchSlips = '/dispatch/slips';
+  static const String dispatchSlipsExport = '/dispatch/slips/export.xlsx';
   static String dispatchSlipById(int id) => '/dispatch/slips/$id';
   static String dispatchSlipQaApprove(int id) =>
       '/dispatch/slips/$id/qa-approve';

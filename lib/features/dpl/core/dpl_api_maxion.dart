@@ -45,6 +45,16 @@ extension DplMaxionApi on DplApiService {
       _send(() => _dio.get(DplPaths.report(key), queryParameters: query == null ? null : _cleanQuery(query)),
           fallback: 'Could not load the report.', fromJson: (d) => DplReportTable.fromJson(_asMap(d), rowsKey));
 
+  /// `GET /dispatch/slips/export.xlsx` — every slip the list's filters
+  /// match (all pages), one row per slip line, as the server builds it.
+  Future<DplApiResponse<Uint8List>> exportDispatchSlipsXlsx({String? status, String? q, DateTime? from, DateTime? to}) =>
+      _bytes(DplPaths.dispatchSlipsExport, query: {
+        if (status != null && status.isNotEmpty) 'status': status,
+        if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
+        if (from != null) 'from': _ymd(from),
+        if (to != null) 'to': _ymd(to),
+      }, fallback: 'Could not export the dispatch slips.');
+
   /// The same report as the Excel file the server builds.
   Future<DplApiResponse<Uint8List>> getReportXlsx(String key, {Map<String, dynamic>? query}) =>
       _bytes(DplPaths.report(key), query: {...?query, 'format': 'xlsx'}, fallback: 'Could not download the report.');

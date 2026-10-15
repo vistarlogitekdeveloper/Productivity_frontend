@@ -8,12 +8,14 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/shimmer_skeleton.dart';
 import '../../../auth/auth_provider.dart';
 import '../../core/design/dpl_theme.dart';
+import '../../core/dpl_api_service.dart';
 import '../../core/dpl_constants.dart';
 import '../../journey/screens/consolidated_slip_screen.dart';
 import '../../journey/widgets/assign_driver_button.dart';
 import '../../journey/widgets/trip_journey_drawer.dart';
 import '../../manager/widgets/empty_state.dart';
 import '../../manager/widgets/error_retry.dart';
+import '../../maxion/common/maxion_kit.dart' show saveServerFile, xlsxMime;
 import '../../models/dpl_dispatch_slip.dart';
 import '../../models/dpl_trip_dispatch_readiness.dart';
 import '../../tracking/screens/trip_track_map_screen.dart';
@@ -92,6 +94,31 @@ class _DispatchSlipsInboxScreenState
     }
   }
 
+  bool _exporting = false;
+
+  /// Every slip the current tab, search and dates match — all pages, not
+  /// just the one on screen — as an Excel file, one row per slip line.
+  Future<void> _export() async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    final f = ref.read(dplDispatchSlipFiltersProvider);
+    final res = await ref.read(dplApiServiceProvider).exportDispatchSlipsXlsx(
+          status: f.status,
+          q: f.query,
+          from: f.from,
+          to: f.to,
+        );
+    if (!mounted) return;
+    setState(() => _exporting = false);
+    final day = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    await saveServerFile(
+      context,
+      res,
+      fileName: 'dispatch-slips-$day.xlsx',
+      mimeType: xlsxMime,
+    );
+  }
+
   void _onSearchChanged(String value) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
@@ -119,6 +146,8 @@ class _DispatchSlipsInboxScreenState
             _searchCtrl.clear();
             ref.read(dplDispatchSlipFiltersProvider.notifier).setQuery('');
           },
+          exporting: _exporting,
+          onExport: _export,
         ),
         Expanded(
           child: RefreshIndicator(
@@ -499,18 +528,54 @@ class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
+  final VoidCallback onExport;
+  final bool exporting;
 
   const _SearchBar({
     required this.controller,
     required this.onChanged,
     required this.onClear,
+    required this.onExport,
+    this.exporting = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-      child: TextField(
+      child: Row(
+        children: [
+          Expanded(child: _field()),
+          const SizedBox(width: 8),
+          // Exports what the list is showing: this tab, search and dates.
+          Tooltip(
+            message: 'Export to Excel',
+            child: OutlinedButton.icon(
+              onPressed: exporting ? null : onExport,
+              icon: exporting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.download_rounded, size: 18),
+              label: const Text('Excel'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(0, 46),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _field() {
+    return TextField(
         controller: controller,
         onChanged: onChanged,
         textInputAction: TextInputAction.search,
@@ -545,7 +610,6 @@ class _SearchBar extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }
