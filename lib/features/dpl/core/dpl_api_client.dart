@@ -7,6 +7,7 @@ import '../../../data/repositories/local_storage_repository.dart';
 import '../../auth/auth_provider.dart';
 import 'dpl_language_provider.dart';
 import 'dpl_password_gate_provider.dart';
+import 'retry_interceptor.dart';
 
 /// A dedicated Dio instance for the DPL module.
 ///
@@ -96,6 +97,11 @@ final dplDioProvider = Provider<Dio>((ref) {
       },
     ),
   );
+
+  // A GET that hit a dropped connection / connect timeout / proxy 502-504 is
+  // tried again (after ~1s, then ~3s) before the screen or telemetry sees it.
+  // Must stay before the telemetry interceptor (retry_interceptor.dart).
+  dio.interceptors.add(RetryInterceptor(dio));
 
   // Named business actions and failed calls, for usage analytics. Last, so
   // it sees the outcome after the auth handling above.

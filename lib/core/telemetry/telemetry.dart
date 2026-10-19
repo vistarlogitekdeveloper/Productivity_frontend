@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show FlutterError;
 import 'package:vistar_event_tracker/vistar_event_tracker.dart';
 
 import '../constants/app_constants.dart';
+import '../../features/dpl/core/retry_interceptor.dart' show RetryInterceptor;
 
 /// Usage analytics for Vistar Pulse (the DPL app), sent to the in-house event
 /// tracker and read in the Platform Console under Analytics > Event tracker.
@@ -238,7 +239,13 @@ class TelemetryInterceptor extends Interceptor {
       final status = err.response?.statusCode;
       // 4xx is the server refusing something on purpose (validation, a
       // permission): not an error of the app. 5xx and no answer at all are.
-      if (status == null || status >= 500) {
+      // A cancel is the app's own doing; an in-between attempt of
+      // RetryInterceptor is not the request's outcome (that is reported once).
+      final retryAttempt =
+          err.requestOptions.extra[RetryInterceptor.skipTelemetryKey] == true;
+      if ((status == null || status >= 500) &&
+          err.type != DioExceptionType.cancel &&
+          !retryAttempt) {
         Telemetry.error('api_error', {
           'endpoint': Telemetry.routePattern(err.requestOptions.path),
           'method': err.requestOptions.method,
